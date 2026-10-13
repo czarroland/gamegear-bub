@@ -13,7 +13,7 @@ because its upstream logic is present in the source tree.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Not connected to Gamebub frontend |
 | Master System | Engine present, Gamebub mode and video wrapper absent |
-| Selectable scaling and display options | Fixed sharp 3× Game Gear image; options absent |
+| Selectable scaling and display options | Sharp 2×/3× confirmed on rev4; 4× centered crop in source, awaiting bitstream and hardware test |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
 | PAL timing, FM sound, extra sprites, extended GG resolution, Z80 turbo | Disabled or fixed to NTSC/native settings |
@@ -48,22 +48,32 @@ Choose the intended user flow before implementing the serialization protocol.
 
 ## 3. Selectable display scaling
 
-The rev4 framework currently scales 160×144 to 480×432, centered on its
-800×480 LCD: sharp integer 3× nearest-neighbor pixels. A 2× choice would be
-320×288. A screen-filling choice would be noninteger and needs a pixel filter
-to avoid uneven steps. The existing core settings can expose the choice, but
-the framework's scale factor is fixed when generated. Implement a core-specific
-display-scale interface in the local framework and synchronize the setting
-into the LCD clock domain. Keep 3× as the default until the alternate modes
-have been verified on hardware.
+The rev4 LCD scales 160×144 to 480×432 at the default sharp integer 3×. The
+Screen size setting also selects sharp 2× (320×288); the user confirmed both
+on rev4 hardware. A new 4× zoom option renders 640×576 and crops 12 native
+lines at each vertical edge. The panel's display offset compensates for its
+physical alignment. The optional framework interface sends the scale mode
+through a multi-bit clock-domain handshake and applies it at a frame boundary.
+The framework change is kept as `patches/framework-video-scale.patch` against
+the pinned framework. A 3.5× choice would need fractional sampling and a
+pixel filter. Test 4× on hardware before deciding whether that extra mode is
+useful.
 
 ## 4. Master System
 
 The upstream system supports SMS mode, but the current wrapper ties the Game
 Gear mode inputs high and declares a 160×144 video framebuffer. SMS needs
 mode-appropriate controls, 256×192 video (and later 224-line support), ROM
-extensions, region timing, and mode-aware package metadata. Develop SMS mode
-alongside the known-good GG package, verify an SMS diagnostic before retail
-games, then expose both systems through a unified Gamebub core if the firmware
-can identify the selected ROM type reliably. The final user experience should
-match the MiSTer core's multi-system behavior as closely as practical.
+extensions, region timing, and mode-aware package metadata. Deliver SMS first
+as a separate selectable core, because the framework currently fixes the
+framebuffer size when the bitstream is built. Verify an SMS diagnostic and
+Pause input before retail games. A later unified core needs a way to select
+the video dimensions and report the ROM type to the FPGA. The final user
+experience should match the MiSTer core's multi-system behavior as closely as
+practical.
+
+Community testing of the GG-only build found that simply admitting `.sms`
+files is insufficient: some titles need SMS Pause, while SMS palette and
+256×192 pixels appear incorrectly in the 160×144 GG framebuffer. These are
+specific acceptance checks for the SMS adapter; reports so far are short
+sessions rather than long-run compatibility tests.
