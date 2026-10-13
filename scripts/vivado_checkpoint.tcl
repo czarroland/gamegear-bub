@@ -1,7 +1,14 @@
 # Build the checked-in rev4 RTL snapshot. A routed pass may need post-route
 # physical optimization with vivado_finish_route.tcl before writing a bitstream.
 set root [file normalize [file join [file dirname [info script]] ..]]
-set output [file join $root build vivado-checkpoint]
+set output [expr {[info exists ::env(GG_VIVADO_OUTPUT)] ? [file normalize $::env(GG_VIVADO_OUTPUT)] : [file join $root build vivado-checkpoint]}]
+set generated [expr {[info exists ::env(GG_GENERATED_RTL)] ? [file normalize $::env(GG_GENERATED_RTL)] : [file join $root generated handheld_rev4]}]
+set core_handle [open [file join $generated GameGearCore.sv] r]
+set core_rtl [read $core_handle]
+close $core_handle
+if {[string first "videoScale_twoX" $core_rtl] < 0} {
+    error "Generated RTL is stale: regenerate HandheldTop with the videoScale interface."
+}
 file mkdir $output
 # The Apple Silicon Docker VM has 4 GiB of RAM; cap Vivado's Linux default
 # thread count to avoid swapping heavily during synthesis and implementation.
@@ -10,10 +17,10 @@ create_project -in_memory -part xc7a100tcsg324-1
 set_property XPM_LIBRARIES {XPM_CDC XPM_FIFO XPM_MEMORY} [current_project]
 set_property verilog_define {BOARD_REV_4=1} [current_fileset]
 
-set handle [open [file join $root generated handheld_rev4 filelist.f] r]
+set handle [open [file join $generated filelist.f] r]
 foreach name [split [read $handle] \n] {
     if {[string trim $name] ne ""} {
-        read_verilog -sv [file join $root generated handheld_rev4 [string trim $name]]
+        read_verilog -sv [file join $generated [string trim $name]]
     }
 }
 close $handle

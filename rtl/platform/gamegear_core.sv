@@ -4,6 +4,7 @@ module gamegear_core #(parameter integer DISPLAY_DIVIDER=38)(
     output wire clocks_clockOutSystem,clocks_clockOutDisplay,clocks_clockOutSpi,clocks_locked,
     output wire [3:0] video_data_r,video_data_g,video_data_b,
     output wire video_dataEnable,video_vblank,video_hblank,
+    output wire videoScale_twoX,
     output wire [15:0] audio_left,audio_right,
     input wire [31:0] host_mem_address,host_mem_dataWrite,
     input wire host_mem_enable,host_mem_write,
@@ -40,6 +41,7 @@ module gamegear_core #(parameter integer DISPLAY_DIVIDER=38)(
         .memory_request(request),.memory_write(write),.memory_address(address),.memory_data_write(data_write),
         .red(video_data_r),.green(video_data_g),.blue(video_data_b),
         .data_enable(video_dataEnable),.hblank(video_hblank),.vblank(video_vblank),
+        .display_scale_2x(videoScale_twoX),
         .audio_left(audio_left),.audio_right(audio_right));
     gg_sdram memory(.clk(clocks_clockOutSystem),.reset(system_reset),
         .request(request),.write(write),.address(address),.data_write(data_write),

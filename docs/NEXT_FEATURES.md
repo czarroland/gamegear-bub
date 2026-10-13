@@ -13,7 +13,7 @@ because its upstream logic is present in the source tree.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Not connected to Gamebub frontend |
 | Master System | Engine present, Gamebub mode and video wrapper absent |
-| Selectable scaling and display options | Fixed sharp 3× Game Gear image; options absent |
+| Selectable scaling and display options | Sharp 3×/2× selector implemented in source; bitstream and hardware verification pending |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
 | PAL timing, FM sound, extra sprites, extended GG resolution, Z80 turbo | Disabled or fixed to NTSC/native settings |
@@ -48,14 +48,14 @@ Choose the intended user flow before implementing the serialization protocol.
 
 ## 3. Selectable display scaling
 
-The rev4 framework currently scales 160×144 to 480×432, centered on its
-800×480 LCD: sharp integer 3× nearest-neighbor pixels. A 2× choice would be
-320×288. A screen-filling choice would be noninteger and needs a pixel filter
-to avoid uneven steps. The existing core settings can expose the choice, but
-the framework's scale factor is fixed when generated. Implement a core-specific
-display-scale interface in the local framework and synchronize the setting
-into the LCD clock domain. Keep 3× as the default until the alternate modes
-have been verified on hardware.
+The rev4 LCD scales 160×144 to 480×432 at the default sharp integer 3×. A
+new Screen size setting selects sharp 2× (320×288), centered in the same
+800×480 display. The core exposes this setting through an optional framework
+interface; the single-bit choice crosses into the LCD clock domain. The
+framework change is kept as `patches/framework-video-scale.patch` against
+the pinned framework. A screen-filling choice would be noninteger and needs
+a pixel filter to avoid uneven steps. Build and hardware-test the 2× trial
+before considering that third option.
 
 ## 4. Master System
 

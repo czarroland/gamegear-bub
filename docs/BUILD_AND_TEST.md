@@ -139,7 +139,12 @@ dependencies `edalize==0.6.7` and optionally `heatshrink2`. Source Vivado's
 installed Java toolchain; Mill and Maven dependencies must be reachable.
 Obtain the pinned Gamebub framework at the revision listed above under its
 own terms and place it at `framework/`; it is a local dependency and is not
-part of this repository.
+part of this repository. For the selectable 2× trial, apply the source patch
+to that pinned checkout before generating Chisel RTL:
+
+```bash
+patch -p1 < patches/framework-video-scale.patch
+```
 
 ```bash
 python3 scripts/prepare_sources.py
@@ -160,7 +165,10 @@ repository also provides:
 vivado -mode batch -source scripts/vivado_checkpoint.tcl
 ```
 
-That Tcl build ran in the x86-64 Docker Vivado environment on this Mac. It
+That Tcl build ran in the x86-64 Docker Vivado environment on this Mac. Set
+`GG_GENERATED_RTL` to an alternate Chisel output directory and
+`GG_VIVADO_OUTPUT` to an alternate reports/bitstream directory when building
+a trial without overwriting the known-good snapshot. It
 writes reports and a routed checkpoint under `build/vivado-checkpoint`, and
 checks setup and hold timing before writing a `.bit`. The first routed pass
 missed setup timing by 0.240 ns; `scripts/vivado_finish_route.tcl` used Vivado's

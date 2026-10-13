@@ -8,6 +8,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     output wire memory_request,memory_write,output wire [24:0] memory_address,
     output wire [7:0] memory_data_write,
     output wire [3:0] red,green,blue,output wire data_enable,hblank,vblank,
+    output wire display_scale_2x,
     output wire signed [15:0] audio_left,audio_right);
     localparam M_IDLE=0,M_REG=1,M_ROM_REQUEST=2,M_ROM_WAIT=3,
                M_SAVE_WRITE=4,M_SAVE_ADDRESS=5,M_SAVE_WAIT=6,M_SAVE_CAPTURE=7,
@@ -20,7 +21,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     reg [1:0] byte_index;
     reg [31:0] host_regs[0:3];
     reg setup_complete=0,run=0,focus=0,rom_loading=0,save_loading=0,save_reading=0,rom_ready=0;
-    reg region=0;
+    reg region=0,scale_2x=0;
     reg [3:0] mapper=0;
     reg [31:0] rom_length=0,rom_committed=0,save_committed=0;
     reg [23:0] rom_mask=0;
@@ -65,6 +66,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     assign command_busy=command_state==C_BUSY;
     assign command_done=command_state==C_DONE || command_state==C_ERROR;
     assign command_error=command_state==C_ERROR;
+    assign display_scale_2x=scale_2x;
     function automatic [31:0] crc_byte(input [31:0] crc,input [7:0] value);
         reg [31:0] c; integer bit_index;
         begin
@@ -112,7 +114,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
             mem_state<=M_IDLE; command_state<=C_IDLE; mem_data_read<=0;
             setup_complete<=0; run<=0; focus<=0; rom_loading<=0;
             save_loading<=0; save_reading<=0; rom_ready<=0;
-            region<=0; mapper<=0; rom_length<=0; rom_mask<=0; rom_committed<=0; save_committed<=0;
+            region<=0; scale_2x<=0; mapper<=0; rom_length<=0; rom_mask<=0; rom_committed<=0; save_committed<=0;
             crc_state<=32'hffffffff; last_error<=0; stalls<=0; reset_count<=0;
             save_clear<=0; save_clear_address<=0; command_delay<=0;
             inflight<=0; cpu_rom_valid<=0; cpu_rom_data<=8'hff; cached_address<=0;
@@ -175,6 +177,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                             32'h14: if(host_word<=5 && mapper!=host_word[3:0]) begin
                                 mapper<=host_word[3:0]; reset_count<=32; clear_wram<=1;
                             end
+                            32'h1c: scale_2x<=host_word[0];
                             32'h20: if(host_word[0]) begin reset_count<=32; clear_wram<=1; end
                             default: last_error<=1;
                         endcase
@@ -187,6 +190,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                             32'h10: read_word<={31'd0,region};
                             32'h14: read_word<={28'd0,mapper};
                             32'h18: read_word<=32'h00a00090; // 160 x 144
+                            32'h1c: read_word<={31'd0,scale_2x};
                             32'h100: read_word<=rom_length;
                             32'h104: read_word<=rom_committed;
                             32'h108: read_word<=crc_state^32'hffffffff;

@@ -1,6 +1,6 @@
 # Try timing optimization on a fully routed checkpoint without weakening XDC.
 set root [file normalize [file join [file dirname [info script]] ..]]
-set output [file join $root build vivado-checkpoint]
+set output [expr {[info exists ::env(GG_VIVADO_OUTPUT)] ? [file normalize $::env(GG_VIVADO_OUTPUT)] : [file join $root build vivado-checkpoint]}]
 set_param general.maxThreads 2
 open_checkpoint [file join $output routed.dcp]
 phys_opt_design -directive Explore
