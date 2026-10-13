@@ -8,6 +8,11 @@ stereo audio, input mapping, and 32 KiB cartridge RAM. Battery save export has
 been verified on hardware; import verification is in progress. The source
 repository does not include a bitstream, firmware UF2, retail ROM, or BIOS.
 
+The current rev4 development package is the
+[v0.1.0-alpha.1 pre-release](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.1).
+Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
+It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
+
 A separate rev4 trial confirmed sharp integer 3× and 2× screen sizes on
 hardware. The current source also adds a centered 4× zoom option that crops
 12 Game Gear lines from the top and bottom; its hardware test is pending.
