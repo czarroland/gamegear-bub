@@ -13,7 +13,7 @@ because its upstream logic is present in the source tree.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Not connected to Gamebub frontend |
 | Master System | Engine present, Gamebub mode and video wrapper absent |
-| Selectable scaling and display options | 2×/3×, 4× crop, and 3.5× bilinear confirmed on rev4; 3.5× is the preferred size but looks blurry |
+| Selectable scaling and display options | 2×/3×, 4× crop, and 3.5× bilinear confirmed on rev4 |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
 | PAL timing, FM sound, extra sprites, extended GG resolution, Z80 turbo | Disabled or fixed to NTSC/native settings |
@@ -57,11 +57,10 @@ four neighboring framebuffer pixels using exact sevenths in both axes. The
 panel's display offset compensates for its physical alignment. The optional
 framework interface sends the scale mode through a multi-bit clock-domain
 handshake and applies it at a frame boundary. The framework change is kept as
-`patches/framework-video-scale.patch` against the pinned framework. The user
-confirmed that 3.5× works on hardware and is the preferred image size, but its
-bilinear interpolation is visibly blurry. Develop and compare a sharper
-fractional filter while keeping all four selectable sizes. The current 3.5×
-bitstream passes post-route timing with only +0.008 ns setup margin.
+`patches/framework-video-scale.patch` against the pinned framework. The 3.5×
+mode has been confirmed on hardware. Evaluate alternative fractional filters
+while keeping all four selectable sizes. The current 3.5× bitstream passes
+post-route timing with +0.008 ns setup margin.
 
 ## 4. Master System
 

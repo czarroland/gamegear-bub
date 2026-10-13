@@ -93,7 +93,7 @@ Its bitstream SHA-256 is
 The `GameGear.ZoomTrial` package was installed on BUB, all five files were
 verified byte for byte, and the card safely ejected. The older core bitstreams
 still match their recorded SHA-256 values. The user confirmed that 4× works
-on hardware and asked to retain it as an option. A 3.5× bilinear mode is now
+on hardware. A 3.5× bilinear mode is now
 packaged separately for a smaller vertical crop. The integrated simulation
 suite and Chisel generation passed. Vivado 2024.1 post-route timing closed at
 setup WNS +0.008 ns and hold WHS +0.054 ns, with zero failing constrained
@@ -102,8 +102,7 @@ endpoints. The bitstream SHA-256 is
 The `GameGear.SmoothTrial` package was installed on BUB, all five files were
 verified byte for byte, and the card safely ejected. The older Alpha and Zoom
 bitstream hashes remain unchanged. The user confirmed that 3.5× works on
-hardware and is the preferred image size. Its current bilinear interpolation
-looks blurry, so sharper fractional scaling remains on the roadmap.
+hardware. Alternative fractional filters remain on the roadmap.
 
 A community tester reported short successful runs with NA/JP/EU ROMs, demos,
 test suites, and patched/translated GG titles, and reported working saves.

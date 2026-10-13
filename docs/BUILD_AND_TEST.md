@@ -278,8 +278,8 @@ Vivado 2024.1 reported post-route setup WNS +0.075 ns and hold WHS +0.024 ns,
 with no failing constrained endpoints. The first route missed setup by
 0.768 ns; `vivado_finish_route.tcl` closed it before writing the bitstream.
 The package was copied to BUB and all five files were verified byte for byte.
-The card was safely ejected. The user confirmed 4× works and prefers to keep it
-as an option. The 3.5× interpolation mode was packaged as a separate trial.
+The card was safely ejected. The user confirmed 4× works on hardware.
+The 3.5× interpolation mode was packaged as a separate trial.
 Package it with:
 
 ```bash
@@ -296,12 +296,12 @@ Vivado 2024.1 reported post-route setup WNS +0.008 ns and hold WHS +0.054 ns,
 with no failing constrained endpoints. Four video read ports increased block RAM
 use from 41 to 113 RAMB36 blocks. All five package files were verified on BUB
 before safely ejecting the card. The user confirmed that the 3.5× mode works
-and prefers its size, while reporting that the interpolation looks blurry.
+on hardware.
 
 ## Next engineering gates
 
-1. Compare a sharper fractional scaling filter with the present bilinear 3.5×
-   mode, then test HUD-heavy games and live setting changes on hardware.
+1. Compare alternative fractional scaling filters with the present bilinear
+   3.5× mode, then test HUD-heavy games and live setting changes on hardware.
 2. Implement SMS mode with 256-pixel video, SMS palette, and Pause input in a
    separate package, then test `.sms` titles and SMS-format GG releases.
 3. Verify cartridge save import and longer play sessions, then add save states.

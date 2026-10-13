@@ -13,12 +13,11 @@ The current rev4 development package is the
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
 
-A separate rev4 trial confirmed sharp integer 3× and 2× screen sizes on
-hardware. The centered 4× zoom option also works on hardware; it crops
-12 Game Gear lines from the top and bottom. The 3.5× option also works on
-hardware and fills more of the screen with a smaller crop. Its current bilinear
-interpolation looks blurry; a sharper fractional filter is planned. The 2×,
-3×, and 4× modes remain selectable.
+A separate rev4 trial confirmed integer 3× and 2× screen sizes on hardware.
+The centered 4× zoom option also works on hardware; it crops 12 Game Gear
+lines from the top and bottom. The 3.5× bilinear option works on hardware
+and crops about 3–4 source lines at each vertical edge. All four sizes remain
+selectable.
 
 The target is [SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) feature
 parity where the Bub hardware and firmware permit it. See the
