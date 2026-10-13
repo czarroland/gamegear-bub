@@ -9,8 +9,7 @@ frame adapter; signed stereo audio; active-low Game Gear Start and buttons;
 focus behavior; and 32 KiB save import/export with a coherent frozen engine.
 
 This source checkpoint is in the Gamebub workspace. The Gamebub framework and
-pulled firmware remain unchanged. No upstream repository has been modified or
-pushed. The enabling firmware source is `v1.1-beta`, Cargo `1.1.0-beta2`, at
+pulled firmware remain unchanged. The enabling firmware source is `v1.1-beta`, Cargo `1.1.0-beta2`, at
 `9966de77f037ae5d7610bd9d2b6f0b512ff7eb5c`.
 
 ## Verification completed
@@ -93,7 +92,18 @@ Its bitstream SHA-256 is
 `3735089578fbc3645522fa0f12079421cdc9830e7a6bb8a969d2c1f6a128ee2e`.
 The `GameGear.ZoomTrial` package was installed on BUB, all five files were
 verified byte for byte, and the card safely ejected. The older core bitstreams
-still match their recorded SHA-256 values. The 4× hardware test is pending.
+still match their recorded SHA-256 values. The user confirmed that 4× works
+on hardware and asked to retain it as an option. A 3.5× bilinear mode is now
+packaged separately for a smaller vertical crop. The integrated simulation
+suite and Chisel generation passed. Vivado 2024.1 post-route timing closed at
+setup WNS +0.008 ns and hold WHS +0.054 ns, with zero failing constrained
+endpoints. The bitstream SHA-256 is
+`2952f533f7f3d1a7ccbf7ffe04ebc804157bccedbb0a1440f36d9fdc4bdee567`.
+The `GameGear.SmoothTrial` package was installed on BUB, all five files were
+verified byte for byte, and the card safely ejected. The older Alpha and Zoom
+bitstream hashes remain unchanged. The user confirmed that 3.5× works on
+hardware and is the preferred image size. Its current bilinear interpolation
+looks blurry, so sharper fractional scaling remains on the roadmap.
 
 A community tester reported short successful runs with NA/JP/EU ROMs, demos,
 test suites, and patched/translated GG titles, and reported working saves.

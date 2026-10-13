@@ -18,6 +18,7 @@
         {"id": 3, "label": "Reset game", "address": "0x00000020", "type": "action", "value": "0x1"},
         {"id": 4, "label": "Screen size", "address": "0x0000001c", "type": "list", "default": "0x0",
          "items": [{"label": "3x sharp", "value": "0x0"}, {"label": "2x sharp", "value": "0x1"},
+                   {"label": "3.5x smooth", "value": "0x3"},
                    {"label": "4x zoom (crop)", "value": "0x2"}]}
 	]
 }

@@ -9,14 +9,16 @@ been verified on hardware; import verification is in progress. The source
 repository does not include a bitstream, firmware UF2, retail ROM, or BIOS.
 
 The current rev4 development package is the
-[v0.1.0-alpha.1 pre-release](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.1).
+[v0.1.0-alpha.2 pre-release](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.2).
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
 
 A separate rev4 trial confirmed sharp integer 3× and 2× screen sizes on
-hardware. The current source also adds a centered 4× zoom option that crops
-12 Game Gear lines from the top and bottom; its hardware test is pending.
-The known-good Game Gear package remains available.
+hardware. The centered 4× zoom option also works on hardware; it crops
+12 Game Gear lines from the top and bottom. The 3.5× option also works on
+hardware and fills more of the screen with a smaller crop. Its current bilinear
+interpolation looks blurry; a sharper fractional filter is planned. The 2×,
+3×, and 4× modes remain selectable.
 
 The target is [SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) feature
 parity where the Bub hardware and firmware permit it. See the
