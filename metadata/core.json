@@ -1,0 +1,10 @@
+{
+	"metadata": {
+		"id": "GameGear.Alpha",
+		"name": "Game Gear (development)",
+		"author": "Game Gear port"
+	},
+	"bitstreams": [
+		{"target": "gamebub_rev4", "filename": "GameGearCore-gamebub_rev4.bit"}
+	]
+}

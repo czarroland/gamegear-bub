@@ -1,0 +1,86 @@
+{
+  "simulation_only": true,
+  "hardware_tested": false,
+  "checks": [
+    {
+      "check": "prepare_sources",
+      "result": "pass",
+      "seconds": 0.07
+    },
+    {
+      "check": "generate_machine",
+      "result": "pass",
+      "seconds": 0.02
+    },
+    {
+      "check": "make_diagnostic",
+      "result": "pass",
+      "seconds": 0.04
+    },
+    {
+      "check": "engine-analysis",
+      "result": "pass",
+      "seconds": 1.07
+    },
+    {
+      "check": "memory-compile",
+      "result": "pass",
+      "seconds": 0.0
+    },
+    {
+      "check": "memory",
+      "result": "pass",
+      "seconds": 0.03
+    },
+    {
+      "check": "audio-compile",
+      "result": "pass",
+      "seconds": 0.01
+    },
+    {
+      "check": "audio",
+      "result": "pass",
+      "seconds": 0.23
+    },
+    {
+      "check": "sdram-compile",
+      "result": "pass",
+      "seconds": 0.01
+    },
+    {
+      "check": "sdram",
+      "result": "pass",
+      "seconds": 0.09
+    },
+    {
+      "check": "engine-verilator-build",
+      "result": "pass",
+      "seconds": 11.66
+    },
+    {
+      "check": "engine",
+      "result": "pass",
+      "seconds": 2.23
+    },
+    {
+      "check": "soc-verilator-build",
+      "result": "pass",
+      "seconds": 15.1
+    },
+    {
+      "check": "soc",
+      "result": "pass",
+      "seconds": 8.24
+    },
+    {
+      "check": "engine-four-state-compile",
+      "result": "pass",
+      "seconds": 0.88
+    },
+    {
+      "check": "engine-four-state",
+      "result": "pass",
+      "seconds": 169.29
+    }
+  ]
+}

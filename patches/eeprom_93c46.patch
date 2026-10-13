@@ -1,0 +1,29 @@
+--- a/rtl/eeprom_93c46.vhd
++++ b/rtl/eeprom_93c46.vhd
+@@ -17,7 +17,7 @@
+         cs_in      : in  std_logic;
+         clk_in     : in  std_logic;
+         di         : in  std_logic;
+-        do         : out std_logic;
++        z80_dout         : out std_logic;
+         soft_reset : in  std_logic := '0';
+         -- NVRAM port (128×8-bit bytes)
+         nvram_a  : out std_logic_vector(6 downto 0);
+@@ -60,7 +60,7 @@
+     signal read_word0        : std_logic_vector(15 downto 0) := (others => '0');
+     signal read_word0_addr   : std_logic_vector(5 downto 0) := (others => '0');
+ begin
+-    do       <= data_o;
++    z80_dout       <= data_o;
+     nvram_we <= nv_we_r;
+     nvram_a  <= nv_a_r;
+     nvram_di <= nv_di_r;
+@@ -146,7 +146,7 @@
+                 -- Always latch inputs for edge detection on every clock cycle
+                 clk_r <= clk_in;
+ 
+-                -- CS LOW: standby / reset to WAIT_START and drive DO high (1) (matching Genesis Plus GX)
++                -- CS LOW: standby / reset to WAIT_START and drive z80_dout high (1) (matching Genesis Plus GX)
+                 if cs_in = '0' then
+                     data_o <= '1';
+                     state  <= WAIT_START;

@@ -1,0 +1,1276 @@
+[
+  {
+    "port": "clk_sys",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "clk",
+    "explicit": true
+  },
+  {
+    "port": "ce_cpu",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "ce_cpu and not freeze",
+    "explicit": true
+  },
+  {
+    "port": "ce_vdp",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "ce_vdp and not freeze",
+    "explicit": true
+  },
+  {
+    "port": "ce_pix",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "ce_pix and not freeze",
+    "explicit": true
+  },
+  {
+    "port": "ce_sp",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "ce_sp and not freeze",
+    "explicit": true
+  },
+  {
+    "port": "turbo",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "gg",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "ggres",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "systeme",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "bios_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ext_bios_sel",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ext_bios_loaded",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "gg_bios_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ext_gg_bios_loaded",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "GG_BIOSWEN",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "GG_EN",
+    "direction": "in",
+    "type": "std_logic",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "GG_CODE",
+    "direction": "in",
+    "type": "std_logic_vector(128 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "GG_RESET",
+    "direction": "in",
+    "type": "std_logic",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "GG_AVAIL",
+    "direction": "out",
+    "type": "std_logic",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "gg_link_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "gg_link_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(6 downto 0)",
+    "binding": "(others => '1')",
+    "explicit": true
+  },
+  {
+    "port": "gg_link_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(6 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "rom_wait_n",
+    "direction": "in",
+    "type": "std_logic := '1'",
+    "binding": "rom_wait_n",
+    "explicit": true
+  },
+  {
+    "port": "RESET_n",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "effective_reset_n",
+    "explicit": true
+  },
+  {
+    "port": "rom_rd",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "rom_read",
+    "explicit": true
+  },
+  {
+    "port": "rom_a",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(23 downto 0)",
+    "binding": "rom_address",
+    "explicit": true
+  },
+  {
+    "port": "rom_do",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "rom_data",
+    "explicit": true
+  },
+  {
+    "port": "j1_up",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(0)",
+    "explicit": true
+  },
+  {
+    "port": "j1_down",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(1)",
+    "explicit": true
+  },
+  {
+    "port": "j1_left",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(2)",
+    "explicit": true
+  },
+  {
+    "port": "j1_right",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(3)",
+    "explicit": true
+  },
+  {
+    "port": "j1_tl",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(4)",
+    "explicit": true
+  },
+  {
+    "port": "j1_tr",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(5)",
+    "explicit": true
+  },
+  {
+    "port": "j1_th",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j1_start",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "j1_coin",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "j1_a3",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "j2_up",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_down",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_left",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_right",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_tl",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_tr",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_th",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "j2_start",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "j2_coin",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "j2_a3",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "pause",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "not buttons(6)",
+    "explicit": true
+  },
+  {
+    "port": "soft_reset",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "E0Type",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(1 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "E1Use",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "E2Use",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "E0",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "F2",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "F3",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "has_paddle",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "has_pedal",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "paddle",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "paddle2",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "pedal",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "sc3000_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "sc_multicart_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "sc_megacart_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "sc_cart_ram",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(1 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "sk1100_en",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "sk1100_row_sel",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(2 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "sk1100_row_data",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(11 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "j1_tr_out",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "j1_th_out",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "j2_tr_out",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "j2_th_out",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "x",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(8 downto 0)",
+    "binding": "x",
+    "explicit": true
+  },
+  {
+    "port": "y",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(8 downto 0)",
+    "binding": "y",
+    "explicit": true
+  },
+  {
+    "port": "vcounter_cpu",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "vcounter",
+    "explicit": true
+  },
+  {
+    "port": "color",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(11 downto 0)",
+    "binding": "color",
+    "explicit": true
+  },
+  {
+    "port": "palettemode",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "mask_column",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "black_column",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "smode_M1",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "m1",
+    "explicit": true
+  },
+  {
+    "port": "smode_M2",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "m2",
+    "explicit": true
+  },
+  {
+    "port": "smode_M3",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "m3",
+    "explicit": true
+  },
+  {
+    "port": "smode_M4",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "m4",
+    "explicit": true
+  },
+  {
+    "port": "ysj_quirk",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "pal",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "region",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "region",
+    "explicit": true
+  },
+  {
+    "port": "mapper_lock",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "force_sega",
+    "explicit": true
+  },
+  {
+    "port": "mapper_codies_force",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "force_codies",
+    "explicit": true
+  },
+  {
+    "port": "mapper_dahjee_a_force",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "force_dahjee",
+    "explicit": true
+  },
+  {
+    "port": "mapper_linear_force",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "force_linear",
+    "explicit": true
+  },
+  {
+    "port": "mapper_zemina_force",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "force_zemina",
+    "explicit": true
+  },
+  {
+    "port": "mapper_evolution_force",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "evolution_gg_active",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "evolution_active",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "mapper_eeprom_out",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "vdp_enables",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(1 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg_enables",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(1 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "audioL",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(15 downto 0)",
+    "binding": "audio_left",
+    "explicit": true
+  },
+  {
+    "port": "audioR",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(15 downto 0)",
+    "binding": "audio_right",
+    "explicit": true
+  },
+  {
+    "port": "fm_ena",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "dbr",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'1'",
+    "explicit": true
+  },
+  {
+    "port": "sp64",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ram_a",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(13 downto 0)",
+    "binding": "wram_a",
+    "explicit": true
+  },
+  {
+    "port": "ram_d",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR( 7 downto 0)",
+    "binding": "wram_d",
+    "explicit": true
+  },
+  {
+    "port": "ram_we",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "wram_we",
+    "explicit": true
+  },
+  {
+    "port": "ram_q",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR( 7 downto 0)",
+    "binding": "wram_q",
+    "explicit": true
+  },
+  {
+    "port": "nvram_a",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(14 downto 0)",
+    "binding": "save_a",
+    "explicit": true
+  },
+  {
+    "port": "nvram_d",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR( 7 downto 0)",
+    "binding": "save_d",
+    "explicit": true
+  },
+  {
+    "port": "nvram_we",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "save_we",
+    "explicit": true
+  },
+  {
+    "port": "nvram_q",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR( 7 downto 0)",
+    "binding": "save_q",
+    "explicit": true
+  },
+  {
+    "port": "encrypt",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(1 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "key_a",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(12 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "key_d",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ROMCL",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "clk",
+    "explicit": true
+  },
+  {
+    "port": "ROMAD",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(24 downto 0)",
+    "binding": "'0' & load_address",
+    "explicit": true
+  },
+  {
+    "port": "ROMDT",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "load_data",
+    "explicit": true
+  },
+  {
+    "port": "ROMEN",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "load_we",
+    "explicit": true
+  },
+  {
+    "port": "BIOSWEN",
+    "direction": "in",
+    "type": "STD_LOGIC",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "z80_reg_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(229 downto 0)",
+    "binding": "debug_cpu",
+    "explicit": true
+  },
+  {
+    "port": "z80_dir",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(229 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "z80_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "vdp_regs_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(127 downto 0)",
+    "binding": "debug_vdp",
+    "explicit": true
+  },
+  {
+    "port": "vdp_regs_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(127 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "vdp_regs_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "vdp_cram_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(383 downto 0)",
+    "binding": "debug_cram",
+    "explicit": true
+  },
+  {
+    "port": "ss_cram_wr",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_cram_A",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(4 downto 0)  := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_cram_D",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(11 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram_en",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram_A",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(14 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram_D",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram_WE",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram_WA",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(14 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram_WD",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)  := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(55 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "psg_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(55 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "psg_ext_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(95 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "psg2_ext_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(95 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "psg_ext_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(95 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg2_ext_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(95 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg_div_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(3 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "psg_div_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(3 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "audio_control_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(10 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "audio_control_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(10 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "audio_quiescent",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "audio_phase_out",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "audio_phase_in",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": true
+  },
+  {
+    "port": "audio_phase_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "not effective_reset_n",
+    "explicit": true
+  },
+  {
+    "port": "audio_ext_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "mapper_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(63 downto 0)",
+    "binding": "debug_mapper",
+    "explicit": true
+  },
+  {
+    "port": "mapper_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(63 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "mapper_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "evolution_ss_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(159 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "evolution_ss_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(95 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "evolution_ss_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "eeprom_ss_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(63 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "eeprom_ss_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(63 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "eeprom_ss_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "z80_m1_n",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "z80_mreq_n",
+    "direction": "out",
+    "type": "STD_LOGIC",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "z80_iset",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(1 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "vdp2_regs_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(127 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "vdp2_regs_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(127 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "vdp2_regs_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "vdp2_cram_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(383 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "ss_cram2_wr",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_cram2_A",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(4 downto 0)  := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_cram2_D",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(11 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram2_en",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram2_A",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(14 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram2_D",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram2_WE",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram2_WA",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(14 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "ss_vram2_WD",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(7 downto 0)  := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg2_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(55 downto 0)",
+    "binding": "open",
+    "explicit": false
+  },
+  {
+    "port": "psg2_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(55 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "psg2_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "io_state_out",
+    "direction": "out",
+    "type": "STD_LOGIC_VECTOR(31 downto 0)",
+    "binding": "debug_io",
+    "explicit": true
+  },
+  {
+    "port": "io_state_in",
+    "direction": "in",
+    "type": "STD_LOGIC_VECTOR(31 downto 0) := (others => '0')",
+    "binding": "(others => '0')",
+    "explicit": false
+  },
+  {
+    "port": "io_state_set",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "se_pause",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "'0'",
+    "explicit": false
+  },
+  {
+    "port": "ss_freeze",
+    "direction": "in",
+    "type": "STD_LOGIC := '0'",
+    "binding": "freeze",
+    "explicit": true
+  }
+]

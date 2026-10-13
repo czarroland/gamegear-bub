@@ -1,0 +1,206 @@
+--- a/rtl/system.vhd
++++ b/rtl/system.vhd
+@@ -3,7 +3,7 @@
+ use IEEE.NUMERIC_STD.ALL; 
+ --use IEEE.STD_LOGIC_ARITH.ALL;
+ -- use IEEE.STD_LOGIC_UNSIGNED.ALL; 
+-use work.jt89.all;
++use work.jt89_pkg.all;
+ 
+ entity system is
+ 	generic (
+@@ -36,6 +36,7 @@
+ 		gg_link_in	: in  STD_LOGIC_VECTOR(6 downto 0);
+ 		gg_link_out	: out STD_LOGIC_VECTOR(6 downto 0);
+ 
++		rom_wait_n : in std_logic := '1';
+ 		RESET_n:		in	 STD_LOGIC;
+ 
+ 		rom_rd:  	out STD_LOGIC;
+@@ -576,24 +577,8 @@
+ 	);
+ 
+ 	-- Game Genie
+-	GAMEGENIE : component CODES
+-	generic map(
+-		ADDR_WIDTH => 16,
+-		DATA_WIDTH => 8
+-	)
+-	port map(
+-		clk => clk_sys,
+-		reset => GG_RESET,
+-		enable => not GG_EN,
+-		addr_in => A,
+-		data_in => D_out,
+-		code => GG_CODE,
+-		available => GG_AVAIL,
+-		genie_ovr => GENIE,
+-		genie_data => GENIE_DO
+-	);
+-	
+-	GENIE_DI <= GENIE_DO when GENIE else D_out;
++	GG_AVAIL <= '0';
++	GENIE_DI <= D_out;
+ 
+ 	z80_inst: entity work.T80s
+ 	generic map(
+@@ -604,6 +589,7 @@
+ 		RESET_n	=> RESET_n,
+ 		CLK		=> clk_sys,
+ 		CEN		=> ce_z80,
++		WAIT_n => rom_wait_n,
+ 		INT_n		=> IRQ_n,
+ 		NMI_n		=> (pause or effective_gg) and gg_link_nmi_n,
+ 		MREQ_n	=> MREQ_n,
+@@ -613,8 +599,8 @@
+ 		WR_n		=> WR_n,
+ 		A			=> A,
+ 		DI			=> GENIE_DI,
+-		DO			=> D_in,
+-		REG    => z80_reg_out,
++		z80_dout			=> D_in,
++		z80_registers    => z80_reg_out,
+ 		DIRSet => z80_set,
+ 		DIR    => z80_dir,
+ 		ISet_out => z80_iset_int
+@@ -630,7 +616,7 @@
+ 		ce_vdp	=> ce_vdp,
+ 		ce_pix	=> ce_pix,
+ 		ce_sp		=> ce_sp,
+-		-- Later TecToy VDP implementations used by Evolution do not enforce
++		-- Later TecToy VDP implementations used by Evolution z80_dout not enforce
+ 		-- the original eight-sprites-per-line display limit.  Several bundled
+ 		-- titles rely on this even when the global compatibility option is off.
+ 		sp64		=> sp64 or mapper_evolution,
+@@ -784,19 +770,8 @@
+         ss_div_in => psg_div_in, ss_quiescent => psg_quiet2
+ 	);
+ 	
+-	fm: work.opll
+-	port map
+-	(
+-		xin		=> clk_sys,
+-		xena		=> ce_cpu,
+-		d        => fm_d,
+-		a        => fm_a,
+-		cs_n     => '0',
+-		we_n		=> '0',
+-		ic_n		=> RESET_n,
+-		mixout   => FM_out
+-	);
+-	
++	FM_out <= (others => '0');
++
+ 	process (clk_sys)
+ 	begin
+ 		if rising_edge(clk_sys) then
+@@ -953,7 +928,7 @@
+ 	-- Only ports demonstrated by the menu ROM and implemented by the
+ 	-- Evolution mapper are exclusive. $A0 remains a mirrored VDP data port.
+ 	-- The menu also writes $06 once to $89 as board configuration; suppress
+-	-- that write at the VDP below, but do not expose an invented readable
++	-- that write at the VDP below, but z80_dout not expose an invented readable
+ 	-- Evolution register (the ROM never reads $89).
+ 	evolution_io_port <= '1' when evolution_menu_mode='1' and
+ 		(A(7 downto 0)=x"61" or A(7 downto 0)=x"62" or A(7 downto 0)=x"63" or
+@@ -1002,18 +977,7 @@
+ 	nvram_d  <= eeprom_nvram_di          when eeprom_enabled = '1' else D_in;
+ 	nvram_D_out <= nvram_q;
+ 
+-	boot_rom_inst : entity work.sprom
+-	generic map
+-	(
+-		init_file=> BASE_DIR & "rtl/mboot.mif",
+-		widthad_a=> 14
+-	)
+-	port map
+-	(
+-		clock		=> clk_sys,
+-		address	=> A(13 downto 0),
+-		q			=> boot_rom_D_out
+-	);
++	boot_rom_D_out <= (others => '1');
+ 
+ 	evolution_menu_mode <= '1' when mapper_evolution = '1' and
+ 	                                evolution_3ffe /= x"87" and
+@@ -1031,7 +995,7 @@
+ 	-- Menu/service space also uses the clone VDP's 12-bit CRAM, but retains
+ 	-- Evolution/SMS controller I/O. Keep the two hardware modes independent.
+ 	-- The Evolution mapper is detected from the cartridge CRC before an SMS
+-	-- BIOS hands execution to the cartridge. Do not apply the clone CRAM mode
++	-- BIOS hands execution to the cartridge. z80_dout not apply the clone CRAM mode
+ 	-- to that BIOS while $3FFE still contains its reset value ($00).
+ 	effective_vdp_gg <= gg or evolution_gg_mode or
+ 	                    (mapper_evolution and (bootloader_n or cart_precedence) and
+@@ -1058,64 +1022,13 @@
+ 	ext_bios_wren <= BIOSWEN;
+ 	ext_bios_addr <= ROMAD(17 downto 0) when BIOSWEN='1' else rom_a_i(17 downto 0);
+ 
+-	ext_bios_inst : entity work.spram
+-	generic map
+-	(
+-		widthad_a=> 18
+-	)
+-	port map
+-	(
+-		clock		=> clk_sys,
+-		address	=> ext_bios_addr,
+-		wren		=> ext_bios_wren,
+-		data		=> ROMDT,
+-		q			=> ext_bios_D_out
+-	);	
+-
+-	ext_gg_bios_wren <= GG_BIOSWEN;
+-	ext_gg_bios_addr <= ROMAD(13 downto 0) when GG_BIOSWEN='1' else A(13 downto 0);
+-
+-
+-	ext_gg_bios_inst : entity work.spram
+-	generic map
+-	(
+-		widthad_a => 14
+-	)
+-	port map
+-	(
+-		clock   => clk_sys,
+-		address => ext_gg_bios_addr,
+-		wren    => ext_gg_bios_wren,
+-		data    => ROMDT,
+-		q       => ext_gg_bios_D_out
+-	);
+-	mc8123_inst : component MC8123_rom_decrypt
+-	port map
+-	(
+-		clk		=> clk_sys,
+-		m1			=> not M1_n,
+-		a			=> A,
+-		d			=> mc8123_D_out,
+-		prog_d	=> rom_do,
+-		key_a		=> key_a,
+-		key_d		=> key_d
+-	);
+-	
+-	segadect2_inst : component SEGASYS1_DECT2
+-	port map
+-	(
+-		clk		=> clk_sys,
+-		mrom_m1	=> not M1_n,
+-		mrom_ad	=> A(14 downto 0),
+-		mrom_dt	=> segadect2_D_out,
+---		rad      =>,
+-		rdt		=> rom_do,
+-		ROMCL		=> ROMCL,
+-		ROMAD		=> ROMAD,
+-		ROMDT		=> ROMDT,
+-		ROMEN		=> ROMEN
+-	);
+-	
++	ext_bios_D_out <= (others => '1');
++	ext_gg_bios_D_out <= (others => '1');
++
++	mc8123_D_out <= rom_do;
++	segadect2_D_out <= rom_do;
++	key_a <= (others => '0');
++
+ 	-- -----------------------------------------------------------------------
+ 	-- GG EEPROM cartridge mapper instance
+ 	-- -----------------------------------------------------------------------

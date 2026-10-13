@@ -1,0 +1,48 @@
+--- a/rtl/T80/T80s.vhd
++++ b/rtl/T80/T80s.vhd
+@@ -35,7 +35,7 @@
+ -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ -- POSSIBILITY OF SUCH DAMAGE.
+ --
+--- Please report bugs to the author, but before you do so, please
++-- Please report bugs to the author, but before you z80_dout so, please
+ -- make sure that this is not a derivative work and that
+ -- you have the latest version of this file.
+ --
+@@ -94,10 +94,10 @@
+ 		OUT0        : in  std_logic := '0';  -- 0 => OUT(C),0, 1 => OUT(C),255
+ 		A				: out std_logic_vector(15 downto 0);
+ 		DI				: in std_logic_vector(7 downto 0);
+-		DO				: out std_logic_vector(7 downto 0);
++		z80_dout				: out std_logic_vector(7 downto 0);
+ 		-- Save state: snapshot of all Z80 registers
+ 		-- WZ,IFF2,IFF1,IM,IY,HL',DE',BC',IX,HL,DE,BC,PC,SP,R,I,F',A',F,A
+-		REG        : out std_logic_vector(229 downto 0);
++		z80_registers        : out std_logic_vector(229 downto 0);
+ 		DIRSet     : in  std_logic := '0';
+ 		DIR        : in  std_logic_vector(229 downto 0) := (others => '0');
+ 		-- Prefix/instruction-set state forwarded from T80
+@@ -117,7 +117,7 @@
+ 
+ begin
+ 
+-	u0 : work.T80
++	u0 : entity work.T80
+ 		generic map(
+ 			Mode => Mode,
+ 			IOWait => IOWait)
+@@ -139,12 +139,12 @@
+ 			A => A,
+ 			DInst => DI,
+ 			DI => DI_Reg,
+-			DO => DO,
++			z80_dout => z80_dout,
+ 			MC => MCycle,
+ 			TS => TState,
+ 			OUT0 => OUT0,
+ 			IntCycle_n => IntCycle_n,
+-			REG => REG,
++			z80_registers => z80_registers,
+ 			DIRSet => DIRSet,
+ 			DIR => DIR,
+ 			ISet_out => ISet_out

@@ -1,0 +1,48 @@
+--- a/rtl/vdp_background.vhd
++++ b/rtl/vdp_background.vhd
+@@ -32,7 +32,7 @@
+ 	vram_D:				in  std_logic_vector(7 downto 0);
+ 
+ 	color:				out std_logic_vector(4 downto 0);
+-	priority:			out std_logic
++	bg_priority:			out std_logic
+ );
+ end entity;
+ 
+@@ -353,23 +353,23 @@
+ 				shift2        <= (others => '0');
+ 				shift3        <= (others => '0');
+ 				palette_shift <= '0';
+-				priority      <= '0';
++				bg_priority      <= '0';
+ 			elsif ce_pix = '1' then
+ 				if text_mode='1' then
+ 					if conv_integer(screen_x)=7 then
+ 						text_shift <= text_pattern(7 downto 2);
+-						priority   <= '0';
++						bg_priority   <= '0';
+ 					elsif conv_integer(screen_x)>=8 and conv_integer(screen_x)<248 then
+ 						if text_phase="101" then
+ 							text_shift <= text_pattern(7 downto 2);
+-							priority   <= '0';
++							bg_priority   <= '0';
+ 						else
+ 							text_shift(5 downto 1) <= text_shift(4 downto 0);
+ 							text_shift(0)          <= '0';
+ 						end if;
+ 					else
+ 						text_shift <= (others=>'0');
+-						priority   <= '0';
++						bg_priority   <= '0';
+ 					end if;
+ 				else
+ 					case x(2 downto 0) is
+@@ -390,7 +390,7 @@
+ 							shift3 <= vram_D(0)&vram_D(1)&vram_D(2)&vram_D(3)&vram_D(4)&vram_D(5)&vram_D(6)&vram_D(7);
+ 						end if;
+ 						palette_shift <= palette;
+-						priority      <= priority_latch;
++						bg_priority      <= priority_latch;
+ 					when others =>
+ 						shift0(7 downto 1) <= shift0(6 downto 0);
+ 						shift1(7 downto 1) <= shift1(6 downto 0);

@@ -1,0 +1,12 @@
+/out
+/build
+__pycache__/
+.Xil/
+xsim.dir/
+*.log
+*.jou
+*.pb
+.DS_Store
+/framework/
+/generated/handheld_rev4/
+/diagnostics/*.hex

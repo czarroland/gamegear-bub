@@ -1,0 +1,11 @@
+--- a/rtl/evolution_mapper.vhd
++++ b/rtl/evolution_mapper.vhd
+@@ -162,7 +162,7 @@
+                         record_read_pending_r <= '1';
+                     end if;
+                     if switch_armed = '1' then
+-                        -- Do not infer a bit-field from the two commands seen in
++                        -- z80_dout not infer a bit-field from the two commands seen in
+                         -- the dumped software. Unknown writes leave the view alone.
+                         if reg3ffe_pending = x"85" or reg3ffe_pending = x"87" or
+                            reg3ffe_pending = x"97" or reg3ffe_pending = x"C7" then

@@ -1,0 +1,63 @@
+module gamegear_core
+#(
+  parameter int  DISPLAY_DIVIDER
+)
+(
+  input  logic        clock,
+  input  logic        reset,
+  input  logic        clocks_clockIn50M,
+  output logic        clocks_clockOutSystem,
+  output logic        clocks_clockOutDisplay,
+  output logic        clocks_clockOutSpi,
+  output logic        clocks_locked,
+  output logic [3:0]  video_data_r,
+  output logic [3:0]  video_data_g,
+  output logic [3:0]  video_data_b,
+  output logic        video_dataEnable,
+  output logic        video_vblank,
+  output logic        video_hblank,
+  output logic [15:0] audio_left,
+  output logic [15:0] audio_right,
+  input  logic        host_mem_enable,
+  input  logic        host_mem_write,
+  output logic        host_mem_done,
+  input  logic [31:0] host_mem_address,
+  output logic [31:0] host_mem_dataRead,
+  input  logic [31:0] host_mem_dataWrite,
+  input  logic        host_commandHost_request,
+  output logic        host_commandHost_busy,
+  output logic        host_commandHost_done,
+  output logic        host_commandHost_error,
+  output logic        host_commandCore_request,
+  input  logic        host_commandCore_busy,
+  input  logic        host_commandCore_done,
+  input  logic        host_commandCore_error,
+  input  logic        input_buttons_a,
+  input  logic        input_buttons_b,
+  input  logic        input_buttons_x,
+  input  logic        input_buttons_y,
+  input  logic        input_buttons_up,
+  input  logic        input_buttons_down,
+  input  logic        input_buttons_left,
+  input  logic        input_buttons_right,
+  input  logic        input_buttons_l,
+  input  logic        input_buttons_r,
+  input  logic        input_buttons_start,
+  input  logic        input_buttons_select,
+  output logic        sdram_clock,
+  output logic        sdram_cke,
+  output logic        sdram_cs,
+  output logic        sdram_ras,
+  output logic        sdram_cas,
+  output logic        sdram_we,
+  output logic [1:0]  sdram_dqm,
+  output logic [1:0]  sdram_bank,
+  output logic [12:0] sdram_address,
+  input  logic [15:0] sdram_dataIn,
+  output logic [15:0] sdram_dataOut,
+  output logic        sdram_dataDir
+);
+
+  // Add module implementation here.
+
+endmodule

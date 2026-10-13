@@ -1,0 +1,20 @@
+{
+	"settings": [
+		{
+			"id": 1,
+			"label": "Region",
+			"address": "0x00000010",
+			"type": "list",
+			"items": [
+				{"label": "Export", "value": "0x0"},
+				{"label": "Japan", "value": "0x1"}
+			],
+			"default": "0x0"
+		},
+        {"id": 2, "label": "Mapper", "address": "0x00000014", "type": "list", "default": "0x0",
+         "items": [{"label": "Auto", "value": "0x0"}, {"label": "Sega", "value": "0x1"},
+                   {"label": "Codemasters", "value": "0x2"}, {"label": "Dahjee", "value": "0x3"},
+                   {"label": "Linear", "value": "0x4"}, {"label": "Zemina", "value": "0x5"}]},
+        {"id": 3, "label": "Reset game", "address": "0x00000020", "type": "action", "value": "0x1"}
+	]
+}

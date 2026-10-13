@@ -1,0 +1,10 @@
+{
+	"files": [
+        {"id": 0, "label": "Game Gear ROM", "extensions": ["gg"],
+         "optional": false, "read_only": true, "user_selected": true,
+         "address": "0x30000000", "max_size": "0x00400000", "max_transfer_speed": 5000},
+        {"id": 1, "label": "Cartridge save", "extensions": ["sav"],
+         "optional": true, "read_only": false, "dependent_on_0": true, "initialize": true,
+         "address": "0x40000000", "max_size": "0x00008000", "max_transfer_speed": 5000}
+	]
+}

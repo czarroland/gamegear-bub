@@ -1,0 +1,29 @@
+--- a/rtl/mapper_detect.vhd
++++ b/rtl/mapper_detect.vhd
+@@ -75,7 +75,7 @@
+ 	signal detect_dahjee_static : std_logic := '0';
+ 	signal dahjee_prev2, dahjee_prev1 : std_logic_vector(7 downto 0) := x"00";
+ 	signal dahjee_skip : integer range 0 to 2 := 0;
+-	-- At most floor(32768/3) matches; do not saturate and lose A/B ordering.
++	-- At most floor(32768/3) matches; z80_dout not saturate and lose A/B ordering.
+ 	signal dahjee_count_23, dahjee_count_def : integer range 0 to 16383 := 0;
+ 	signal dahjee_region_ff : std_logic := '0';
+ 
+@@ -340,7 +340,7 @@
+ 						if A(15 downto 2) = "11111111111111" then
+ 							sega_mapper_write_seen <= '1';
+ 						end if;
+-						-- reset wonderkid write count on any Sega mapper/reg write to avoid false promotion
++						-- reset wonderkid write count on any Sega mapper/z80_registers write to avoid false promotion
+ 						if A(15 downto 2) = "11111111111111" or A = x"3FFE" or A = x"7FFF" or A = x"BFFF" then
+ 							wonderkid_write_count <= 0;
+ 						end if;
+@@ -518,7 +518,7 @@
+ 	end process;
+ 
+ 	-- Static DahJee Type A, in the existing download clock domain. Downloads
+-	-- supply ascending byte addresses; ROMEN gaps do not advance the scanner.
++	-- supply ascending byte addresses; ROMEN gaps z80_dout not advance the scanner.
+ 	-- Only complete triples inside [0,$8000) count (MAME's loop can read two
+ 	-- bytes beyond that window). A new address-zero write resets all state.
+ 	process (ROMCL)

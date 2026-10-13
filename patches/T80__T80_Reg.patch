@@ -1,0 +1,11 @@
+--- a/rtl/T80/T80_Reg.vhd
++++ b/rtl/T80/T80_Reg.vhd
+@@ -52,7 +52,7 @@
+ -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ -- POSSIBILITY OF SUCH DAMAGE.
+ --
+--- Please report bugs to the author, but before you do so, please
++-- Please report bugs to the author, but before you z80_dout so, please
+ -- make sure that this is not a derivative work and that
+ -- you have the latest version of this file.
+ --

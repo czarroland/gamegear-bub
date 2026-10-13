@@ -1,0 +1,29 @@
+--- a/rtl/cart_eeprom.vhd
++++ b/rtl/cart_eeprom.vhd
+@@ -5,7 +5,7 @@
+ --        World Series Baseball [v0/v1], World Series Baseball '95
+ --
+ -- Write $8000:  bit 2=CS  bit 1=CLK  bit 0=DI   (MAME & Genesis-Plus-GX convention)
+--- Read  $8000:  bit 0=DO
++-- Read  $8000:  bit 0=z80_dout
+ --
+ -- ROM banking (standard Sega $FFFD-$FFFF) is handled unchanged in system.vhd.
+ -- ============================================================================
+@@ -64,7 +64,7 @@
+             cs_in      => eep_cs,
+             clk_in     => eep_clk,
+             di         => eep_di,
+-            do         => eep_do,
++            z80_dout         => eep_do,
+             nvram_a    => nv_a,
+             nvram_di   => nv_di,
+             nvram_do   => nvram_do,
+@@ -118,7 +118,7 @@
+     end process;
+ 
+     -- Read: return eep_lines(7..3) & eep_cs & '1' & eep_do to match Genesis Plus GX
+-    -- (bit 2 = CS, bit 1 = CLK = '1', bit 0 = DO)
++    -- (bit 2 = CS, bit 1 = CLK = '1', bit 0 = z80_dout)
+     D_out <= (eep_lines(7 downto 3) & eep_cs & '1' & eep_do) when (enabled = '1' and A = x"8000" and (eep_cs = '1' or fffc_window_en = '1')) else
+              (others => '0');
+ end rtl;

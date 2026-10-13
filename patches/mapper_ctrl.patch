@@ -1,0 +1,41 @@
+--- a/rtl/mapper_ctrl.vhd
++++ b/rtl/mapper_ctrl.vhd
+@@ -339,7 +339,7 @@
+ 					end if;
+ 				elsif mapper_eeprom = '1' then
+ 					-- EEPROM carts (93C46) always use the plain Sega $FFFC-$FFFF register map.
+-					-- Must take priority over every other mapper heuristic below (4-PAK $3FFE
++					-- Must take bg_priority over every other mapper heuristic below (4-PAK $3FFE
+ 					-- write-trigger, Zemina opcode scan, Dahjee/linear/castle/etc.) so a false
+ 					-- positive on one of those heuristics can never steal the $FFFC write.
+ 					if ss_freeze = '0' and WR_n='0' and MREQ_n='0' and A(15 downto 2)="11111111111111" then
+@@ -349,7 +349,8 @@
+ 							when "01" => bank0 <= D_in;
+ 							when "10" => bank1 <= D_in;
+ 							when "11" => bank2 <= D_in;
+-						end case;
++						when others => null;
++end case;
+ 					end if;
+ 				elsif systeme = '1' or sc3000_en = '1' or mapper_castle = '1' or mapper_linear = '1' or mapper_dahjee_a = '1' or mapper_sega_locked = '1' then
+ 					-- no System E, SC-3000, Castle (32KB RAM), linear, Dahjee Type A, or Sega-locked mappers
+@@ -387,7 +388,8 @@
+ 							when "01" => bank3 <= D_in;
+ 							when "10" => bank0 <= D_in;
+ 							when "11" => bank1 <= D_in;
+-						end case;
++						when others => null;
++end case;
+ 					end if ;
+ 				elsif ss_freeze = '0' and mapper_manual_force = '0' and bootloader_n = '1' and WR_n='0' and MREQ_n='0' and A=x"3FFE" and sega_mapper_write_seen = '0' then
+ 					-- 4-PAK All Action: first write to $3FFE when no mapper active (gated by sega_mapper_write_seen='0').
+@@ -419,7 +421,8 @@
+ 								when "01" => bank0 <= D_in;
+ 								when "10" => bank1 <= D_in;
+ 								when "11" => bank2 <= D_in ; 
+-							end case;
++							when others => null;
++end case;
+ 						end if;
+ 					end if;
+ 					if ss_freeze = '0' and WR_n='0' and MREQ_n='0' and nvram_e='0' and mapper_lock='0' then

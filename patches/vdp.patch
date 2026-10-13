@@ -1,0 +1,24 @@
+--- a/rtl/vdp.vhd
++++ b/rtl/vdp.vhd
+@@ -55,7 +55,7 @@
+ 		--  [3]            irq_line_en
+ 		--  [4]            spr_shift
+ 		--  [5]            mode_M4
+-		--  [6]            mode_M2  (reg 0, bit 1)
++		--  [6]            mode_M2  (z80_registers 0, bit 1)
+ 		--  [7]            display_on
+ 		--  [8]            irq_frame_en
+ 		--  [9]            mode_M1
+@@ -178,10 +178,10 @@
+ 	signal last_x0:			std_logic := '0';
+ 	signal reset_flags:		boolean ;
+ 	signal irq_delay:       std_logic_vector(2 downto 0) := "111";
+-	signal collide_flag:		std_logic := '0'; -- signal collide to cpu via reg
++	signal collide_flag:		std_logic := '0'; -- signal collide to cpu via z80_registers
+ 	signal collide_buf:		std_logic := '0'; -- collide pending
+ 	signal xspr_collide_shift: std_logic_vector(13 downto 0) := (others=>'0'); -- collide delay
+-	signal overflow_flag:	std_logic := '0'; -- signal overflow to cpu via reg
++	signal overflow_flag:	std_logic := '0'; -- signal overflow to cpu via z80_registers
+ 	signal line_overflow:	std_logic := '0'; -- overflow alread occured on this line
+ 	signal hbl_counter:		std_logic_vector(7 downto 0) := (others=>'0');
+ 	signal vbl_irq:			std_logic;
