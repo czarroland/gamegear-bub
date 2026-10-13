@@ -6,7 +6,7 @@ set generated [expr {[info exists ::env(GG_GENERATED_RTL)] ? [file normalize $::
 set core_handle [open [file join $generated GameGearCore.sv] r]
 set core_rtl [read $core_handle]
 close $core_handle
-if {[string first "videoScale_twoX" $core_rtl] < 0} {
+if {[string first "videoScale_mode" $core_rtl] < 0} {
     error "Generated RTL is stale: regenerate HandheldTop with the videoScale interface."
 }
 file mkdir $output

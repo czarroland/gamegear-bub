@@ -8,6 +8,11 @@ stereo audio, input mapping, and 32 KiB cartridge RAM. Battery save export has
 been verified on hardware; import verification is in progress. The source
 repository does not include a bitstream, firmware UF2, retail ROM, or BIOS.
 
+A separate rev4 trial confirmed sharp integer 3× and 2× screen sizes on
+hardware. The current source also adds a centered 4× zoom option that crops
+12 Game Gear lines from the top and bottom; its hardware test is pending.
+The known-good Game Gear package remains available.
+
 The target is [SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) feature
 parity where the Bub hardware and firmware permit it. See the
 [feature roadmap](docs/NEXT_FEATURES.md), [build and hardware test instructions](docs/BUILD_AND_TEST.md),

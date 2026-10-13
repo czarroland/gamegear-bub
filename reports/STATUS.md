@@ -77,10 +77,30 @@ hardware, normal exit produced `gamegear-diagnostic.sav` with the expected
 32,768-byte size, first byte `5A`, and an `FF` tail. To test import, the file
 was backed up and marker bytes `22 33 44` were placed at offsets 1–3 and `99`
 at its final offset. The modified file was verified on BUB and the card safely
-ejected; relaunch/exit and post-run inspection are pending. Save states,
-selectable display scaling, and Master System mode have not been implemented.
-The rev4 framework currently centers the 160×144 framebuffer at an integer
-3× scale on its 800×480 LCD.
+ejected; relaunch/exit and post-run inspection are pending. Save states and
+Master System mode have not been implemented. A separate sharp 3×/2× scaling
+trial passed the integrated simulator suite and rev4 Vivado 2024.1 timing:
+setup WNS +0.005 ns, hold WHS +0.021 ns, no failing constrained endpoints.
+Its bitstream is `build/vivado-scaling/GameGearCore-gamebub_rev4.bit` (SHA-256
+`43f5385af381ae2290b9a1587c892b83fbd138310a18977e0f55dfab59a297ba`).
+The package was installed as `/Volumes/BUB/cores/GameGear.ScalingTrial`,
+verified byte for byte, and the card safely ejected. The original
+`GameGear.Alpha` bitstream still has its known-good SHA-256. The user confirmed
+that the 2×/3× scaling trial works on hardware. The new 4× centered crop option
+passed the integrated simulator suite and Vivado 2024.1 post-route timing:
+setup WNS +0.075 ns, hold WHS +0.024 ns, no failing constrained endpoints.
+Its bitstream SHA-256 is
+`3735089578fbc3645522fa0f12079421cdc9830e7a6bb8a969d2c1f6a128ee2e`.
+The `GameGear.ZoomTrial` package was installed on BUB, all five files were
+verified byte for byte, and the card safely ejected. The older core bitstreams
+still match their recorded SHA-256 values. The 4× hardware test is pending.
+
+A community tester reported short successful runs with NA/JP/EU ROMs, demos,
+test suites, and patched/translated GG titles, and reported working saves.
+The same tester found that adding `.sms` to the GG-only file metadata permits
+some SMS-format titles to start but leaves missing Pause input, wrong palette,
+and 160×144 cropping. These reports inform the SMS tests; most play sessions
+were approximately five minutes or less.
 
 Retail games, non-Sega mappers, EEPROM saves, 224-line mode, and SMS
 compatibility remain unverified or unimplemented. See `docs/BUILD_AND_TEST.md`

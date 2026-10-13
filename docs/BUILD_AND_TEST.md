@@ -139,7 +139,7 @@ dependencies `edalize==0.6.7` and optionally `heatshrink2`. Source Vivado's
 installed Java toolchain; Mill and Maven dependencies must be reachable.
 Obtain the pinned Gamebub framework at the revision listed above under its
 own terms and place it at `framework/`; it is a local dependency and is not
-part of this repository. For the selectable 2× trial, apply the source patch
+part of this repository. For the selectable scaling modes, apply the source patch
 to that pinned checkout before generating Chisel RTL:
 
 ```bash
@@ -194,8 +194,9 @@ under normal play; optimize arbitration if stalls materially alter CPU pacing.
 
 ## First test on the Bub
 
-The user's rev4 already has custom core-loading firmware. This build is
-packaged on BUB. To reproduce the package from the reviewed bitstream:
+The user's rev4 already has custom core-loading firmware. The known-good
+baseline is packaged on BUB. To reproduce its package from the reviewed
+bitstream:
 
 ```bash
 python3 scripts/package_core.py --bitstream build/vivado-checkpoint/GameGearCore-gamebub_rev4.bit --output build/core-package
@@ -233,18 +234,61 @@ The tool also adds at most three `FF` alignment bytes and prints the CRC.
 It leaves the supplied ROM unchanged and refuses to overwrite an existing
 output. It does not change a game's region or turn an SMS title into a GG one.
 
+## Selectable scaling
+
+The Screen size setting offers `3x sharp` (default, 480×432), `2x sharp`
+(320×288), and `4x zoom` (640×576). The 4× choice centers the Game Gear image
+on the 800×480 rev4 LCD, cropping 12 source lines at both the top and bottom.
+It keeps square integer pixels and the original 160×144 framebuffer. The
+previous 2×/3× trial was confirmed on hardware. Its package used a distinct
+ID so the working core remained selectable:
+
+```bash
+python3 scripts/package_core.py \
+  --bitstream build/vivado-scaling/GameGearCore-gamebub_rev4.bit \
+  --output build/core-package-scaling \
+  --core-id GameGear.ScalingTrial \
+  --core-name 'Game Gear (2x/3x trial)'
+```
+
+The trial bitstream SHA-256 is
+`43f5385af381ae2290b9a1587c892b83fbd138310a18977e0f55dfab59a297ba`.
+Post-route setup WNS is +0.005 ns and hold WHS is +0.021 ns; 0 constrained
+endpoints fail. The first routed pass missed setup by 0.439 ns, then
+`vivado_finish_route.tcl` closed it. The 2×/3× trial passed its hardware test.
+To package the newer 4× zoom build without replacing either installed core:
+
+```bash
+python3 scripts/package_core.py \
+  --bitstream build/vivado-zoom/GameGearCore-gamebub_rev4.bit \
+  --output build/core-package-zoom \
+  --core-id GameGear.ZoomTrial \
+  --core-name 'Game Gear (2x/3x/4x trial)'
+```
+
+Check that 3× is the startup default, 2× and 3× show complete centered
+pictures, and 4× crops exactly 12 Game Gear lines from each vertical edge.
+Switch modes during play and check that audio, controls, and menu entry remain
+stable. Games that place a HUD at the top or bottom may lose part of it at 4×.
+The 4× trial bitstream SHA-256 is
+`3735089578fbc3645522fa0f12079421cdc9830e7a6bb8a969d2c1f6a128ee2e`.
+Vivado 2024.1 reported post-route setup WNS +0.075 ns and hold WHS +0.024 ns,
+with no failing constrained endpoints. The first route missed setup by
+0.768 ns; `vivado_finish_route.tcl` closed it before writing the bitstream.
+The package was copied to BUB and all five files were verified byte for byte.
+The card was safely ejected. Hardware behavior of 4× awaits the user's test.
+
 ## Next engineering gates
 
-1. Run the diagnostic on the user's Bub and capture load/display/audio/input/
-   save results. Tune SDRAM phase or timings from measured evidence.
-2. Improve setup margin and close the remaining framework HDMI/audio-clock and
+1. Hardware test 4× with a HUD-heavy game and exercise live setting changes.
+2. Implement SMS mode with 256-pixel video, SMS palette, and Pause input in a
+   separate package, then test `.sms` titles and SMS-format GG releases.
+3. Verify cartridge save import and longer play sessions, then add save states.
+4. Improve setup margin and close the remaining framework HDMI/audio-clock and
    external-I/O timing gaps before a broader release.
-3. Test retail games, mapper variants, EEPROM behavior, and the GG crop of
-   224-line VDP mode. SMS mode requires separate implementation.
-4. Expand simulation to delayed ROM responses, mapper variants, 224-line VDP
-   mode, resets during transactions, and EEPROM cartridge saves. Then test
-   representative user-owned games before calling the port playable.
+5. Expand simulation to delayed ROM responses, mapper variants, 224-line VDP
+   mode, resets during transactions, and EEPROM cartridge saves.
 
 All source work is in a separate third-party port. Nothing has been pushed to
 the official Gamebub or SMS repositories. Preserve original source notices and
-the framework's unmodified status when preparing a release.
+keep framework modifications as an auditable patch when preparing a release.

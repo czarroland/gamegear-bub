@@ -4,82 +4,122 @@
      case None => throw new CoreException("'video' is required")
    }
  
-+  val coreScaleTwoX = core.getInterface("videoScale") match {
-+    case Some(scale: VideoScaleV0) => scale.twoX
++  val coreScaleMode = core.getInterface("videoScale") match {
++    case Some(scale: VideoScaleV0) => scale.mode
 +    case Some(x) => throw new CoreException("Unknown 'videoScale': " + x.getClass())
-+    case None => false.B
++    case None => 0.U(2.W)
 +  }
 +
    // Video filter
    val videoFilterIn = Wire(ColorRGB(videoColorDepthR, videoColorDepthG, videoColorDepthB))
    val videoFilterOut = Wire(ColorRGB(8))
-@@ -580,6 +586,7 @@
+@@ -580,6 +586,8 @@
      // Read from the correct framebuffer.
      val framebufferIndex = Wire(UInt(1.W))
      val lastFrameComplete = XpmCdcSingle(clock, regLastFrameComplete.asBool).asUInt
-+    val scaleTwoX = XpmCdcSingle(clock, coreScaleTwoX)
++    val scaleMode = XpmCdcHandshake.continuous(clock, coreScaleMode)
++    val frameScaleMode = RegInit(0.U(2.W))
      for (i <- 0 until 2) {
        framebuffers(i).readPorts(0).enable := framebufferIndex === i.U
        framebuffers(i).readPorts(0).address := framebufferReadAddress
-@@ -676,14 +683,26 @@
+@@ -670,20 +678,36 @@
+       framebufferIndex := regHdmiFrame
+       when (hdmiFramePulse && !RegNext(hdmiFramePulse)) {
+         regHdmiFrame := lastFrameComplete
+-      }
+-
+-      // Scale and center framebuffer within output video.
++        frameScaleMode := scaleMode
++      }
++
++      // Center each scale; zoomed modes crop symmetrically at the screen edge.
        val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
-       val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2
-       val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
+-      val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2
+-      val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
 +      val scale2 = videoScale.min(2)
-+      val offset2X = (screenWidth - (videoWidth * scale2)) / 2
-+      val offset2Y = (screenHeight - (videoHeight * scale2)) / 2
        val framebufferReadDelay = 3 /* reading */ + videoFilterLatency
 -      framebufferReadAddress :=
-+      val defaultReadAddress =
-         (((videoY - videoOffsetY.U) / videoScale.U) * videoWidth.U) +
-           ((videoX - videoOffsetX.U + framebufferReadDelay.U) / videoScale.U)
+-        (((videoY - videoOffsetY.U) / videoScale.U) * videoWidth.U) +
+-          ((videoX - videoOffsetX.U + framebufferReadDelay.U) / videoScale.U)
 -      framebufferInBounds := videoX >= videoOffsetX.U &&
-+      val scale2ReadAddress =
-+        (((videoY - offset2Y.U) / scale2.U) * videoWidth.U) +
-+          ((videoX - offset2X.U + framebufferReadDelay.U) / scale2.U)
-+      framebufferReadAddress := Mux(scaleTwoX, scale2ReadAddress, defaultReadAddress)
-+      val defaultInBounds = videoX >= videoOffsetX.U &&
-         videoX < (videoOffsetX + (videoWidth * videoScale)).U &&
-         videoY >= videoOffsetY.U &&
-         videoY < (videoOffsetY + (videoHeight * videoScale)).U
-+      val scale2InBounds = videoX >= offset2X.U &&
-+        videoX < (offset2X + (videoWidth * scale2)).U &&
-+        videoY >= offset2Y.U &&
-+        videoY < (offset2Y + (videoHeight * scale2)).U
-+      framebufferInBounds := Mux(scaleTwoX, scale2InBounds, defaultInBounds)
+-        videoX < (videoOffsetX + (videoWidth * videoScale)).U &&
+-        videoY >= videoOffsetY.U &&
+-        videoY < (videoOffsetY + (videoHeight * videoScale)).U
++      def viewport(scale: Int): (UInt, Bool) = {
++        val left = (screenWidth - videoWidth * scale) / 2
++        val top = (screenHeight - videoHeight * scale) / 2
++        val xOffset = left.max(0)
++        val yOffset = top.max(0)
++        val xCrop = (-left).max(0)
++        val yCrop = (-top).max(0)
++        val xEnd = (left + videoWidth * scale).min(screenWidth).max(0)
++        val yEnd = (top + videoHeight * scale).min(screenHeight).max(0)
++        val address =
++          (((videoY + yCrop.U - yOffset.U) / scale.U) * videoWidth.U) +
++            ((videoX + xCrop.U - xOffset.U + framebufferReadDelay.U) / scale.U)
++        val inBounds = videoX >= xOffset.U && videoX < xEnd.U &&
++          videoY >= yOffset.U && videoY < yEnd.U
++        (address, inBounds)
++      }
++      val (defaultAddress, defaultBounds) = viewport(videoScale)
++      val (smallAddress, smallBounds) = viewport(scale2)
++      val (zoomAddress, zoomBounds) = viewport(4)
++      framebufferReadAddress := MuxLookup(frameScaleMode, defaultAddress)(Seq(
++        1.U -> smallAddress, 2.U -> zoomAddress))
++      framebufferInBounds := MuxLookup(frameScaleMode, defaultBounds)(Seq(
++        1.U -> smallBounds, 2.U -> zoomBounds))
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -720,17 +739,30 @@
+@@ -715,22 +739,39 @@
+       videoX := dpiX
+       videoY := dpiY
+       framebufferIndex := dpiDriverIo.displayFrame
+-
+-      // Scale and center framebuffer without output video.
++      when (dpiDriverIo.displayFrame =/= RegNext(dpiDriverIo.displayFrame)) {
++        frameScaleMode := scaleMode
++      }
++
++      // Scale and center framebuffer on the LCD; crop zoomed modes evenly.
        val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
-       val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2 + revision.displayOffsetX
-       val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
+-      val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2 + revision.displayOffsetX
+-      val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
 +      val scale2 = videoScale.min(2)
-+      val offset2X = (screenWidth - (videoWidth * scale2)) / 2 + revision.displayOffsetX
-+      val offset2Y = (screenHeight - (videoHeight * scale2)) / 2
        val framebufferReadDelay = 3 /* reading */ + videoFilterLatency
        val framebufferReadDelayX = if (revision.displayRotate) 0 else framebufferReadDelay
        val framebufferReadDelayY = if (revision.displayRotate) framebufferReadDelay else 0
 -      framebufferReadAddress :=
-+      val defaultReadAddress =
-         (((dpiY - videoOffsetY.U + framebufferReadDelayY.U) / videoScale.U) * videoWidth.U) +
-           ((dpiX - videoOffsetX.U + framebufferReadDelayX.U) / videoScale.U)
+-        (((dpiY - videoOffsetY.U + framebufferReadDelayY.U) / videoScale.U) * videoWidth.U) +
+-          ((dpiX - videoOffsetX.U + framebufferReadDelayX.U) / videoScale.U)
 -      framebufferInBounds :=
-+      val scale2ReadAddress =
-+        (((dpiY - offset2Y.U + framebufferReadDelayY.U) / scale2.U) * videoWidth.U) +
-+          ((dpiX - offset2X.U + framebufferReadDelayX.U) / scale2.U)
-+      framebufferReadAddress := Mux(scaleTwoX, scale2ReadAddress, defaultReadAddress)
-+      val defaultInBounds =
-         dpiX >= videoOffsetX.U &&
-         dpiX < (videoOffsetX + (videoWidth * videoScale)).U &&
-         dpiY >= videoOffsetY.U &&
-         dpiY < (videoOffsetY + (videoHeight * videoScale)).U
-+      val scale2InBounds =
-+        dpiX >= offset2X.U &&
-+        dpiX < (offset2X + (videoWidth * scale2)).U &&
-+        dpiY >= offset2Y.U &&
-+        dpiY < (offset2Y + (videoHeight * scale2)).U
-+      framebufferInBounds := Mux(scaleTwoX, scale2InBounds, defaultInBounds)
+-        dpiX >= videoOffsetX.U &&
+-        dpiX < (videoOffsetX + (videoWidth * videoScale)).U &&
+-        dpiY >= videoOffsetY.U &&
+-        dpiY < (videoOffsetY + (videoHeight * videoScale)).U
++      def viewport(scale: Int): (UInt, Bool) = {
++        val left = (screenWidth - videoWidth * scale) / 2 + revision.displayOffsetX
++        val top = (screenHeight - videoHeight * scale) / 2
++        val xOffset = left.max(0)
++        val yOffset = top.max(0)
++        val xCrop = (-left).max(0)
++        val yCrop = (-top).max(0)
++        val xEnd = (left + videoWidth * scale).min(screenWidth).max(0)
++        val yEnd = (top + videoHeight * scale).min(screenHeight).max(0)
++        val address =
++          (((dpiY + yCrop.U - yOffset.U + framebufferReadDelayY.U) / scale.U) * videoWidth.U) +
++            ((dpiX + xCrop.U - xOffset.U + framebufferReadDelayX.U) / scale.U)
++        val inBounds = dpiX >= xOffset.U && dpiX < xEnd.U &&
++          dpiY >= yOffset.U && dpiY < yEnd.U
++        (address, inBounds)
++      }
++      val (defaultAddress, defaultBounds) = viewport(videoScale)
++      val (smallAddress, smallBounds) = viewport(scale2)
++      val (zoomAddress, zoomBounds) = viewport(4)
++      framebufferReadAddress := MuxLookup(frameScaleMode, defaultAddress)(Seq(
++        1.U -> smallAddress, 2.U -> zoomAddress))
++      framebufferInBounds := MuxLookup(frameScaleMode, defaultBounds)(Seq(
++        1.U -> smallBounds, 2.U -> zoomBounds))
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
@@ -92,6 +132,6 @@
 +
 +/** Optional integer display scaling control supplied by a core. */
 +class VideoScaleV0 extends Bundle {
-+  /** Select 2x scaling; false retains the framework's maximum integer scale. */
-+  val twoX = Output(Bool())
++  /** 0 = maximum fitting integer scale, 1 = 2x, 2 = centered 4x crop. */
++  val mode = Output(UInt(2.W))
 +}
