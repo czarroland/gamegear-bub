@@ -13,7 +13,7 @@ because its upstream logic is present in the source tree.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Not connected to Gamebub frontend |
 | Master System | Engine present, Gamebub mode and video wrapper absent |
-| Selectable scaling and display options | Sharp 2×/3× confirmed on rev4; 4× centered crop in source, awaiting bitstream and hardware test |
+| Selectable scaling and display options | Sharp 2×/3× and 4× crop confirmed on rev4; 3.5× bilinear in source, awaiting bitstream and hardware test |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
 | PAL timing, FM sound, extra sprites, extended GG resolution, Z80 turbo | Disabled or fixed to NTSC/native settings |
@@ -49,15 +49,16 @@ Choose the intended user flow before implementing the serialization protocol.
 ## 3. Selectable display scaling
 
 The rev4 LCD scales 160×144 to 480×432 at the default sharp integer 3×. The
-Screen size setting also selects sharp 2× (320×288); the user confirmed both
-on rev4 hardware. A new 4× zoom option renders 640×576 and crops 12 native
-lines at each vertical edge. The panel's display offset compensates for its
-physical alignment. The optional framework interface sends the scale mode
-through a multi-bit clock-domain handshake and applies it at a frame boundary.
-The framework change is kept as `patches/framework-video-scale.patch` against
-the pinned framework. A 3.5× choice would need fractional sampling and a
-pixel filter. Test 4× on hardware before deciding whether that extra mode is
-useful.
+Screen size setting also selects sharp 2× (320×288) and 4× zoom (640×576);
+the user confirmed all three on rev4 hardware. The 4× choice crops 12 native
+lines at each vertical edge. The source now includes a 3.5× bilinear choice
+that renders 560×504 and crops about 3–4 source lines at each edge. It blends
+four neighboring framebuffer pixels using exact sevenths in both axes. The
+panel's display offset compensates for its physical alignment. The optional
+framework interface sends the scale mode through a multi-bit clock-domain
+handshake and applies it at a frame boundary. The framework change is kept as
+`patches/framework-video-scale.patch` against the pinned framework. Verify
+the new mode's memory use, timing, and image quality on hardware.
 
 ## 4. Master System
 

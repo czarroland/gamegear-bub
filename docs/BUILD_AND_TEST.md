@@ -237,11 +237,13 @@ output. It does not change a game's region or turn an SMS title into a GG one.
 ## Selectable scaling
 
 The Screen size setting offers `3x sharp` (default, 480×432), `2x sharp`
-(320×288), and `4x zoom` (640×576). The 4× choice centers the Game Gear image
-on the 800×480 rev4 LCD, cropping 12 source lines at both the top and bottom.
-It keeps square integer pixels and the original 160×144 framebuffer. The
-previous 2×/3× trial was confirmed on hardware. Its package used a distinct
-ID so the working core remained selectable:
+(320×288), `4x zoom` (640×576), and `3.5x smooth` (560×504). The 4× choice
+centers the Game Gear image on the 800×480 rev4 LCD, cropping 12 source lines
+at both the top and bottom. The 3.5× choice blends four neighboring pixels
+and crops about 3–4 source lines at each vertical edge. All modes use the
+original 160×144 framebuffer. The 2×/3× and 4× trials were confirmed on
+hardware. Their packages used distinct IDs so the working core remained
+selectable:
 
 ```bash
 python3 scripts/package_core.py \
@@ -276,11 +278,29 @@ Vivado 2024.1 reported post-route setup WNS +0.075 ns and hold WHS +0.024 ns,
 with no failing constrained endpoints. The first route missed setup by
 0.768 ns; `vivado_finish_route.tcl` closed it before writing the bitstream.
 The package was copied to BUB and all five files were verified byte for byte.
-The card was safely ejected. Hardware behavior of 4× awaits the user's test.
+The card was safely ejected. The user confirmed 4× works and prefers to keep it
+as an option. The 3.5× interpolation mode is packaged as a separate trial;
+its hardware behavior must be checked before recommending it. Package it with:
+
+```bash
+python3 scripts/package_core.py \
+  --bitstream build/vivado-smooth/GameGearCore-gamebub_rev4.bit \
+  --output build/core-package-smooth \
+  --core-id GameGear.SmoothTrial \
+  --core-name 'Game Gear (2x/3x/3.5x/4x trial)'
+```
+
+The 3.5× trial bitstream SHA-256 is
+`2952f533f7f3d1a7ccbf7ffe04ebc804157bccedbb0a1440f36d9fdc4bdee567`.
+Vivado 2024.1 reported post-route setup WNS +0.008 ns and hold WHS +0.054 ns,
+with no failing constrained endpoints. Four video read ports increased block RAM
+use from 41 to 113 RAMB36 blocks. All five package files were verified on BUB
+before safely ejecting the card. The hardware test is pending.
 
 ## Next engineering gates
 
-1. Hardware test 4× with a HUD-heavy game and exercise live setting changes.
+1. Build and hardware test 3.5× with a HUD-heavy game and exercise live
+   setting changes. Compare its sharpness and crop with 3× and 4×.
 2. Implement SMS mode with 256-pixel video, SMS palette, and Pause input in a
    separate package, then test `.sms` titles and SMS-format GG releases.
 3. Verify cartridge save import and longer play sessions, then add save states.

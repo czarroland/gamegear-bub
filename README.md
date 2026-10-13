@@ -14,8 +14,9 @@ Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
 
 A separate rev4 trial confirmed sharp integer 3× and 2× screen sizes on
-hardware. The current source also adds a centered 4× zoom option that crops
-12 Game Gear lines from the top and bottom; its hardware test is pending.
+hardware. The centered 4× zoom option also works on hardware; it crops
+12 Game Gear lines from the top and bottom. The current source adds a 3.5×
+bilinear option with a smaller crop; its hardware test is pending.
 The known-good Game Gear package remains available.
 
 The target is [SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) feature
