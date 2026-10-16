@@ -1,5 +1,18 @@
 # Sega 8-bit port — rev4 hardware diagnostic checkpoint
 
+## 2026-10-16 GG/SMS display handoff hardware trial
+
+[`v0.1.0-alpha.5`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.5)
+is a public prerelease with the corrected LCD frame handoff described below.
+Its source tag points to commit `13cb76b9cd948ddb1afdfe4cb4fb5459785b2366`.
+GitHub reports the uploaded ZIP digest as
+`e6a9103ddff4253343cf356a9ef5aa8b4f6a02031aad81a83aae41d8ea73d966`,
+matching the local package. The bitstream SHA-256 is
+`0db7c3113fa11391654b0d7ba51dff70d86b4022b45db4404687e47ee14f58ba`.
+All 13 package files were installed on the mounted BUB card and read back
+byte for byte. The alpha.3 rollback bitstream, settings, and saves were
+preserved. Actual GG and SMS gameplay on this build remains unverified.
+
 ## 2026-10-16 SMS NTSC community prerelease
 
 [`v0.1.0-alpha.4`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
@@ -15,7 +28,8 @@ match byte for byte; the bitstream is at
 core remains available for rollback. Hardware testing exposed a regression:
 GG and SMS games animate and respond to buttons but do not advance past their
 first screen, including when System is forced to the matching machine type.
-The root cause and corrected build remain pending. The prerelease is therefore
+The on-device root cause remains unproven; the alpha.5 trial above tests a
+specific display handoff correction. The alpha.4 prerelease is therefore
 not a qualified playable SMS checkpoint, nor a claim of PAL, FM or full engine
 parity.
 

@@ -21,8 +21,11 @@ NTSC at runtime in one SoC, with a shared 256×240 framebuffer pair and native
 active viewport. Its
 [alpha.4 GG/SMS trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
 was released and installed, but hardware tests found that games do not
-progress beyond their first screen. The regression is under investigation;
-alpha.3 remains the playable GG build. PAL and FM remain later work. Earlier
+progress beyond their first screen. The
+[alpha.5 GG/SMS display handoff trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.5)
+is published and installed on the BUB card for hardware verification of a
+candidate fix. Alpha.3 remains the playable GG build until that trial passes.
+PAL and FM remain later work. Earlier
 4× and 3.5× trials remain documented as historical results.
 
 The target is one rev4 core package for Game Gear and Master System, with FM
