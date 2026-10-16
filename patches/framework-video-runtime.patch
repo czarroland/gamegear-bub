@@ -39,7 +39,7 @@ index 0000000..c506664
 +  val tvPal = Output(Bool())
 +}
 diff --git a/src/main/scala/platform/handheld/HandheldTop.scala b/src/main/scala/platform/handheld/HandheldTop.scala
-index e31ba55..c6cc439 100644
+index e31ba55..90d19c5 100644
 --- a/src/main/scala/platform/handheld/HandheldTop.scala
 +++ b/src/main/scala/platform/handheld/HandheldTop.scala
 @@ -231,6 +231,18 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
@@ -61,17 +61,18 @@ index e31ba55..c6cc439 100644
    // Video filter
    val videoFilterIn = Wire(ColorRGB(videoColorDepthR, videoColorDepthG, videoColorDepthB))
    val videoFilterOut = Wire(ColorRGB(8))
-@@ -546,6 +558,9 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -546,6 +558,10 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
    )
    /// Last completed frame
    val regLastFrameComplete = RegInit(0.U(1.W))
 +  // Packed completed-frame record crosses to the display domain as one value.
-+  // The low bit is the framework-owned buffer index.
-+  val regCompletedViewport = RegInit(0.U(64.W))
++  // High bits hold the scale used for this completed frame; the low bit is
++  // the framework-owned buffer index.
++  val regCompletedViewport = RegInit(0.U(66.W))
  
    val overlayWidth = revision.overlayWidth
    val overlayHeight = revision.overlayHeight
-@@ -566,6 +581,8 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -566,6 +582,8 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
    io.hdmiClockPowerDown := hdmiClockPowerTimer === 0.U
  
    val reset_av = withClock(io.clock_av) { XpmCdcSyncRst(reset) }
@@ -80,16 +81,17 @@ index e31ba55..c6cc439 100644
    withClockAndReset (clock = io.clock_av, reset = reset_av) {
      val videoX = Wire(UInt(10.W))
      val videoY = Wire(UInt(10.W))
-@@ -580,6 +597,49 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -580,6 +598,50 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      // Read from the correct framebuffer.
      val framebufferIndex = Wire(UInt(1.W))
      val lastFrameComplete = XpmCdcSingle(clock, regLastFrameComplete.asBool).asUInt
-+    val scaleMode = XpmCdcHandshake.continuous(clock, coreScaleMode)
++    val scaleMode = if (variableViewport) 0.U(2.W)
++      else XpmCdcHandshake.continuous(clock, coreScaleMode)
 +    val frameScaleMode = RegInit(0.U(2.W))
 +    val syncedViewport = if (variableViewport) {
 +      Some(XpmCdcHandshake.continuous(clock, regCompletedViewport))
 +    } else None
-+    val frameViewport = if (variableViewport) Some(RegInit(0.U(64.W))) else None
++    val frameViewport = if (variableViewport) Some(RegInit(0.U(66.W))) else None
 +    displayOwnedBuffer := (if (variableViewport) frameViewport.get(0) else 0.U)
 +    displayHasFrame := (if (variableViewport) frameViewport.get(63).asBool else false.B)
 +    def dynamicViewport(x: UInt, y: UInt, screenWidth: Int, screenHeight: Int,
@@ -130,7 +132,7 @@ index e31ba55..c6cc439 100644
      for (i <- 0 until 2) {
        framebuffers(i).readPorts(0).enable := framebufferIndex === i.U
        framebuffers(i).readPorts(0).address := framebufferReadAddress
-@@ -667,23 +727,41 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -667,23 +729,41 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
          }
        }
        val hdmiFramePulse = io.hdmiCy === (hdmiFrameHeight - 1).U
@@ -138,7 +140,7 @@ index e31ba55..c6cc439 100644
 +      framebufferIndex := (if (variableViewport) frameViewport.get(0) else regHdmiFrame)
        when (hdmiFramePulse && !RegNext(hdmiFramePulse)) {
          regHdmiFrame := lastFrameComplete
-+        frameScaleMode := scaleMode
++        frameScaleMode := (if (variableViewport) syncedViewport.get(65, 64) else scaleMode)
 +        if (variableViewport) frameViewport.get := syncedViewport.get
        }
  
@@ -184,14 +186,14 @@ index e31ba55..c6cc439 100644
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -714,23 +792,42 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -714,23 +794,42 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
        val dpiY = if (revision.displayRotate) dpiDriverIo.pixelX else dpiDriverIo.pixelY
        videoX := dpiX
        videoY := dpiY
 -      framebufferIndex := dpiDriverIo.displayFrame
 +      framebufferIndex := (if (variableViewport) frameViewport.get(0) else dpiDriverIo.displayFrame)
 +      when (dpiDriverIo.displayFrame =/= RegNext(dpiDriverIo.displayFrame)) {
-+        frameScaleMode := scaleMode
++        frameScaleMode := (if (variableViewport) syncedViewport.get(65, 64) else scaleMode)
 +        if (variableViewport) frameViewport.get := syncedViewport.get
 +      }
  
@@ -240,7 +242,7 @@ index e31ba55..c6cc439 100644
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -827,20 +924,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -827,20 +926,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      framebuffers(i).readwritePorts(0).writeData := DontCare
    }
    val framebufferInterfaceRead = framebufferInterface.enable && !framebufferInterface.write
@@ -290,7 +292,7 @@ index e31ba55..c6cc439 100644
  
    //////////////////////////////////
    // Core Connections
-@@ -848,11 +971,33 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -848,11 +973,33 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
  
    // Framebuffer writes
    {
@@ -327,7 +329,7 @@ index e31ba55..c6cc439 100644
        // Core framebuffer write and SPI framebuffer read share the same read/write port,
        // so ensure that they're not activated at the same time (so they can be inferred correctly).
        val address = (framebufferY * videoWidth.U(10.W)) + framebufferX
-@@ -870,9 +1015,35 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -870,9 +1017,36 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
  
      val vblankEdge = coreVideo.vblank && !RegNext(coreVideo.vblank)
      val hblankEdge = coreVideo.hblank && !RegNext(coreVideo.hblank)
@@ -342,13 +344,14 @@ index e31ba55..c6cc439 100644
 +        viewport.x0 +& viewport.activeWidth <= videoWidth.U &&
 +        viewport.y0 +& viewport.activeHeight <= videoHeight.U
 +      when (!viewport.valid) {
-+        regCompletedViewport := Cat(0.U(37.W), viewport.epoch, 0.U(19.W))
++        regCompletedViewport := Cat(0.U(2.W), 0.U(37.W), viewport.epoch, 0.U(19.W))
 +      }
 +      when (vblankEdge && viewport.valid &&
 +            (viewport.epoch =/= publishedEpoch || viewport.frameId =/= publishedFrameId)) {
 +        when (geometryValid && captureEnabled && !captureBad) {
 +          regLastFrameComplete := framebufferWriteIndex
-+          regCompletedViewport := Cat(1.U(1.W), viewport.activeWidth, viewport.activeHeight,
++          regCompletedViewport := Cat(coreScaleMode, 1.U(1.W),
++            viewport.activeWidth, viewport.activeHeight,
 +            viewport.x0, viewport.y0, viewport.epoch, viewport.frameId,
 +            viewport.systemSms, viewport.tvPal, framebufferWriteIndex)
 +          publishedEpoch := viewport.epoch
@@ -366,7 +369,7 @@ index e31ba55..c6cc439 100644
      }
  
      when (coreVideo.vblank) {
-@@ -917,4 +1088,4 @@ case class Revision(
+@@ -917,4 +1091,4 @@ case class Revision(
    overlayWidth: Int,
    overlayHeight: Int,
    numSdramChips: Int,

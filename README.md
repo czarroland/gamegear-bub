@@ -10,21 +10,24 @@ The source repository does not include a bitstream, firmware UF2, retail ROM,
 or BIOS.
 
 The last published Game Gear development package is the
-[v0.1.0-alpha.2 pre-release](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.2).
+[v0.1.0-alpha.3 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3).
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
-It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
+It uses the separate `GameGear.Scale23` core ID and requires the existing
+custom core-loading firmware.
 
-The implementation branch now exposes only sharp integer 3× and 2× sizes.
-Stored 4× and 3.5× preferences normalize to 3×. This source change has not yet
-been qualified on hardware or published as a new package. Earlier alpha
-releases still contain the 4× and 3.5× experiments; their reports remain as
-historical test results.
+The unified development branch exposes only sharp integer 3× and 2× sizes.
+Stored 4× and 3.5× GG preferences normalize to 3×. It now selects GG or SMS
+NTSC at runtime in one SoC, with a shared 256×240 framebuffer pair and native
+active viewport. Integrated simulation passes; this SMS image is still being
+routed and has not been released or run on hardware. PAL and FM remain later
+work. Earlier 4× and 3.5× trials remain documented as historical results.
 
 The target is one rev4 core package for Game Gear and Master System, with FM
 sound and runtime machine selection, following the pinned
 [SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) engine where the Bub
 hardware and firmware permit it. See the
-[feature roadmap](docs/NEXT_FEATURES.md), [build and hardware test instructions](docs/BUILD_AND_TEST.md),
+[feature roadmap](docs/NEXT_FEATURES.md), [SEG2 runtime ABI](docs/SEGA_RUNTIME_ABI.md),
+[build and hardware test instructions](docs/BUILD_AND_TEST.md),
 [recorded results](reports/STATUS.md), and [source notices](NOTICE.md).
 
 ```bash

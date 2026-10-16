@@ -117,6 +117,12 @@ module tb_soc;
         $readmemh("diagnostics/gamegear-diagnostic.hex",rom);
         repeat(5) @(negedge clk); reset=0;
         wait(memory_initialized); @(negedge clk);
+        expect_read(32'h0,32'h53454732); // SEG2 unified ABI.
+        expect_read(32'h4,32'h00020000);
+        expect_read(32'h8,32'h0000001f);
+        expect_read(32'hc,0);
+        expect_read(32'h18,32'h010000f0);
+        expect_read(32'h38,1); // SMS defaults to literal 2x.
         if(display_scale_mode!==0) $fatal(1,"Default screen scale must be 3x");
         expect_read(32'h1c,0);
         host(1,32'h1c,1,0);
@@ -186,8 +192,19 @@ module tb_soc;
         command(16'h0101,0,0,0,0);
         command(16'h0302,1,0,0,0);expect_read(32'h40000000,32'h4433225a);command(16'h0303,1,0,0,0);
         host(1,32'h2c,2,0); expect_read(32'h118,32'h16); // Manual SMS wins over GG header.
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready) $fatal(1,"Same-ROM SMS override did not complete");
+        expect_read(32'hc,2);
+        command(16'h0302,1,0,0,0);
+        expect_read(32'h40000000,32'h4433225a); // Profile reset retains cartridge SRAM.
+        command(16'h0303,1,0,0,0);
         host(1,32'h2c,32'h10000002,0); expect_read(32'h2c,0);
         expect_read(32'h118,32'h35);
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready) $fatal(1,"Same-ROM GG override did not complete");
+        expect_read(32'hc,1);
         command(16'h0300,0,0,0,0); // New load epoch clears all previous type evidence.
         expect_read(32'h118,0);
         host(1,32'h30,2,0); expect_read(32'h30,2);
@@ -197,9 +214,40 @@ module tb_soc;
         expect_read(32'h110,7); expect_read(32'h30,2);
         command(16'h0300,0,0,0,0); // A clean reload recovers from the rejected hint.
         expect_read(32'h110,0); expect_read(32'h30,0); expect_read(32'h118,0);
+        $readmemh("diagnostics/sms-pause-diagnostic.hex",rom);
+        host(1,32'h30,2,0);
+        for(i=0;i<32768;i=i+4) host(1,32'h30000000+i,{rom[i+3],rom[i+2],rom[i+1],rom[i]},1);
+        mem_enable=0;
+        command(16'h0301,0,32768,0,0);
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready || dut.active_type!=2 || display_scale_mode!=1)
+            $fatal(1,"Committed SMS ROM did not apply its runtime profile/default 2x size");
+        expect_read(32'hc,2);
+        expect_read(32'h18,32'h010000f0);
+        command(16'h0100,0,0,0,0);
+        command(16'h0200,1,0,0,0);
+        timeout=0;
+        while((!viewport_valid || viewport_width!=256 || viewport_height!=192 ||
+               !viewport_system_sms) && timeout<2400000) begin
+            @(negedge clk); timeout=timeout+1;
+        end
+        if(timeout==2400000 || viewport_tv_pal || viewport_frame_id==0)
+            $fatal(1,"Same SoC did not publish the SMS 256x192 viewport");
+        repeat(100) @(negedge clk);
+        buttons[6]=1; repeat(100) @(negedge clk);
+        if(!dut.sms_pause_pressed) $fatal(1,"Bub Start did not reach SMS Pause");
+        buttons[6]=0; select_button=1; repeat(100) @(negedge clk);
+        if(!dut.sms_console_reset) $fatal(1,"Bub Select did not reach SMS console Reset");
+        select_button=0;
+        host(1,32'h38,0,0); expect_read(32'h38,0);
+        if(display_scale_mode!==0 || !dut.profile_ready)
+            $fatal(1,"SMS sharp 3x setting restarted the emulator or did not apply");
+        host(1,32'h38,1,0); expect_read(32'h38,1);
+        if(display_scale_mode!==1) $fatal(1,"SMS sharp 2x setting did not restore");
         command(16'hffff,0,0,0,1);
-        $display("PASS firmware-to-SDRAM-to-real-GG: host lifecycle, byte order, CRC, lengths, ROM type evidence, inputs, focus, 160x144 frames, stereo, save freeze/export, retained save, refresh");
+        $display("PASS unified SoC: GG and SMS ROMs in one engine, runtime profile, 160x144/256x192 viewports, SMS Pause/Reset, independent sizes, host/save/refresh");
         $finish;
     end
-    initial begin #200000000; $fatal(1,"SoC test timeout"); end
+    initial begin #300000000; $fatal(1,"SoC test timeout"); end
 endmodule

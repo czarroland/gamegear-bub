@@ -11,14 +11,31 @@ and masked host readback outside the active image. The framework drops and
 counts a capture when the display still owns its target buffer or SPI readback
 conflicts with capture. The updated top elaborates with Chisel on rev4.
 
-An initial routed 256×240 implementation fits and closes timing after Vivado
-2024.1 post-route optimization: setup WNS +0.040 ns, hold WHS +0.001 ns,
-65 RAMB36 and 3 RAMB18. Its audio averaging divider dominated the original
-timing miss. That divider now computes the same signed result one bit per clock
-over the roughly 1,118-clock sample interval; the legacy audio test and a new
-exact signed-division test over varied input windows pass. The latest
-ownership/audio revision is still being routed. The SoC remains hardwired to
-GG/NTSC; no SMS gameplay image or new public release has been installed.
+An initial routed 256×240 implementation closed timing after Vivado 2024.1
+post-route optimization at setup WNS +0.040 ns and hold WHS +0.001 ns. Its
+audio averaging divider dominated the original timing miss. That divider now
+computes the same signed result one bit per clock over the roughly
+1,118-clock sample interval; the legacy audio test and a new exact signed
+division test over varied input windows pass. The completed ownership/audio
+revision at development commit `7c72beb` fits with 8,369 LUTs, 65 RAMB36 and
+3 RAMB18, and routes with setup WNS +0.168 ns and hold WHS +0.049 ns.
+Vivado wrote a bitstream, but this revision still holds the active SoC at
+GG/NTSC and is not an SMS release.
+
+The next working revision connects the ROM-type decision to a drained,
+recoverable GG/SMS runtime profile transaction, sets SMS's default size to
+sharp 2×, and couples the chosen scale to each completed frame descriptor.
+All 34 host regression checks pass, including the real GG and SMS engines,
+GG→SMS loading through the same SoC, GG 160×144 and SMS 256×192 viewport
+sidebands, same-ROM machine override, Pause/console Reset, and retained save
+RAM. A targeted SoC rerun also passes the finalized `SEG2` registers and
+settings. The framework patch applies to the pristine pinned source, Chisel
+elaborates, and the rev4 implementation fits at 8,924 LUTs, 65 RAMB36 and
+3 RAMB18. Vivado 2024.1 routed the combined runtime design and wrote a
+bitstream with setup WNS +0.221 ns, hold WHS +0.027 ns, no failing constrained
+endpoints and DRC 0 errors/26 warnings. The HDMI audio-clock and other
+external I/O timing limitations described below still apply. A public
+prerelease, SD-card installation and physical SMS test are pending.
 
 ## 2026-10-16 GG scaling checkpoint and SMS work
 

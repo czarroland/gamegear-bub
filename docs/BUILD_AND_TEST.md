@@ -2,9 +2,12 @@
 
 The published Game Gear alpha releases and earlier scaling trials are hardware
 test records. The user confirmed that the diagnostic ROM and Sonic Triple
-Trouble run on rev4. The current implementation branch is narrowing scaling to
-sharp 2×/3× before adding SMS and FM to one shared core; it has not yet been
-qualified as a new bitstream or installed package.
+Trouble run on rev4. The current development branch now runs GG and SMS NTSC
+through one SoC in simulation with shared 256×240 framebuffer capacity. Its
+runtime bitstream has not yet been qualified, released, or installed. FM and
+PAL remain later work. See `docs/SEGA_RUNTIME_ABI.md` for the new package's
+registers, defaults, and compatibility limits; the records below describe
+the earlier GG-only hardware checkpoints.
 
 ## Scope
 
@@ -173,7 +176,8 @@ repository also provides:
 vivado -mode batch -source scripts/vivado_checkpoint.tcl
 ```
 
-That Tcl build ran in the x86-64 Docker Vivado environment on this Mac. Set
+The earlier GG-only Tcl build ran in the x86-64 Docker Vivado environment on
+this Mac. Set
 `GG_GENERATED_RTL` to an alternate Chisel output directory and
 `GG_VIVADO_OUTPUT` to an alternate reports/bitstream directory when building
 a trial without overwriting the known-good snapshot. It

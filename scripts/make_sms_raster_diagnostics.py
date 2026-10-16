@@ -17,4 +17,5 @@ for height, register_one in ((224, 0x50), (240, 0x48)):
     rom[0x7ff0:0x7ff8] = b"TMR SEGA"
     rom[0x7fff] = 0x4c
     (target / f"sms-raster-{height}.hex").write_text("".join(f"{value:02x}\n" for value in rom))
+    (target / f"sms-raster-{height}.sms").write_bytes(rom)
     print(f"Built original SMS {height}-line raster diagnostic")

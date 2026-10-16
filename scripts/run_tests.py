@@ -44,6 +44,9 @@ def main():
     run('video-viewport-compile',ivl_args+['-g2012','-s','tb_video_viewport','-o',BUILD/'tb_video_viewport',
                                          'rtl/platform/gg_video.sv','tests/tb_video_viewport.sv'])
     run('video-viewport',[vvp,BUILD/'tb_video_viewport'])
+    run('sega-profile-compile',ivl_args+['-g2012','-s','tb_sega_profile','-o',BUILD/'tb_sega_profile',
+                                      'rtl/platform/sega_profile.sv','tests/tb_sega_profile.sv'])
+    run('sega-profile',[vvp,BUILD/'tb_sega_profile'])
     run('memory-compile',[ghdl,'-a','--std=08','--workdir='+str(BUILD/'ghdl'),ROOT/'tests/tb_memory.vhdl'])
     run('memory',[ghdl,'-r','--std=08','--workdir='+str(BUILD/'ghdl'),'tb_memory','--assert-level=error'])
     for name,sources in [('audio',['rtl/platform/gg_audio.sv','tests/tb_audio.sv']),
@@ -54,6 +57,7 @@ def main():
     engine=['build/gamegear_machine.v']+sorted(str(p.relative_to(ROOT)) for p in (ROOT/'rtl/generated/jt89').glob('*.v'))+['rtl/platform/gg_enables.sv']
     for name,extra in [('engine',[]),('sms_engine',['rtl/platform/gg_video.sv']),
                        ('soc',['rtl/platform/gg_audio.sv','rtl/platform/gg_video.sv',
+                      'rtl/platform/sega_profile.sv',
                       'rtl/platform/sms_pause_guard.sv','rtl/platform/sega_rom_type.sv',
                       'rtl/platform/gamegear_soc.sv','rtl/platform/gg_sdram.sv','tests/sdram_model.sv'])]:
         sources=engine+extra+['tests/tb_'+name+'.sv']

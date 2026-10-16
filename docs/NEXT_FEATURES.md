@@ -75,9 +75,9 @@ geometry/epoch/buffer ownership coherently, and addresses pixels with a fixed
 display frame boundary with literal sharp 2×/3× sampling, including the
 specified SMS crop. Captures are dropped rather than overwriting a buffer
 being scanned; host readback masks storage outside the completed viewport.
-This framebuffer path has generated Chisel RTL and one earlier revision of it
-passed a rev4 route after post-route optimization. The ownership revision is
-still in verification and has not been run on the Bub.
+This framebuffer path has generated Chisel RTL and the ownership revision
+passed a rev4 route with +0.168 ns setup and +0.049 ns hold slack. It has not
+been run on the Bub.
 The first native-versus-staged MiSTer decoder fixture passes in GHDL for
 cartridge selection and bank addressing, including the `$3E` no-BIOS SMS fix.
 This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
@@ -91,8 +91,11 @@ The ROM type resolver accepts a load-epoch hint and falls back to a validated
 Sega header; its host transaction path passes the integrated SoC test. The
 video adapter now records dimensions, mode and epoch after a complete frame;
 synthetic tests cover GG 160×144 and SMS 256×192/224/240, plus a malformed
-line and epoch flush. The SoC still fixes its active profile to GG/NTSC, so
-there is no SMS-capable hardware package yet. The loader must convey a
+line and epoch flush. The next working SoC revision now applies the selected
+GG/SMS profile after the ROM bus drains and a cold restart completes. It is
+passing integrated simulation and rev4 synthesis, with routed timing and Bub
+testing still pending. There is no SMS hardware package yet.
+The loader must convey a
 guarded `.gg`/`.sms` type hint, with System Auto and a manual override. SMS
 requires its full palette, 256-column raster with 192/224/240-line modes,
 Pause NMI and console Reset semantics. Runtime PAL/NTSC timing and a shared FM

@@ -26,15 +26,14 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     reg [31:0] host_regs[0:3];
     reg setup_complete=0,run=0,focus=0,rom_loading=0,save_loading=0,save_reading=0,rom_ready=0;
     reg region=0;
-    reg [1:0] scale_mode=0;
+    reg [1:0] gg_scale_mode=0,sms_scale_mode=1;
     reg [1:0] system_override=0;
     reg [3:0] mapper=0;
     reg [31:0] rom_length=0,rom_committed=0,save_committed=0;
     reg [23:0] rom_mask=0;
     reg [31:0] crc_state=32'hffffffff,last_error=0,stalls=0;
-    reg [5:0] reset_count=0;
     reg [7:0] video_epoch=0;
-    reg clear_wram=0;
+    wire clear_wram;
     reg save_clear=0;
     reg [14:0] save_clear_address=0;
     reg [2:0] command_delay=0;
@@ -47,13 +46,13 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     wire [23:0] rom_address;
     wire [23:0] masked_address=rom_address & rom_mask;
     wire freeze=save_loading || save_reading;
-    wire machine_reset_n=!reset && run && rom_ready && reset_count==0;
+    wire [1:0] active_type;
+    wire profile_ready,profile_busy,profile_error;
+    wire machine_reset_n=!reset && run && rom_ready && profile_ready;
     wire wram_busy;
     wire machine_running=machine_reset_n && !wram_busy;
     wire [6:0] effective_buttons=focus ? buttons : 7'd0;
-    // The viewport/profile transaction will replace this GG-only binding.
-    // Keep the installed GG behavior while staging the SMS control path.
-    wire machine_sms=1'b0;
+    wire machine_sms=active_type==2'd2;
     wire sms_console_reset=machine_sms && machine_running && focus && !freeze && select_button;
     wire sms_pause_pressed;
     wire machine_pause_pressed=machine_sms ? sms_pause_pressed : effective_buttons[6];
@@ -70,6 +69,13 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
         host_regs[2]==rom_committed && rom_committed>=32768 &&
         rom_committed<=4194304 && host_regs[2][1:0]==0 &&
         host_regs[3]==0 && last_error==0;
+    wire profile_setting_change=mem_state==M_REG && host_write && (
+        (host_address==32'h10 && host_word<=1 && region!=host_word[0]) ||
+        (host_address==32'h14 && host_word<=5 && mapper!=host_word[3:0]) ||
+        (host_address==32'h2c &&
+            ((host_word<=2 && system_override!=host_word[1:0]) ||
+             (host_word>2 && system_override!=0))) ||
+        (host_address==32'h20 && host_word[0]));
     wire type_hint_write=mem_state==M_REG && host_write && host_address==32'h30;
     wire type_hint_rejected,type_header_conflict;
     wire [1:0] type_hint,type_header,type_selected,type_source;
@@ -78,10 +84,19 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
         .byte_valid(memory_done && inflight && owner_host),
         .byte_address(inflight_address),.byte_data(host_word[byte_index*8+:8]),
         .hint_write(type_hint_write),.hint_value(host_word),
-        .committed_length(rom_length),.system_override(system_override),
+        .committed_length(rom_loading ? rom_committed : rom_length),
+        .system_override(system_override),
         .hint_rejected(type_hint_rejected),.hint_type(type_hint),
         .header_type(type_header),.header_conflict(type_header_conflict),
         .selected_type(type_selected),.selected_source(type_source));
+    sega_profile profile(.clk(clk),.reset(reset),
+        .load_start(rom_start_accepted),.load_end(rom_end_accepted),
+        .reconfigure(profile_setting_change),.setup_complete(setup_complete),
+        .rom_ready(rom_ready),.memory_idle(!inflight && mem_state==M_IDLE),
+        .save_busy(save_loading || save_reading || save_clear),.wram_busy(wram_busy),
+        .selected_type(type_selected),.active_type(active_type),
+        .ready(profile_ready),.busy(profile_busy),.error(profile_error),
+        .clear_wram(clear_wram));
     wire [11:0] native_color;
     wire native_hblank,native_vblank;
     wire video_frame_complete,video_frame_valid,video_completed_machine_sms,video_completed_tv_pal;
@@ -108,7 +123,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     assign command_busy=command_state==C_BUSY;
     assign command_done=command_state==C_DONE || command_state==C_ERROR;
     assign command_error=command_state==C_ERROR;
-    assign display_scale_mode=scale_mode;
+    assign display_scale_mode=machine_sms ? sms_scale_mode : gg_scale_mode;
     assign viewport_valid=video_frame_valid;
     assign viewport_width=video_width;
     assign viewport_height=video_height;
@@ -142,7 +157,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
             size_mask=bits;
         end
     endfunction
-    gg_enables enables(clk,reset,ce_cpu,ce_vdp,ce_pix,ce_sp);
+    gg_enables enables(clk,reset || !machine_reset_n,ce_cpu,ce_vdp,ce_pix,ce_sp);
     gamegear_machine machine(.clk(clk),.reset_n(machine_reset_n),.clear_wram(clear_wram),.freeze(freeze),
         .machine_sms(machine_sms),.tv_pal(1'b0),
         .pause_pressed(machine_pause_pressed),.console_reset(sms_console_reset),
@@ -163,25 +178,24 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
         .completed_epoch(video_completed_epoch),
         .completed_machine_sms(video_completed_machine_sms),
         .completed_tv_pal(video_completed_tv_pal),.frame_id(video_frame_id));
-    gg_audio #(.CLOCK_HZ(CLOCK_HZ)) audio(.clk(clk),.reset(reset),
+    gg_audio #(.CLOCK_HZ(CLOCK_HZ)) audio(.clk(clk),.reset(reset || !profile_ready),
         .mute(!machine_running || !focus || freeze),.raw_left(raw_left),.raw_right(raw_right),
         .left(audio_left),.right(audio_right),.sample_tick());
     integer j;
     always @(posedge clk) begin
-        clear_wram<=0;
         if(reset) begin
             mem_state<=M_IDLE; command_state<=C_IDLE; mem_data_read<=0;
             setup_complete<=0; run<=0; focus<=0; rom_loading<=0;
             save_loading<=0; save_reading<=0; rom_ready<=0;
-            region<=0; scale_mode<=0; system_override<=0;
+            region<=0; gg_scale_mode<=0; sms_scale_mode<=1; system_override<=0;
             mapper<=0; rom_length<=0; rom_mask<=0; rom_committed<=0; save_committed<=0;
-            crc_state<=32'hffffffff; last_error<=0; stalls<=0; reset_count<=0; video_epoch<=0;
+            crc_state<=32'hffffffff; last_error<=0; stalls<=0; video_epoch<=0;
             save_clear<=0; save_clear_address<=0; command_delay<=0;
             inflight<=0; cpu_rom_valid<=0; cpu_rom_data<=8'hff; cached_address<=0;
             byte_index<=0; host_address<=0; host_word<=0; read_word<=0; host_write<=0;
             for(j=0;j<4;j=j+1) host_regs[j]<=0;
         end else begin
-            if(reset_count!=0) reset_count<=reset_count-1'b1;
+            if(profile_setting_change) video_epoch<=video_epoch+1'b1;
             if(!machine_running || !rom_read) cpu_rom_valid<=0;
             if(cpu_needs_byte && {8'd0,masked_address}>=rom_length) begin
                 cpu_rom_valid<=1; cpu_rom_data<=8'hff; cached_address<=masked_address;
@@ -231,47 +245,47 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                         else read_word<=host_regs[host_address[3:2]];
                     end else if(host_write) begin
                         case(host_address)
-                            32'h10: if(region!=host_word[0]) begin
-                                region<=host_word[0]; reset_count<=32; clear_wram<=1;
-                            end
-                            32'h14: if(host_word<=5 && mapper!=host_word[3:0]) begin
-                                mapper<=host_word[3:0]; reset_count<=32; clear_wram<=1;
-                            end
+                            32'h10: if(host_word<=1) region<=host_word[0];
+                                else last_error<=1;
+                            32'h14: if(host_word<=5) mapper<=host_word[3:0];
+                                else last_error<=1;
                             // Legacy 4x/3.5x values and all other invalid
                             // 32-bit values return to the GG default (3x).
-                            32'h1c: scale_mode<=(host_word==32'd1) ? 2'd1 : 2'd0;
-                            32'h20: if(host_word[0]) begin
-                                reset_count<=32; clear_wram<=1; video_epoch<=video_epoch+1'b1;
-                            end
+                            32'h1c: gg_scale_mode<=(host_word==32'd1) ? 2'd1 : 2'd0;
+                            32'h20: ; // The profile transaction handles cold restart.
                             32'h2c: system_override<=(host_word<=32'd2) ? host_word[1:0] : 2'd0;
                             32'h30: if(type_hint_rejected) last_error<=7;
+                            32'h38: sms_scale_mode<=(host_word==32'd0) ? 2'd0 : 2'd1;
                             default: last_error<=1;
                         endcase
                     end else begin
                         case(host_address)
-                            32'h0: read_word<=32'h47474231; // GGB1 ABI
-                            32'h4: read_word<=32'h00010000;
-                            32'h8: read_word<=32'h0000000f; // GG, stereo, save, diagnostics
-                            32'hc: read_word<=1; // GG profile
+                            32'h0: read_word<=32'h53454732; // SEG2 unified ABI
+                            32'h4: read_word<=32'h00020000;
+                            32'h8: read_word<=32'h0000001f; // GG, stereo, save, diagnostics, SMS NTSC
+                            32'hc: read_word<={30'd0,active_type};
                             32'h10: read_word<={31'd0,region};
                             32'h14: read_word<={28'd0,mapper};
-                            32'h18: read_word<=32'h00a00090; // 160 x 144
-                            32'h1c: read_word<={30'd0,scale_mode};
+                            32'h18: read_word<=32'h010000f0; // 256 x 240 storage
+                            32'h1c: read_word<={30'd0,gg_scale_mode};
                             32'h28: read_word<=video_frame_valid ?
                                 {7'd0,video_width,7'd0,video_height} : 32'd0;
                             32'h100: read_word<=rom_length;
                             32'h104: read_word<=rom_committed;
                             32'h108: read_word<=crc_state^32'hffffffff;
                             32'h10c: read_word<={24'd0,memory_initialized,save_reading,save_loading,rom_loading,focus,setup_complete,run,rom_ready};
-                            32'h110: read_word<=last_error;
+                            32'h110: read_word<=profile_error ? 32'd8 : last_error;
                             32'h114: read_word<=stalls;
-                            // Requested machine evidence only. The active profile is still GG.
+                            // Requested type evidence is separate from the active profile.
                             32'h118: read_word<={25'd0,type_header_conflict,type_source,type_header,type_selected};
                             32'h11c: read_word<={28'd0,system_override,type_hint};
                             32'h120: read_word<={video_frame_valid,video_completed_tv_pal,
                                 video_completed_machine_sms,video_completed_epoch,video_frame_id,5'd0};
+                            32'h124: read_word<={25'd0,profile_error,profile_busy,profile_ready,
+                                active_type,type_selected};
                             32'h2c: read_word<={30'd0,system_override};
                             32'h30: read_word<={30'd0,type_hint};
+                            32'h38: read_word<={30'd0,sms_scale_mode};
                             default: begin read_word<=0; last_error<=1; end
                         endcase
                     end
@@ -303,8 +317,10 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
             else if(command_request && command_state==C_IDLE) begin
                 command_state<=C_DONE; host_regs[0]<=0;
                 case(host_regs[0][15:0])
-                    16'h0000: host_regs[0]<=!memory_initialized ? 1 : !setup_complete ? 2 : run ? 4 : 3;
-                    16'h0100: if(rom_ready && setup_complete && memory_initialized && !rom_loading && !save_loading && !save_reading)
+                    16'h0000: host_regs[0]<=!memory_initialized ? 1 :
+                        (!setup_complete || !profile_ready) ? 2 : run ? 4 : 3;
+                    16'h0100: if(rom_ready && profile_ready && setup_complete && memory_initialized &&
+                        !rom_loading && !save_loading && !save_reading)
                         begin run<=1; if(!run) video_epoch<=video_epoch+1'b1; end
                         else begin command_state<=C_ERROR; last_error<=5; end
                     16'h0101: begin run<=0; cpu_rom_valid<=0; end
@@ -313,7 +329,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                     16'h0300: if(rom_start_accepted) begin
                         run<=0; rom_ready<=0; rom_loading<=1; rom_committed<=0;
                         rom_length<=0; crc_state<=32'hffffffff; last_error<=0; stalls<=0;
-                        cpu_rom_valid<=0; clear_wram<=1; video_epoch<=video_epoch+1'b1;
+                        cpu_rom_valid<=0; video_epoch<=video_epoch+1'b1;
                     end else if(host_regs[1]==1 && mem_state==M_IDLE && !save_reading) begin
                         save_loading<=1; save_committed<=0; save_clear<=1; save_clear_address<=0;
                         command_state<=C_BUSY;
