@@ -26,6 +26,9 @@ The first independent native MiSTer decoder oracle passes in GHDL for GG/SMS
 cartridge selection and bank addressing, including the `$3E` no-BIOS fix. A
 real-engine SMS diagnostic passes in Verilator for Pause NMI under `DI`, held
 press/repress, the console Reset I/O bit and a complete 256×192 native frame.
+Separate real-engine diagnostics pass for 256×224 and 256×240 NTSC frames and
+their completed viewport descriptors. PAL timing and physical display are
+still unverified.
 Unit tests cover Pause rearming across focus/freeze/mode changes, ROM-type
 hint/header precedence, and completed-frame descriptors at GG 160×144 and
 SMS 256×192/224/240. The integrated GG SoC test also passes load-hint

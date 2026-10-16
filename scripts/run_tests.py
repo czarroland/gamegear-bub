@@ -27,7 +27,7 @@ def main():
         for line in log.read_text().splitlines():
             if 'PASS' in line:print(line)
     for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py',
-                   'make_sms_pause_diagnostic.py']:
+                   'make_sms_pause_diagnostic.py','make_sms_raster_diagnostics.py']:
         run(script.removesuffix('.py'),[sys.executable,ROOT/'scripts'/script])
     run('staging-tests',[sys.executable,ROOT/'tests/test_prepare_sources.py'])
     run('engine-analysis',[sys.executable,ROOT/'scripts/analyze_engine.py','--synthesize'])
@@ -60,6 +60,14 @@ def main():
             '-MAKEFLAGS','VK_PCH_I_FAST= VK_PCH_I_SLOW=','--top-module','tb_'+name,
             '--Mdir',BUILD/('verilator_'+name),'-j','4']+sources)
         run(name,[BUILD/('verilator_'+name)/('Vtb_'+name)])
+    for height in (224,240):
+        name=f'sms-raster-{height}'
+        directory=BUILD/f'verilator_sms_raster_{height}'
+        run(name+'-verilator-build',[verilator,'--binary','--timing','-Wno-fatal',
+            '-MAKEFLAGS','VK_PCH_I_FAST= VK_PCH_I_SLOW=',f'-GHEIGHT={height}',
+            '--top-module','tb_sms_raster','--Mdir',directory,'-j','4']+
+            engine+['rtl/platform/gg_video.sv','tests/tb_sms_raster.sv'])
+        run(name,[directory/'Vtb_sms_raster'])
     if args.four_state:
         run('engine-four-state-compile',ivl_args+['-g2012','-s','tb_engine','-o',BUILD/'tb_engine']+engine+['tests/tb_engine.sv'])
         run('engine-four-state',[vvp,BUILD/'tb_engine'])

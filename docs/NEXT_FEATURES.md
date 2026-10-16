@@ -75,6 +75,9 @@ This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
 diagnostic also passes in simulation: Pause reaches the Z80 NMI handler with
 maskable interrupts disabled, a held press does not repeat, console Reset
 appears at port `$DD`, and the native raster produces a full 256×192 frame.
+Separate real-engine diagnostics also confirm 256×224 and 256×240 frame
+boundaries and their completed descriptors. These are NTSC simulation cases;
+PAL clock behavior and on-device presentation remain unverified.
 The ROM type resolver accepts a load-epoch hint and falls back to a validated
 Sega header; its host transaction path passes the integrated SoC test. The
 video adapter now records dimensions, mode and epoch after a complete frame;
