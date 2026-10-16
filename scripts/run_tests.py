@@ -47,6 +47,7 @@ def main():
     run('memory-compile',[ghdl,'-a','--std=08','--workdir='+str(BUILD/'ghdl'),ROOT/'tests/tb_memory.vhdl'])
     run('memory',[ghdl,'-r','--std=08','--workdir='+str(BUILD/'ghdl'),'tb_memory','--assert-level=error'])
     for name,sources in [('audio',['rtl/platform/gg_audio.sv','tests/tb_audio.sv']),
+                         ('audio_division',['rtl/platform/gg_audio.sv','tests/tb_audio_division.sv']),
                          ('sdram',['rtl/platform/gg_sdram.sv','tests/sdram_model.sv','tests/tb_sdram.sv'])]:
         run(name+'-compile',ivl_args+['-g2012','-s','tb_'+name,'-o',BUILD/('tb_'+name)]+sources)
         run(name,[vvp,BUILD/('tb_'+name)])

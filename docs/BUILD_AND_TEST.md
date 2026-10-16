@@ -146,12 +146,12 @@ dependencies `edalize==0.6.7` and optionally `heatshrink2`. Source Vivado's
 installed Java toolchain; Mill and Maven dependencies must be reachable.
 Obtain the pinned Gamebub framework at the revision listed above under its
 own terms and place it at `framework/`; it is a local dependency and is not
-part of this repository. Apply the current 2×/3× source patch to a **clean**
+part of this repository. Apply the current runtime viewport source patch to a **clean**
 checkout of that pinned framework before generating Chisel RTL:
 
 ```bash
-git apply --check patches/framework-video-scale.patch
-git apply patches/framework-video-scale.patch
+git apply --check patches/framework-video-runtime.patch
+git apply patches/framework-video-runtime.patch
 ```
 
 ```bash

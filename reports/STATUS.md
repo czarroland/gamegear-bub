@@ -1,5 +1,25 @@
 # Game Gear port — rev4 hardware diagnostic checkpoint
 
+## 2026-10-16 shared viewport development checkpoint
+
+The development core now declares a fixed 256×240 video storage capacity and
+exports completed native viewport dimensions, system/TV flags, epoch and frame
+ID from the GG/SMS frame tracker. A combined patch against the pinned Gamebub
+framework adds two fixed-stride buffers, a coherent completed-frame descriptor,
+display-buffer ownership feedback, bounded sharp 2×/3× LCD/HDMI addressing,
+and masked host readback outside the active image. The framework drops and
+counts a capture when the display still owns its target buffer or SPI readback
+conflicts with capture. The updated top elaborates with Chisel on rev4.
+
+An initial routed 256×240 implementation fits and closes timing after Vivado
+2024.1 post-route optimization: setup WNS +0.040 ns, hold WHS +0.001 ns,
+65 RAMB36 and 3 RAMB18. Its audio averaging divider dominated the original
+timing miss. That divider now computes the same signed result one bit per clock
+over the roughly 1,118-clock sample interval; the legacy audio test and a new
+exact signed-division test over varied input windows pass. The latest
+ownership/audio revision is still being routed. The SoC remains hardwired to
+GG/NTSC; no SMS gameplay image or new public release has been installed.
+
 ## 2026-10-16 GG scaling checkpoint and SMS work
 
 The public

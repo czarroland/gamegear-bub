@@ -9,6 +9,10 @@ close $core_handle
 if {[string first "videoScale_mode" $core_rtl] < 0} {
     error "Generated RTL is stale: regenerate HandheldTop with the videoScale interface."
 }
+if {[string first "videoViewport_activeWidth" $core_rtl] < 0 ||
+    [string first "videoViewport_frameId" $core_rtl] < 0} {
+    error "Generated RTL is stale: regenerate HandheldTop with the completed-frame viewport interface."
+}
 file mkdir $output
 # The Apple Silicon Docker VM has 4 GiB of RAM; cap Vivado's Linux default
 # thread count to avoid swapping heavily during synthesis and implementation.

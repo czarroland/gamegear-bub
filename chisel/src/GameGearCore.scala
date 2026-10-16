@@ -13,7 +13,9 @@ class GameGearCore extends Module with Core {
   require(SdramV0.numChips >= 1, "Game Gear needs one SDRAM chip")
   val io = IO(new Bundle {
     val clocks = new ClocksV0(systemHz, displayHz, 200_000_000)
-    val video = new VideoV0(160, 144, 4, 4, 4, framePeriod)
+    // Storage capacity; the completed-frame sideband supplies the native area.
+    val video = new VideoV0(256, 240, 4, 4, 4, framePeriod)
+    val videoViewport = new VideoViewportV0()
     val videoScale = new VideoScaleV0()
     val audio = new AudioV0()
     val host = new HostV0()

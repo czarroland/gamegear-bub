@@ -7,7 +7,8 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
     output reg sample_tick);
     localparam integer MEAN_CYCLES=CLOCK_HZ/48000;
     localparam integer ACC_WIDTH=16+$clog2(MEAN_CYCLES+2);
-    localparam signed [ACC_WIDTH-1:0] DIVISOR=ACC_WIDTH'(MEAN_CYCLES);
+    localparam integer REM_WIDTH=$clog2(MEAN_CYCLES+1)+1;
+    localparam integer COUNT_WIDTH=$clog2(ACC_WIDTH+1);
     reg [31:0] phase=0;
     reg signed [ACC_WIDTH-1:0] sum_left=0,sum_right=0;
     wire signed [ACC_WIDTH-1:0] next_left=sum_left+$signed({{(ACC_WIDTH-16){raw_left[15]}},raw_left});
@@ -15,10 +16,22 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
     reg signed [ACC_WIDTH-1:0] window_left=0,window_right=0;
     reg signed [16:0] quotient_left=0,quotient_right=0;
     reg window_valid=0,quotient_valid=0;
-    // A constant divisor keeps the boxcar practical to synthesize. The two
-    // window lengths differ by one cycle; their gain difference is <0.1%.
-    wire signed [16:0] mean_left=window_left/DIVISOR;
-    wire signed [16:0] mean_right=window_right/DIVISOR;
+    // The mean has over a thousand clocks to finish. Divide one bit per
+    // clock instead of putting two signed constant dividers on the 53 MHz
+    // audio path. Magnitude division followed by sign restoration keeps the
+    // same truncation toward zero as SystemVerilog signed division.
+    reg divide_active=0;
+    reg [COUNT_WIDTH-1:0] bits_left=0;
+    reg negative_left=0,negative_right=0;
+    reg [ACC_WIDTH-1:0] dividend_left=0,dividend_right=0;
+    reg [ACC_WIDTH-1:0] quotient_shift_left=0,quotient_shift_right=0;
+    reg [REM_WIDTH-1:0] remainder_left=0,remainder_right=0;
+    wire [REM_WIDTH-1:0] trial_left={remainder_left[REM_WIDTH-2:0],dividend_left[ACC_WIDTH-1]};
+    wire [REM_WIDTH-1:0] trial_right={remainder_right[REM_WIDTH-2:0],dividend_right[ACC_WIDTH-1]};
+    wire take_left=trial_left>=REM_WIDTH'(MEAN_CYCLES);
+    wire take_right=trial_right>=REM_WIDTH'(MEAN_CYCLES);
+    wire [ACC_WIDTH-1:0] quotient_next_left={quotient_shift_left[ACC_WIDTH-2:0],take_left};
+    wire [ACC_WIDTH-1:0] quotient_next_right={quotient_shift_right[ACC_WIDTH-2:0],take_right};
     function automatic signed [15:0] clip(input signed [31:0] sample);
         if(sample>32767) clip=16'sh7fff;
         else if(sample< -32768) clip=16'sh8000;
@@ -29,13 +42,39 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
             phase<=0; sum_left<=0; sum_right<=0; left<=0; right<=0;
             window_left<=0; window_right<=0; quotient_left<=0; quotient_right<=0;
             window_valid<=0; quotient_valid<=0; sample_tick<=0;
+            divide_active<=0; bits_left<=0; negative_left<=0; negative_right<=0;
+            dividend_left<=0; dividend_right<=0;
+            quotient_shift_left<=0; quotient_shift_right<=0;
+            remainder_left<=0; remainder_right<=0;
         end else begin
             window_valid<=0;
-            quotient_valid<=window_valid;
+            quotient_valid<=0;
             sample_tick<=quotient_valid;
             if(window_valid) begin
-                quotient_left<=mean_left;
-                quotient_right<=mean_right;
+                divide_active<=1;
+                bits_left<=COUNT_WIDTH'(ACC_WIDTH);
+                negative_left<=window_left[ACC_WIDTH-1];
+                negative_right<=window_right[ACC_WIDTH-1];
+                dividend_left<=window_left[ACC_WIDTH-1] ? -window_left : window_left;
+                dividend_right<=window_right[ACC_WIDTH-1] ? -window_right : window_right;
+                quotient_shift_left<=0; quotient_shift_right<=0;
+                remainder_left<=0; remainder_right<=0;
+            end else if(divide_active) begin
+                dividend_left<={dividend_left[ACC_WIDTH-2:0],1'b0};
+                dividend_right<={dividend_right[ACC_WIDTH-2:0],1'b0};
+                remainder_left<=take_left ? trial_left-REM_WIDTH'(MEAN_CYCLES) : trial_left;
+                remainder_right<=take_right ? trial_right-REM_WIDTH'(MEAN_CYCLES) : trial_right;
+                quotient_shift_left<=quotient_next_left;
+                quotient_shift_right<=quotient_next_right;
+                bits_left<=bits_left-1'b1;
+                if(bits_left==1) begin
+                    divide_active<=0;
+                    quotient_left<=negative_left ? -$signed(quotient_next_left[16:0]) :
+                        $signed(quotient_next_left[16:0]);
+                    quotient_right<=negative_right ? -$signed(quotient_next_right[16:0]) :
+                        $signed(quotient_next_right[16:0]);
+                    quotient_valid<=1;
+                end
             end
             if(quotient_valid) begin
                 left<=mute ? 16'sd0 : clip(quotient_left);

@@ -9,6 +9,10 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     output wire [7:0] memory_data_write,
     output wire [3:0] red,green,blue,output wire data_enable,hblank,vblank,
     output wire [1:0] display_scale_mode,
+    output wire viewport_valid,viewport_system_sms,viewport_tv_pal,
+    output wire [8:0] viewport_width,viewport_height,viewport_x0,viewport_y0,
+    output wire [7:0] viewport_epoch,
+    output wire [15:0] viewport_frame_id,
     output wire signed [15:0] audio_left,audio_right);
     localparam M_IDLE=0,M_REG=1,M_ROM_REQUEST=2,M_ROM_WAIT=3,
                M_SAVE_WRITE=4,M_SAVE_ADDRESS=5,M_SAVE_WAIT=6,M_SAVE_CAPTURE=7,
@@ -105,6 +109,15 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     assign command_done=command_state==C_DONE || command_state==C_ERROR;
     assign command_error=command_state==C_ERROR;
     assign display_scale_mode=scale_mode;
+    assign viewport_valid=video_frame_valid;
+    assign viewport_width=video_width;
+    assign viewport_height=video_height;
+    assign viewport_x0=0;
+    assign viewport_y0=0;
+    assign viewport_epoch=video_completed_epoch;
+    assign viewport_frame_id=video_frame_id;
+    assign viewport_system_sms=video_completed_machine_sms;
+    assign viewport_tv_pal=video_completed_tv_pal;
     function automatic [31:0] crc_byte(input [31:0] crc,input [7:0] value);
         reg [31:0] c; integer bit_index;
         begin

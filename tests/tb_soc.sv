@@ -15,6 +15,10 @@ module tb_soc;
     wire [3:0] red,green,blue;
     wire data_enable,hblank,vblank;
     wire [1:0] display_scale_mode;
+    wire viewport_valid,viewport_system_sms,viewport_tv_pal;
+    wire [8:0] viewport_width,viewport_height,viewport_x0,viewport_y0;
+    wire [7:0] viewport_epoch;
+    wire [15:0] viewport_frame_id;
     wire signed [15:0] audio_left,audio_right;
     wire cke,cs,ras,cas,we,data_dir;
     wire [1:0] dqm,bank;
@@ -165,6 +169,12 @@ module tb_soc;
         while(frames<3) @(negedge clk);
         check_frames=0;
         expect_read(32'h28,32'h00a00090);
+        if(!viewport_valid || viewport_width!==160 || viewport_height!==144 ||
+           viewport_x0!==0 || viewport_y0!==0 || viewport_system_sms!==0 ||
+           viewport_tv_pal!==0 || viewport_frame_id==0)
+            $fatal(1,"GG completed viewport sideband was not wired: valid=%b %0dx%0d at %0d,%0d mode=%b/%b frame=%0d",
+                viewport_valid,viewport_width,viewport_height,viewport_x0,viewport_y0,
+                viewport_system_sms,viewport_tv_pal,viewport_frame_id);
         if(total_red<10000 || total_green<10000) $fatal(1,"Diagnostic image lacks both colors");
         if(audio_left===0 || audio_right!==0) $fatal(1,"Stereo output failed %h/%h",audio_left,audio_right);
         // A save read freezes the real CPU, while SDRAM keeps refreshing.
