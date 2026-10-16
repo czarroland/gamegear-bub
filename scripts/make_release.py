@@ -28,8 +28,10 @@ def main():
     parser.add_argument('--bitstream',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
-    if not args.tag.startswith('v') or not args.tag.endswith('-alpha.4'):
-        raise SystemExit('This SMS NTSC preview recipe is for the immutable alpha.4 tag')
+    suffix=args.tag.removeprefix('v0.1.0-alpha.')
+    if (not args.tag.startswith('v0.1.0-alpha.') or not suffix.isdecimal() or
+        int(suffix)<4 or str(int(suffix))!=suffix):
+        raise SystemExit('Expected a v0.1.0-alpha.N SMS NTSC tag with N >= 4')
     if len(args.source_commit)!=40 or any(c not in '0123456789abcdef' for c in args.source_commit):
         raise SystemExit('Pass the exact 40-character public source commit SHA')
     output=args.output.resolve()
@@ -49,6 +51,11 @@ def main():
         shutil.copyfile(source,target)
     for filename in ('LICENSE-GPL-V3','NOTICE.md'):
         shutil.copyfile(ROOT/filename,stage/filename)
+    regression_note='''Alpha.4 showed commercial-game video failures on hardware. For this newer tag,
+verify the diagnostic Start color change and the transition into gameplay in
+both GG and SMS games before treating the build as playable. Alpha.3 remains
+the known-good GG rollback.
+''' if int(suffix)>4 else ''
     install=f'''Sega 8-bit GG + SMS NTSC preview for Gamebub rev4 ({args.tag})
 ================================================================
 
@@ -71,7 +78,7 @@ is bundled or installed by this package.
 
 This is an SMS NTSC test checkpoint. PAL timing, FM synthesis, save states,
 complete mapper/EEPROM coverage and long hardware soaks are not verified.
-Back up saves. The firmware derives .sav from the ROM basename, so GG and
+{regression_note}Back up saves. The firmware derives .sav from the ROM basename, so GG and
 SMS files with the same basename in one directory share a save path. Keep
 those files in separate directories. To remove this trial, back up saves and
 delete only cores/Sega8bit.Dev and settings/Sega8bit.Dev.json.

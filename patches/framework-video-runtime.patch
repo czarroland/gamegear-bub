@@ -39,7 +39,7 @@ index 0000000..c506664
 +  val tvPal = Output(Bool())
 +}
 diff --git a/src/main/scala/platform/handheld/HandheldTop.scala b/src/main/scala/platform/handheld/HandheldTop.scala
-index e31ba55..90d19c5 100644
+index e31ba55..ca0f437 100644
 --- a/src/main/scala/platform/handheld/HandheldTop.scala
 +++ b/src/main/scala/platform/handheld/HandheldTop.scala
 @@ -231,6 +231,18 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
@@ -132,7 +132,20 @@ index e31ba55..90d19c5 100644
      for (i <- 0 until 2) {
        framebuffers(i).readPorts(0).enable := framebufferIndex === i.U
        framebuffers(i).readPorts(0).address := framebufferReadAddress
-@@ -667,23 +729,41 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -624,7 +686,11 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+       /* sourceFramePeriod = */ videoFramePeriod,
+       /* clockHz = */ clockDisplayHz,
+     )
+-    dpiDriverIo.lastRenderedFrame := lastFrameComplete
++    // The viewport descriptor and its buffer index cross as one handshake.
++    // The separate one-bit synchronizer can arrive first and make the LCD
++    // switch buffers before its matching geometry has reached this clock.
++    dpiDriverIo.lastRenderedFrame :=
++      (if (variableViewport) syncedViewport.get(0) else lastFrameComplete)
+     io.lcd := dpiDriverIo.signals
+     val lcdData = videoOutput.convertTo(
+       ColorRGB(
+@@ -667,23 +733,41 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
          }
        }
        val hdmiFramePulse = io.hdmiCy === (hdmiFrameHeight - 1).U
@@ -186,7 +199,7 @@ index e31ba55..90d19c5 100644
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -714,23 +794,42 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -714,23 +798,42 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
        val dpiY = if (revision.displayRotate) dpiDriverIo.pixelX else dpiDriverIo.pixelY
        videoX := dpiX
        videoY := dpiY
@@ -242,7 +255,7 @@ index e31ba55..90d19c5 100644
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -827,20 +926,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -827,20 +930,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      framebuffers(i).readwritePorts(0).writeData := DontCare
    }
    val framebufferInterfaceRead = framebufferInterface.enable && !framebufferInterface.write
@@ -292,7 +305,7 @@ index e31ba55..90d19c5 100644
  
    //////////////////////////////////
    // Core Connections
-@@ -848,11 +973,33 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -848,11 +977,37 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
  
    // Framebuffer writes
    {
@@ -306,11 +319,15 @@ index e31ba55..90d19c5 100644
 +    val droppedCaptures = RegInit(0.U(32.W))
 +    dontTouch(droppedCaptures)
 +    val vblankStart = !coreVideo.vblank && RegNext(coreVideo.vblank)
-+    val canCapture = if (variableViewport) captureEnabled else true.B
++    val captureGranted = !displayHasFrameSync ||
++      framebufferWriteIndex =/= displayOwnedBufferSync.asUInt
++    // The first active pixel may coincide with the falling edge of vblank.
++    // Use the new grant immediately rather than the previous frame's latch.
++    val canCapture = if (variableViewport)
++      Mux(vblankStart, captureGranted, captureEnabled) else true.B
 +    if (variableViewport) {
 +      when (vblankStart) {
-+        captureEnabled := !displayHasFrameSync ||
-+          framebufferWriteIndex =/= displayOwnedBufferSync.asUInt
++        captureEnabled := captureGranted
 +        captureBad := false.B
 +      }
 +    }
@@ -329,7 +346,7 @@ index e31ba55..90d19c5 100644
        // Core framebuffer write and SPI framebuffer read share the same read/write port,
        // so ensure that they're not activated at the same time (so they can be inferred correctly).
        val address = (framebufferY * videoWidth.U(10.W)) + framebufferX
-@@ -870,9 +1017,36 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -870,9 +1025,36 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
  
      val vblankEdge = coreVideo.vblank && !RegNext(coreVideo.vblank)
      val hblankEdge = coreVideo.hblank && !RegNext(coreVideo.hblank)
@@ -369,7 +386,7 @@ index e31ba55..90d19c5 100644
      }
  
      when (coreVideo.vblank) {
-@@ -917,4 +1091,4 @@ case class Revision(
+@@ -917,4 +1099,4 @@ case class Revision(
    overlayWidth: Int,
    overlayHeight: Int,
    numSdramChips: Int,

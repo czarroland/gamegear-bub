@@ -19,6 +19,34 @@ The root cause and corrected build remain pending. The prerelease is therefore
 not a qualified playable SMS checkpoint, nor a claim of PAL, FM or full engine
 parity.
 
+## 2026-10-16 commercial-game video regression investigation
+
+On alpha.4 hardware, the GG diagnostic's color bar changes when Start is held
+and changes back on release. Commercial ROMs still fail: Sonic Triple Trouble
+plays an input sound effect without leaving the SEGA screen, and the tested
+English translation of Sylvan Tale is white from launch. Both GG ROMs display
+normally under alpha.3. This narrows the fault to the new unified path under
+game-specific timing; the precise on-device cause is not yet proven.
+
+Local-only RTL traces used the same two owned ROM files without adding them to
+source control or release assets. In each 75-frame native-engine run, 73
+completed 160×144 viewport descriptors were valid and frame hashes changed
+after Start or during gameplay. The native GG frame tracker therefore did not
+reproduce the stuck hardware picture in these traces.
+
+The alpha.4 rev4 display RTL fed the LCD driver's `lastRenderedFrame` through a
+single-bit clock synchronizer while the matching viewport descriptor crossed
+through a separate multi-bit handshake. The LCD could switch buffers before
+its descriptor arrived; stale descriptor ownership could then reject later
+captures. The development patch now drives that LCD signal from the
+descriptor's own buffer index. It also allows a newly granted capture on the
+first active pixel when vblank falls. Chisel rev4 elaboration passes with both
+changes. Vivado 2024.1 routed the corrected rev4 image with setup WNS
++0.366 ns, hold WHS +0.027 ns, no failing constrained endpoints, DRC zero
+errors and 26 warnings. The new bitstream SHA-256 is
+`0db7c3113fa11391654b0d7ba51dff70d86b4022b45db4404687e47ee14f58ba`.
+A hardware trial is still required; alpha.4 remains unsuitable for normal play.
+
 ## 2026-10-16 shared viewport development checkpoint
 
 The development core now declares a fixed 256×240 video storage capacity and
