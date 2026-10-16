@@ -9,9 +9,14 @@ SHA-256 is `28d39d851cff6a26a6ae6518f7e32a419a8a2f0d8c09ba902b549d6806d5b28d`,
 and package ZIP SHA-256 is
 `a8f24dcf3140db801982c2995bdea352ca7bec0c91a5a0b9ac1cd543bb89bd49`.
 An anonymous download of the public ZIP matched the built package hash.
-The matching SD-card installation and on-device SMS result are pending because
-the BUB card is not mounted; the known-good GG alpha.3 remains available for
-rollback. The released checkpoint is not a claim of PAL, FM or full engine
+On the mounted BUB card, all nine core and diagnostic files from that ZIP
+match byte for byte; the bitstream is at
+`/Volumes/BUB/cores/Sega8bit.Dev/SegaCore-gamebub_rev4.bit`. The alpha.3 GG
+core remains available for rollback. Hardware testing exposed a regression:
+GG and SMS games animate and respond to buttons but do not advance past their
+first screen, including when System is forced to the matching machine type.
+The root cause and corrected build remain pending. The prerelease is therefore
+not a qualified playable SMS checkpoint, nor a claim of PAL, FM or full engine
 parity.
 
 ## 2026-10-16 shared viewport development checkpoint
@@ -49,8 +54,8 @@ elaborates, and the rev4 implementation fits at 8,924 LUTs, 65 RAMB36 and
 bitstream with setup WNS +0.221 ns, hold WHS +0.027 ns, no failing constrained
 endpoints and DRC 0 errors/26 warnings. The HDMI audio-clock and other
 external I/O timing limitations described below still apply. The public
-prerelease is recorded above; SD-card installation and physical SMS testing
-are pending.
+prerelease, matching SD-card installation, and hardware regression are
+recorded above.
 
 ## 2026-10-16 GG scaling checkpoint and SMS work
 
@@ -69,10 +74,9 @@ regression suite passed, and Vivado 2024.1 post-route margins were +0.042 ns
 setup and +0.053 ns hold. The DRC still warns about the framework HDMI clock
 buffer connection and asynchronous BRAM controls.
 
-Rob reported on 2026-10-16 that this installed core runs "fantastically" on
-his Bub. The exact ROMs, scale selections, test duration, audio and save
-round-trip results have not been supplied; no broader hardware compatibility
-claim is made. The dated report is also in the release notes.
+The installed alpha.3 core passed a hardware smoke test. The exact ROMs,
+scale selections, test duration, audio and save round-trip results have not
+been recorded; no broader hardware compatibility claim is made.
 
 The first independent native MiSTer decoder oracle passes in GHDL for GG/SMS
 cartridge selection and bank addressing, including the `$3E` no-BIOS fix. A
@@ -145,7 +149,7 @@ Vivado 2024.1 produced
 The FPGA reports are under `build/vivado-checkpoint`; the bitstream is packaged
 on `/Volumes/BUB/cores/GameGear.Alpha`, and the original diagnostic is at
 `/Volumes/BUB/roms/GameGear/gamegear-diagnostic.gg`. Both copies were verified.
-The user's existing custom firmware was left in place.
+The existing custom firmware was left in place.
 
 The +0.002 ns setup margin is thin. Vivado reports no timing failures, but this
 is a development build for the first physical test. The routed DRC has no errors;
@@ -161,8 +165,8 @@ Some(1000000Hz)`. The package had set `max_transfer_speed` to 500 KB/s,
 which the firmware converts to a 1 MHz SPI cap; its slowest configured SPI
 driver is 10 MHz. Both ROM and save metadata now use 5000 KB/s, which selects
 that driver. The corrected `files.json` was verified on BUB and the card was
-safely ejected. The user subsequently confirmed that both the diagnostic ROM
-and Sonic Triple Trouble load and run on the rev4 hardware. The bitstream was
+safely ejected. Subsequent rev4 testing confirmed that both the diagnostic ROM
+and Sonic Triple Trouble load and run. The bitstream was
 not rebuilt for this fix.
 
 Battery-backed save import/export is implemented in the current core. On
@@ -178,16 +182,16 @@ Its bitstream is `build/vivado-scaling/GameGearCore-gamebub_rev4.bit` (SHA-256
 `43f5385af381ae2290b9a1587c892b83fbd138310a18977e0f55dfab59a297ba`).
 The package was installed as `/Volumes/BUB/cores/GameGear.ScalingTrial`,
 verified byte for byte, and the card safely ejected. The original
-`GameGear.Alpha` bitstream still has its known-good SHA-256. The user confirmed
-that the 2×/3× scaling trial works on hardware. The new 4× centered crop option
+`GameGear.Alpha` bitstream still has its known-good SHA-256. The 2×/3× scaling
+trial works on hardware. The new 4× centered crop option
 passed the integrated simulator suite and Vivado 2024.1 post-route timing:
 setup WNS +0.075 ns, hold WHS +0.024 ns, no failing constrained endpoints.
 Its bitstream SHA-256 is
 `3735089578fbc3645522fa0f12079421cdc9830e7a6bb8a969d2c1f6a128ee2e`.
 The `GameGear.ZoomTrial` package was installed on BUB, all five files were
 verified byte for byte, and the card safely ejected. The older core bitstreams
-still match their recorded SHA-256 values. The user confirmed that 4× works
-on hardware. A 3.5× bilinear mode is now
+still match their recorded SHA-256 values. The 4× mode works on hardware.
+A 3.5× bilinear mode is now
 packaged separately for a smaller vertical crop. The integrated simulation
 suite and Chisel generation passed. Vivado 2024.1 post-route timing closed at
 setup WNS +0.008 ns and hold WHS +0.054 ns, with zero failing constrained
@@ -195,8 +199,8 @@ endpoints. The bitstream SHA-256 is
 `2952f533f7f3d1a7ccbf7ffe04ebc804157bccedbb0a1440f36d9fdc4bdee567`.
 The `GameGear.SmoothTrial` package was installed on BUB, all five files were
 verified byte for byte, and the card safely ejected. The older Alpha and Zoom
-bitstream hashes remain unchanged. The user confirmed that 3.5× works on
-hardware. Alternative fractional filters remain on the roadmap.
+bitstream hashes remain unchanged. The 3.5× mode works on hardware.
+Alternative fractional filters remain on the roadmap.
 
 A community tester reported short successful runs with NA/JP/EU ROMs, demos,
 test suites, and patched/translated GG titles, and reported working saves.

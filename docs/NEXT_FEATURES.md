@@ -13,8 +13,8 @@ on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
 | Native Game Gear, stereo PSG, Sega mapper | Runs diagnostic and Sonic Triple Trouble on rev4; broader compatibility pending |
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Outside this implementation slice |
-| Master System | Upstream engine present; runtime Gamebub mode, video and controls pending |
-| Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; Rob reports it runs well. Individual ROM/scale results remain to be recorded |
+| Master System | GG/SMS NTSC alpha.4 trial released and installed; games do not progress past first screen on hardware, so regression diagnosis is in progress |
+| Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; hardware smoke testing passed. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
 | PAL timing and FM sound | Planned in the same unified bitstream; not yet connected |
@@ -61,23 +61,23 @@ in `docs/BUILD_AND_TEST.md`; they are not the target display roadmap. The new
 post-route timing. The public
 [`v0.1.0-alpha.3`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3)
 package was installed under the separate `GameGear.Scale23` ID and verified
-against the public ZIP hash. Rob reported on 2026-10-16 that it runs
-"fantastically"; the precise ROM, scale and duration are not yet recorded.
+against the public ZIP hash. Hardware smoke testing passed; the precise ROM,
+scale and duration are not yet recorded.
 
 ## 4. Master System and FM in the same core
 
-The released wrapper fixes Game Gear mode and declares a 160×144 framebuffer.
-The development wrapper now exposes native GG/SMS and TV-mode inputs, held at
-GG/NTSC until the profile transaction is verified. Its framework patch now
+The GG-only alpha.3 wrapper fixes Game Gear mode and declares a 160×144 framebuffer.
+The unified alpha.4 wrapper selects GG or SMS NTSC at runtime. Its framework patch
 allocates one pair of 256×240 framebuffers, publishes completed-frame
 geometry/epoch/buffer ownership coherently, and addresses pixels with a fixed
 256-column stride. The LCD/HDMI output applies the native dimensions at a
 display frame boundary with literal sharp 2×/3× sampling, including the
 specified SMS crop. Captures are dropped rather than overwriting a buffer
 being scanned; host readback masks storage outside the completed viewport.
-This framebuffer path has generated Chisel RTL and the ownership revision
-passed a rev4 route with +0.168 ns setup and +0.049 ns hold slack. It has not
-been run on the Bub.
+This framebuffer path generated Chisel RTL and the ownership revision
+passed a rev4 route with +0.168 ns setup and +0.049 ns hold slack. The later
+alpha.4 package passed timing and was installed, but its first-screen hardware
+regression remains unresolved.
 The first native-versus-staged MiSTer decoder fixture passes in GHDL for
 cartridge selection and bank addressing, including the `$3E` no-BIOS SMS fix.
 This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
@@ -93,8 +93,8 @@ video adapter now records dimensions, mode and epoch after a complete frame;
 synthetic tests cover GG 160×144 and SMS 256×192/224/240, plus a malformed
 line and epoch flush. The next working SoC revision now applies the selected
 GG/SMS profile after the ROM bus drains and a cold restart completes. It is
-passing integrated simulation and rev4 synthesis, with routed timing and Bub
-testing still pending. There is no SMS hardware package yet.
+passing integrated simulation and rev4 timing. The alpha.4 GG/SMS hardware
+package is a diagnostic prerelease and is not yet playable.
 The loader must convey a
 guarded `.gg`/`.sms` type hint, with System Auto and a manual override. SMS
 requires its full palette, 256-column raster with 192/224/240-line modes,

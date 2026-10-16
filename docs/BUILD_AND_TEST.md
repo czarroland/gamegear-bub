@@ -1,13 +1,14 @@
 # Game Gear on Gamebub — rev4 build and hardware test record
 
 The published Game Gear alpha releases and earlier scaling trials are hardware
-test records. The user confirmed that the diagnostic ROM and Sonic Triple
-Trouble run on rev4. The current development branch now runs GG and SMS NTSC
-through one SoC in simulation with shared 256×240 framebuffer capacity. Its
-runtime bitstream has not yet been qualified, released, or installed. FM and
-PAL remain later work. See `docs/SEGA_RUNTIME_ABI.md` for the new package's
-registers, defaults, and compatibility limits; the records below describe
-the earlier GG-only hardware checkpoints.
+test records. The diagnostic ROM and Sonic Triple Trouble run on rev4 under
+the GG-only build. The unified GG/SMS NTSC development branch uses one SoC and
+a shared 256×240 framebuffer. Its alpha.4 bitstream was released and installed,
+but hardware tests found that GG and SMS games do not progress past their first
+screen. Use alpha.3 for playable GG testing while this regression is investigated.
+FM and PAL remain later work. See `docs/SEGA_RUNTIME_ABI.md` for the unified
+package's registers, defaults, and compatibility limits; the records below
+describe the earlier GG-only hardware checkpoints.
 
 ## Scope
 
@@ -206,7 +207,7 @@ under normal play; optimize arbitration if stalls materially alter CPU pacing.
 
 ## Historical first test on the Bub
 
-The user's rev4 already has custom core-loading firmware. The known-good
+The test rev4 already has custom core-loading firmware. The known-good
 baseline is packaged on BUB. To reproduce its package from the reviewed
 bitstream:
 

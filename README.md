@@ -1,15 +1,15 @@
 # Game Gear on Gamebub
 
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
-rev4. The published alpha releases run native Game Gear games: the diagnostic
-ROM and Sonic Triple Trouble have both run on hardware. They include the Sega
+rev4. The GG-only alpha.3 release runs native Game Gear games: the diagnostic
+ROM and Sonic Triple Trouble have both run on hardware. It includes the Sega
 CPU, VDP and JT89 sound engine, a Gamebub host loader, SDRAM controller,
 160×144 video, stereo audio, input mapping, and 32 KiB cartridge RAM. Battery
 save export has been verified on hardware; import verification is in progress.
 The source repository does not include a bitstream, firmware UF2, retail ROM,
 or BIOS.
 
-The last published Game Gear development package is the
+The current playable Game Gear development package is the
 [v0.1.0-alpha.3 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3).
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the separate `GameGear.Scale23` core ID and requires the existing
@@ -18,9 +18,12 @@ custom core-loading firmware.
 The unified development branch exposes only sharp integer 3× and 2× sizes.
 Stored 4× and 3.5× GG preferences normalize to 3×. It now selects GG or SMS
 NTSC at runtime in one SoC, with a shared 256×240 framebuffer pair and native
-active viewport. Integrated simulation passes; this SMS image is still being
-routed and has not been released or run on hardware. PAL and FM remain later
-work. Earlier 4× and 3.5× trials remain documented as historical results.
+active viewport. Its
+[alpha.4 GG/SMS trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
+was released and installed, but hardware tests found that games do not
+progress beyond their first screen. The regression is under investigation;
+alpha.3 remains the playable GG build. PAL and FM remain later work. Earlier
+4× and 3.5× trials remain documented as historical results.
 
 The target is one rev4 core package for Game Gear and Master System, with FM
 sound and runtime machine selection, following the pinned
