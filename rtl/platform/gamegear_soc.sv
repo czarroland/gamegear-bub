@@ -94,6 +94,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     endfunction
     gg_enables enables(clk,reset,ce_cpu,ce_vdp,ce_pix,ce_sp);
     gamegear_machine machine(.clk(clk),.reset_n(machine_reset_n),.clear_wram(clear_wram),.freeze(freeze),
+        .machine_sms(1'b0),.tv_pal(1'b0),
         .ce_cpu(ce_cpu),.ce_vdp(ce_vdp),.ce_pix(ce_pix),.ce_sp(ce_sp),.rom_wait_n(rom_wait_n),
         .buttons(effective_buttons),.region(region),.mapper(mapper),
         .load_we(inflight && owner_host && memory_done),.load_address(inflight_address),

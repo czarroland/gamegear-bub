@@ -5,6 +5,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity gamegear_machine is
   port(clk,reset_n,clear_wram,freeze:in std_logic;
+       machine_sms,tv_pal:in std_logic;
        ce_cpu,ce_vdp,ce_pix,ce_sp,rom_wait_n:in std_logic;
        buttons:in std_logic_vector(6 downto 0); region:in std_logic;
        mapper:in std_logic_vector(3 downto 0);
@@ -68,8 +69,8 @@ begin
   save_ram:entity work.dpram generic map(widthad_a=>15,init_file=>"ff")
     port map(clock_a=>clk,clock_b=>clk,address_a=>save_mem_a,address_b=>save_host_address,
       data_a=>save_mem_d,data_b=>(others=>'0'),wren_a=>save_mem_we,wren_b=>'0',q_a=>save_q,q_b=>save_host_q);
-  raster:entity work.video port map(clk=>clk,ce_pix=>ce_pix and not freeze,pal=>'0',border=>'0',
-    ggres=>'1',mask_column=>'0',cut_mask=>'0',smode_M1=>m1,smode_M2=>m2,smode_M3=>m3,smode_M4=>m4,
+  raster:entity work.video port map(clk=>clk,ce_pix=>ce_pix and not freeze,pal=>tv_pal,border=>'0',
+    ggres=>not machine_sms,mask_column=>'0',cut_mask=>'0',smode_M1=>m1,smode_M2=>m2,smode_M3=>m3,smode_M4=>m4,
     video_state_out=>open,x=>x,y=>y,vcounter_cpu=>vcounter,hsync=>open,vsync=>open,hblank=>hblank,vblank=>vblank);
   sega:entity work.system generic map(MAX_SPPL=>7)
     port map(
@@ -79,8 +80,8 @@ begin
       ce_pix => ce_pix and not freeze,
       ce_sp => ce_sp and not freeze,
       turbo => '0',
-      gg => '1',
-      ggres => '1',
+      gg => not machine_sms,
+      ggres => not machine_sms,
       systeme => '0',
       bios_en => '0',
       ext_bios_sel => '0',
@@ -156,7 +157,7 @@ begin
       smode_M3 => m3,
       smode_M4 => m4,
       ysj_quirk => '0',
-      pal => '0',
+      pal => tv_pal,
       region => region,
       mapper_lock => force_sega,
       mapper_codies_force => force_codies,

@@ -30,6 +30,7 @@ def main():
         run(script.removesuffix('.py'),[sys.executable,ROOT/'scripts'/script])
     run('staging-tests',[sys.executable,ROOT/'tests/test_prepare_sources.py'])
     run('engine-analysis',[sys.executable,ROOT/'scripts/analyze_engine.py','--synthesize'])
+    run('memory-decode-oracle',[sys.executable,ROOT/'scripts/run_memory_decode_oracle.py'])
     ghdl=executable('ghdl');ivl=executable('iverilog');vvp=executable('vvp');verilator=executable('verilator')
     ivl_args=[ivl]
     if os.environ.get('IVL_BASE'):ivl_args+=['-B',os.environ['IVL_BASE']]

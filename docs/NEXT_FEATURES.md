@@ -14,7 +14,7 @@ on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Outside this implementation slice |
 | Master System | Upstream engine present; runtime Gamebub mode, video and controls pending |
-| Selectable scaling and display options | Source branch narrowed to sharp 2×/3×; new build and hardware result pending |
+| Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; Rob reports it runs well. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
 | PAL timing and FM sound | Planned in the same unified bitstream; not yet connected |
@@ -24,7 +24,7 @@ on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
 
 ## 1. Battery-backed game saves
 
-The current core already imports and exports a 32 KiB cartridge RAM image as
+The current GG core already imports and exports a 32 KiB cartridge RAM image as
 `<ROM name>.sav`. The firmware loads that file on entry and writes it on normal
 exit or power-off preparation. The diagnostic ROM writes `5A` to the first
 byte of this RAM. Normal exit on hardware has created a 32,768-byte
@@ -57,11 +57,22 @@ frame boundary, with one read port per framebuffer. Legacy stored values 2
 (4×) and 3 (3.5×) normalize to the Game Gear default of 3×. The prior 4× and
 3.5× packages were hardware trials and remain documented as historical results
 in `docs/BUILD_AND_TEST.md`; they are not the target display roadmap. The new
-2×/3× branch still needs Chisel generation, routing and Bub qualification.
+2×/3× branch passed Chisel generation, the host regression suite and rev4
+post-route timing. The public
+[`v0.1.0-alpha.3`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3)
+package was installed under the separate `GameGear.Scale23` ID and verified
+against the public ZIP hash. Rob reported on 2026-10-16 that it runs
+"fantastically"; the precise ROM, scale and duration are not yet recorded.
 
 ## 4. Master System and FM in the same core
 
-The wrapper currently fixes Game Gear mode and declares a 160×144 framebuffer.
+The released wrapper fixes Game Gear mode and declares a 160×144 framebuffer.
+The development wrapper now exposes native GG/SMS and TV-mode inputs, held at
+GG/NTSC until the profile transaction and viewport adapter are verified.
+The first native-versus-staged MiSTer decoder fixture is prepared to compare
+cartridge selection and bank addressing, including the `$3E` no-BIOS SMS fix.
+Its GHDL run is pending; even a passing result will be a narrow oracle, not a
+claim of full engine parity.
 The unified core will allocate fixed maximum-capacity buffers and publish the
 active GG or SMS viewport with each complete frame. The loader must convey a
 guarded `.gg`/`.sms` type hint, with System Auto and a manual override. SMS

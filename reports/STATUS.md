@@ -1,5 +1,36 @@
 # Game Gear port — rev4 hardware diagnostic checkpoint
 
+## 2026-10-16 GG scaling checkpoint and SMS work
+
+The public
+[`v0.1.0-alpha.3`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3)
+prerelease contains a GG-only rev4 core with sharp 2×/3× scaling and the
+MiSTer Sega engine refreshed to `8443a0d19a88aff7a5900011bccf386daf146945`.
+Its source commit is `a18cdfad0d5c269a63e85e11a2a4c68daeb27354`, ZIP
+SHA-256 is `7bdd94551a50a85baec2be58d92d09f675754ca62931018aa1d8c39fa0a09f0a`,
+and bitstream SHA-256 is
+`8dcc320f2bbc2095c61a25cc5b07ca9fb391ab5c4e3b8fbc101fa38822db8bbf`.
+The anonymously downloaded ZIP matched that hash. Its core files were
+installed from the ZIP and read back at `/Volumes/BUB/cores/GameGear.Scale23`;
+older core packages, settings and saves were backed up and preserved. The host
+regression suite passed, and Vivado 2024.1 post-route margins were +0.042 ns
+setup and +0.053 ns hold. The DRC still warns about the framework HDMI clock
+buffer connection and asynchronous BRAM controls.
+
+Rob reported on 2026-10-16 that this installed core runs "fantastically" on
+his Bub. The exact ROMs, scale selections, test duration, audio and save
+round-trip results have not been supplied; no broader hardware compatibility
+claim is made. The dated report is also in the release notes.
+
+The next plan work package is an independent native MiSTer oracle before the
+shared GG/SMS viewport and profile integration. A first decoder fixture and
+runtime wrapper inputs are in development; no SMS-capable package exists yet.
+
+---
+
+The material below records the original 2026-10-13 GG checkpoint. The dated
+update above supersedes its older roadmap and release-status statements.
+
 Date: 2026-10-13 UTC. Target: Gamebub rev4. Goal: native Game Gear.
 
 **Implemented and simulated:** real T80 CPU, VDP and JT89 PSG; portable common-
