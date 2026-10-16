@@ -22,9 +22,17 @@ his Bub. The exact ROMs, scale selections, test duration, audio and save
 round-trip results have not been supplied; no broader hardware compatibility
 claim is made. The dated report is also in the release notes.
 
-The next plan work package is an independent native MiSTer oracle before the
-shared GG/SMS viewport and profile integration. A first decoder fixture and
-runtime wrapper inputs are in development; no SMS-capable package exists yet.
+The first independent native MiSTer decoder oracle passes in GHDL for GG/SMS
+cartridge selection and bank addressing, including the `$3E` no-BIOS fix. A
+real-engine SMS diagnostic passes in Verilator for Pause NMI under `DI`, held
+press/repress, the console Reset I/O bit and a complete 256×192 native frame.
+Unit tests cover Pause rearming across focus/freeze/mode changes, ROM-type
+hint/header precedence, and completed-frame descriptors at GG 160×144 and
+SMS 256×192/224/240. The integrated GG SoC test also passes load-hint
+ordering, header fallback, epoch reset and active 160×144 readback. The SoC
+still holds its active profile at GG/NTSC and the framework still has a
+160×144 framebuffer; these simulations are groundwork, not an SMS-capable
+hardware package.
 
 ---
 

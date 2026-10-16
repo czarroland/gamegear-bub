@@ -69,10 +69,19 @@ against the public ZIP hash. Rob reported on 2026-10-16 that it runs
 The released wrapper fixes Game Gear mode and declares a 160×144 framebuffer.
 The development wrapper now exposes native GG/SMS and TV-mode inputs, held at
 GG/NTSC until the profile transaction and viewport adapter are verified.
-The first native-versus-staged MiSTer decoder fixture is prepared to compare
+The first native-versus-staged MiSTer decoder fixture passes in GHDL for
 cartridge selection and bank addressing, including the `$3E` no-BIOS SMS fix.
-Its GHDL run is pending; even a passing result will be a narrow oracle, not a
-claim of full engine parity.
+This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
+diagnostic also passes in simulation: Pause reaches the Z80 NMI handler with
+maskable interrupts disabled, a held press does not repeat, console Reset
+appears at port `$DD`, and the native raster produces a full 256×192 frame.
+The ROM type resolver accepts a load-epoch hint and falls back to a validated
+Sega header; its host transaction path passes the integrated SoC test. The
+video adapter now records dimensions, mode and epoch after a complete frame;
+synthetic tests cover GG 160×144 and SMS 256×192/224/240, plus a malformed
+line and epoch flush. The SoC still fixes its active profile to GG/NTSC and
+the framework still allocates a 160×144 display buffer, so there is no
+SMS-capable hardware package yet.
 The unified core will allocate fixed maximum-capacity buffers and publish the
 active GG or SMS viewport with each complete frame. The loader must convey a
 guarded `.gg`/`.sms` type hint, with System Auto and a manual override. SMS

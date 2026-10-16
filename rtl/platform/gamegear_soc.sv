@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
-    input wire clk,reset,input wire [6:0] buttons,
+    input wire clk,reset,input wire [6:0] buttons,input wire select_button,
     input wire mem_enable,mem_write,input wire [31:0] mem_address,mem_data_write,
     output wire mem_done,output reg [31:0] mem_data_read,
     input wire command_request,output wire command_busy,command_done,command_error,
@@ -23,11 +23,13 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     reg setup_complete=0,run=0,focus=0,rom_loading=0,save_loading=0,save_reading=0,rom_ready=0;
     reg region=0;
     reg [1:0] scale_mode=0;
+    reg [1:0] system_override=0;
     reg [3:0] mapper=0;
     reg [31:0] rom_length=0,rom_committed=0,save_committed=0;
     reg [23:0] rom_mask=0;
     reg [31:0] crc_state=32'hffffffff,last_error=0,stalls=0;
     reg [5:0] reset_count=0;
+    reg [7:0] video_epoch=0;
     reg clear_wram=0;
     reg save_clear=0;
     reg [14:0] save_clear_address=0;
@@ -45,8 +47,43 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     wire wram_busy;
     wire machine_running=machine_reset_n && !wram_busy;
     wire [6:0] effective_buttons=focus ? buttons : 7'd0;
+    // The viewport/profile transaction will replace this GG-only binding.
+    // Keep the installed GG behavior while staging the SMS control path.
+    wire machine_sms=1'b0;
+    wire sms_console_reset=machine_sms && machine_running && focus && !freeze && select_button;
+    wire sms_pause_pressed;
+    wire machine_pause_pressed=machine_sms ? sms_pause_pressed : effective_buttons[6];
+    sms_pause_guard pause_guard(.clk(clk),.reset(reset),.machine_sms(machine_sms),
+        .running(machine_running),.focus(focus),.freeze(freeze),
+        .console_reset(sms_console_reset),.start_pressed(buttons[6]),
+        .pause_pressed(sms_pause_pressed));
+    wire rom_start_accepted=command_request && command_state==C_IDLE &&
+        host_regs[0][15:0]==16'h0300 && host_regs[1]==0 &&
+        !inflight && mem_state==M_IDLE;
+    wire rom_end_accepted=command_request && command_state==C_IDLE &&
+        host_regs[0][15:0]==16'h0301 && host_regs[1]==0 &&
+        rom_loading && mem_state==M_IDLE && !inflight &&
+        host_regs[2]==rom_committed && rom_committed>=32768 &&
+        rom_committed<=4194304 && host_regs[2][1:0]==0 &&
+        host_regs[3]==0 && last_error==0;
+    wire type_hint_write=mem_state==M_REG && host_write && host_address==32'h30;
+    wire type_hint_rejected,type_header_conflict;
+    wire [1:0] type_hint,type_header,type_selected,type_source;
+    sega_rom_type rom_type(.clk(clk),.reset(reset),
+        .begin_load(rom_start_accepted),.finish_load(rom_end_accepted),
+        .byte_valid(memory_done && inflight && owner_host),
+        .byte_address(inflight_address),.byte_data(host_word[byte_index*8+:8]),
+        .hint_write(type_hint_write),.hint_value(host_word),
+        .committed_length(rom_length),.system_override(system_override),
+        .hint_rejected(type_hint_rejected),.hint_type(type_hint),
+        .header_type(type_header),.header_conflict(type_header_conflict),
+        .selected_type(type_selected),.selected_source(type_source));
     wire [11:0] native_color;
     wire native_hblank,native_vblank;
+    wire video_frame_complete,video_frame_valid,video_completed_machine_sms,video_completed_tv_pal;
+    wire [8:0] video_width,video_height;
+    wire [7:0] video_completed_epoch;
+    wire [15:0] video_frame_id;
     wire signed [15:0] raw_left,raw_right;
     wire [7:0] save_q,wram_q;
     wire [14:0] save_address=save_clear ? save_clear_address : host_address[14:0]+{13'd0,byte_index};
@@ -94,7 +131,8 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
     endfunction
     gg_enables enables(clk,reset,ce_cpu,ce_vdp,ce_pix,ce_sp);
     gamegear_machine machine(.clk(clk),.reset_n(machine_reset_n),.clear_wram(clear_wram),.freeze(freeze),
-        .machine_sms(1'b0),.tv_pal(1'b0),
+        .machine_sms(machine_sms),.tv_pal(1'b0),
+        .pause_pressed(machine_pause_pressed),.console_reset(sms_console_reset),
         .ce_cpu(ce_cpu),.ce_vdp(ce_vdp),.ce_pix(ce_pix),.ce_sp(ce_sp),.rom_wait_n(rom_wait_n),
         .buttons(effective_buttons),.region(region),.mapper(mapper),
         .load_we(inflight && owner_host && memory_done),.load_address(inflight_address),
@@ -104,8 +142,14 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
         .debug_wram_address(wram_address),.debug_wram_q(wram_q),.wram_busy(wram_busy),
         .debug_cpu(),.debug_vdp(),.debug_cram(),.debug_io(),.debug_mapper());
     gg_video video(.clk(clk),.reset(reset),.run(machine_running),.freeze(freeze),.ce_pix(ce_pix),
+        .machine_sms(machine_sms),.tv_pal(1'b0),.epoch(video_epoch),
         .color(native_color),.native_hblank(native_hblank),.native_vblank(native_vblank),
-        .red(red),.green(green),.blue(blue),.data_enable(data_enable),.hblank(hblank),.vblank(vblank));
+        .red(red),.green(green),.blue(blue),.data_enable(data_enable),.hblank(hblank),.vblank(vblank),
+        .frame_complete(video_frame_complete),.frame_valid(video_frame_valid),
+        .active_width(video_width),.active_height(video_height),
+        .completed_epoch(video_completed_epoch),
+        .completed_machine_sms(video_completed_machine_sms),
+        .completed_tv_pal(video_completed_tv_pal),.frame_id(video_frame_id));
     gg_audio #(.CLOCK_HZ(CLOCK_HZ)) audio(.clk(clk),.reset(reset),
         .mute(!machine_running || !focus || freeze),.raw_left(raw_left),.raw_right(raw_right),
         .left(audio_left),.right(audio_right),.sample_tick());
@@ -116,8 +160,9 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
             mem_state<=M_IDLE; command_state<=C_IDLE; mem_data_read<=0;
             setup_complete<=0; run<=0; focus<=0; rom_loading<=0;
             save_loading<=0; save_reading<=0; rom_ready<=0;
-            region<=0; scale_mode<=0; mapper<=0; rom_length<=0; rom_mask<=0; rom_committed<=0; save_committed<=0;
-            crc_state<=32'hffffffff; last_error<=0; stalls<=0; reset_count<=0;
+            region<=0; scale_mode<=0; system_override<=0;
+            mapper<=0; rom_length<=0; rom_mask<=0; rom_committed<=0; save_committed<=0;
+            crc_state<=32'hffffffff; last_error<=0; stalls<=0; reset_count<=0; video_epoch<=0;
             save_clear<=0; save_clear_address<=0; command_delay<=0;
             inflight<=0; cpu_rom_valid<=0; cpu_rom_data<=8'hff; cached_address<=0;
             byte_index<=0; host_address<=0; host_word<=0; read_word<=0; host_write<=0;
@@ -182,7 +227,11 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                             // Legacy 4x/3.5x values and all other invalid
                             // 32-bit values return to the GG default (3x).
                             32'h1c: scale_mode<=(host_word==32'd1) ? 2'd1 : 2'd0;
-                            32'h20: if(host_word[0]) begin reset_count<=32; clear_wram<=1; end
+                            32'h20: if(host_word[0]) begin
+                                reset_count<=32; clear_wram<=1; video_epoch<=video_epoch+1'b1;
+                            end
+                            32'h2c: system_override<=(host_word<=32'd2) ? host_word[1:0] : 2'd0;
+                            32'h30: if(type_hint_rejected) last_error<=7;
                             default: last_error<=1;
                         endcase
                     end else begin
@@ -195,12 +244,21 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                             32'h14: read_word<={28'd0,mapper};
                             32'h18: read_word<=32'h00a00090; // 160 x 144
                             32'h1c: read_word<={30'd0,scale_mode};
+                            32'h28: read_word<=video_frame_valid ?
+                                {7'd0,video_width,7'd0,video_height} : 32'd0;
                             32'h100: read_word<=rom_length;
                             32'h104: read_word<=rom_committed;
                             32'h108: read_word<=crc_state^32'hffffffff;
                             32'h10c: read_word<={24'd0,memory_initialized,save_reading,save_loading,rom_loading,focus,setup_complete,run,rom_ready};
                             32'h110: read_word<=last_error;
                             32'h114: read_word<=stalls;
+                            // Requested machine evidence only. The active profile is still GG.
+                            32'h118: read_word<={25'd0,type_header_conflict,type_source,type_header,type_selected};
+                            32'h11c: read_word<={28'd0,system_override,type_hint};
+                            32'h120: read_word<={video_frame_valid,video_completed_tv_pal,
+                                video_completed_machine_sms,video_completed_epoch,video_frame_id,5'd0};
+                            32'h2c: read_word<={30'd0,system_override};
+                            32'h30: read_word<={30'd0,type_hint};
                             default: begin read_word<=0; last_error<=1; end
                         endcase
                     end
@@ -234,21 +292,20 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                 case(host_regs[0][15:0])
                     16'h0000: host_regs[0]<=!memory_initialized ? 1 : !setup_complete ? 2 : run ? 4 : 3;
                     16'h0100: if(rom_ready && setup_complete && memory_initialized && !rom_loading && !save_loading && !save_reading)
-                        run<=1; else begin command_state<=C_ERROR; last_error<=5; end
+                        begin run<=1; if(!run) video_epoch<=video_epoch+1'b1; end
+                        else begin command_state<=C_ERROR; last_error<=5; end
                     16'h0101: begin run<=0; cpu_rom_valid<=0; end
                     16'h0102: setup_complete<=1;
                     16'h0200: focus<=host_regs[1][0];
-                    16'h0300: if(host_regs[1]==0 && !inflight && mem_state==M_IDLE) begin
+                    16'h0300: if(rom_start_accepted) begin
                         run<=0; rom_ready<=0; rom_loading<=1; rom_committed<=0;
                         rom_length<=0; crc_state<=32'hffffffff; last_error<=0; stalls<=0;
-                        cpu_rom_valid<=0; clear_wram<=1;
+                        cpu_rom_valid<=0; clear_wram<=1; video_epoch<=video_epoch+1'b1;
                     end else if(host_regs[1]==1 && mem_state==M_IDLE && !save_reading) begin
                         save_loading<=1; save_committed<=0; save_clear<=1; save_clear_address<=0;
                         command_state<=C_BUSY;
                     end else begin command_state<=C_ERROR; last_error<=6; end
-                    16'h0301: if(host_regs[1]==0 && rom_loading && mem_state==M_IDLE && !inflight &&
-                        host_regs[2]==rom_committed && rom_committed>=32768 && rom_committed<=4194304 &&
-                        host_regs[2][1:0]==0 && host_regs[3]==0 && last_error==0) begin
+                    16'h0301: if(rom_end_accepted) begin
                         rom_length<=rom_committed; rom_mask<=size_mask(rom_committed);
                         rom_loading<=0; rom_ready<=1;
                     end else if(host_regs[1]==1 && save_loading && mem_state==M_IDLE &&

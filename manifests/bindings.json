@@ -332,15 +332,15 @@
     "port": "pause",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "not buttons(6)",
+    "binding": "not pause_pressed",
     "explicit": true
   },
   {
     "port": "soft_reset",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'0'",
-    "explicit": false
+    "binding": "console_reset",
+    "explicit": true
   },
   {
     "port": "E0Type",

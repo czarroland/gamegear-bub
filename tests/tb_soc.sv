@@ -4,6 +4,7 @@ module tb_soc;
     reg clk=0; always #10 clk=~clk;
     reg reset=1;
     reg [6:0] buttons=0;
+    reg select_button=0;
     reg mem_enable=0,mem_write=0,command_request=0;
     reg [31:0] mem_address=0,mem_data_write=0;
     wire mem_done,command_busy,command_done,command_error;
@@ -143,6 +144,7 @@ module tb_soc;
         command(16'h0301,0,65536,0,0);
         expect_read(32'h100,65536); expect_read(32'h104,65536);
         expect_read(32'h108,DIAGNOSTIC_CRC);
+        expect_read(32'h118,32'h35); // GG selected from a committed header without a new loader.
         command(16'h0300,1,0,0,0);
         host(1,32'h40000000,32'h44332211,0);
         command(16'h0301,1,4,0,0);
@@ -162,6 +164,7 @@ module tb_soc;
         check_frames=1;
         while(frames<3) @(negedge clk);
         check_frames=0;
+        expect_read(32'h28,32'h00a00090);
         if(total_red<10000 || total_green<10000) $fatal(1,"Diagnostic image lacks both colors");
         if(audio_left===0 || audio_right!==0) $fatal(1,"Stereo output failed %h/%h",audio_left,audio_right);
         // A save read freezes the real CPU, while SDRAM keeps refreshing.
@@ -172,8 +175,20 @@ module tb_soc;
         command(16'h0303,1,0,0,0);
         command(16'h0101,0,0,0,0);
         command(16'h0302,1,0,0,0);expect_read(32'h40000000,32'h4433225a);command(16'h0303,1,0,0,0);
+        host(1,32'h2c,2,0); expect_read(32'h118,32'h16); // Manual SMS wins over GG header.
+        host(1,32'h2c,32'h10000002,0); expect_read(32'h2c,0);
+        expect_read(32'h118,32'h35);
+        command(16'h0300,0,0,0,0); // New load epoch clears all previous type evidence.
+        expect_read(32'h118,0);
+        host(1,32'h30,2,0); expect_read(32'h30,2);
+        expect_read(32'h118,32'h22); // Loader-owned SMS hint before bytes.
+        host(1,32'h30000000,32'h000000f3,0);
+        host(1,32'h30,1,0); // A late hint must fail without changing the selection.
+        expect_read(32'h110,7); expect_read(32'h30,2);
+        command(16'h0300,0,0,0,0); // A clean reload recovers from the rejected hint.
+        expect_read(32'h110,0); expect_read(32'h30,0); expect_read(32'h118,0);
         command(16'hffff,0,0,0,1);
-        $display("PASS firmware-to-SDRAM-to-real-GG: host lifecycle, byte order, CRC, lengths, inputs, focus, 160x144 frames, stereo, save freeze/export, retained save, refresh");
+        $display("PASS firmware-to-SDRAM-to-real-GG: host lifecycle, byte order, CRC, lengths, ROM type evidence, inputs, focus, 160x144 frames, stereo, save freeze/export, retained save, refresh");
         $finish;
     end
     initial begin #200000000; $fatal(1,"SoC test timeout"); end

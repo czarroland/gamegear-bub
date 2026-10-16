@@ -26,7 +26,8 @@ def main():
         results.append({'check':label,'result':'pass','seconds':round(time.monotonic()-start,2)})
         for line in log.read_text().splitlines():
             if 'PASS' in line:print(line)
-    for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py']:
+    for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py',
+                   'make_sms_pause_diagnostic.py']:
         run(script.removesuffix('.py'),[sys.executable,ROOT/'scripts'/script])
     run('staging-tests',[sys.executable,ROOT/'tests/test_prepare_sources.py'])
     run('engine-analysis',[sys.executable,ROOT/'scripts/analyze_engine.py','--synthesize'])
@@ -34,6 +35,15 @@ def main():
     ghdl=executable('ghdl');ivl=executable('iverilog');vvp=executable('vvp');verilator=executable('verilator')
     ivl_args=[ivl]
     if os.environ.get('IVL_BASE'):ivl_args+=['-B',os.environ['IVL_BASE']]
+    run('rom-type-compile',ivl_args+['-g2012','-s','tb_rom_type','-o',BUILD/'tb_rom_type',
+                                   'rtl/platform/sega_rom_type.sv','tests/tb_rom_type.sv'])
+    run('rom-type',[vvp,BUILD/'tb_rom_type'])
+    run('sms-pause-compile',ivl_args+['-g2012','-s','tb_sms_pause_guard','-o',BUILD/'tb_sms_pause_guard',
+                                     'rtl/platform/sms_pause_guard.sv','tests/tb_sms_pause_guard.sv'])
+    run('sms-pause',[vvp,BUILD/'tb_sms_pause_guard'])
+    run('video-viewport-compile',ivl_args+['-g2012','-s','tb_video_viewport','-o',BUILD/'tb_video_viewport',
+                                         'rtl/platform/gg_video.sv','tests/tb_video_viewport.sv'])
+    run('video-viewport',[vvp,BUILD/'tb_video_viewport'])
     run('memory-compile',[ghdl,'-a','--std=08','--workdir='+str(BUILD/'ghdl'),ROOT/'tests/tb_memory.vhdl'])
     run('memory',[ghdl,'-r','--std=08','--workdir='+str(BUILD/'ghdl'),'tb_memory','--assert-level=error'])
     for name,sources in [('audio',['rtl/platform/gg_audio.sv','tests/tb_audio.sv']),
@@ -41,7 +51,9 @@ def main():
         run(name+'-compile',ivl_args+['-g2012','-s','tb_'+name,'-o',BUILD/('tb_'+name)]+sources)
         run(name,[vvp,BUILD/('tb_'+name)])
     engine=['build/gamegear_machine.v']+sorted(str(p.relative_to(ROOT)) for p in (ROOT/'rtl/generated/jt89').glob('*.v'))+['rtl/platform/gg_enables.sv']
-    for name,extra in [('engine',[]),('soc',['rtl/platform/gg_audio.sv','rtl/platform/gg_video.sv',
+    for name,extra in [('engine',[]),('sms_engine',['rtl/platform/gg_video.sv']),
+                       ('soc',['rtl/platform/gg_audio.sv','rtl/platform/gg_video.sv',
+                      'rtl/platform/sms_pause_guard.sv','rtl/platform/sega_rom_type.sv',
                       'rtl/platform/gamegear_soc.sv','rtl/platform/gg_sdram.sv','tests/sdram_model.sv'])]:
         sources=engine+extra+['tests/tb_'+name+'.sv']
         run(name+'-verilator-build',[verilator,'--binary','--timing','-Wno-fatal',

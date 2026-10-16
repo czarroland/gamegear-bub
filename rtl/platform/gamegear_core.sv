@@ -33,6 +33,7 @@ module gamegear_core #(parameter integer DISPLAY_DIVIDER=38)(
     gamegear_soc soc(.clk(clocks_clockOutSystem),.reset(system_reset),
         .buttons({input_buttons_start,input_buttons_a,input_buttons_b,
                   input_buttons_right,input_buttons_left,input_buttons_down,input_buttons_up}),
+        .select_button(input_buttons_select),
         .mem_enable(host_mem_enable),.mem_write(host_mem_write),.mem_address(host_mem_address),
         .mem_data_write(host_mem_dataWrite),.mem_done(host_mem_done),.mem_data_read(host_mem_dataRead),
         .command_request(host_commandHost_request),.command_busy(host_commandHost_busy),
