@@ -1,4 +1,18 @@
-# Game Gear port — rev4 hardware diagnostic checkpoint
+# Sega 8-bit port — rev4 hardware diagnostic checkpoint
+
+## 2026-10-16 SMS NTSC community prerelease
+
+[`v0.1.0-alpha.4`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
+is a public prerelease of the one GG/SMS NTSC trial core. Its exact public
+source commit is `d71f34e225cbbaba96090164ebfcbd58efe14a75`, bitstream
+SHA-256 is `28d39d851cff6a26a6ae6518f7e32a419a8a2f0d8c09ba902b549d6806d5b28d`,
+and package ZIP SHA-256 is
+`a8f24dcf3140db801982c2995bdea352ca7bec0c91a5a0b9ac1cd543bb89bd49`.
+An anonymous download of the public ZIP matched the built package hash.
+The matching SD-card installation and on-device SMS result are pending because
+the BUB card is not mounted; the known-good GG alpha.3 remains available for
+rollback. The released checkpoint is not a claim of PAL, FM or full engine
+parity.
 
 ## 2026-10-16 shared viewport development checkpoint
 
@@ -34,8 +48,9 @@ elaborates, and the rev4 implementation fits at 8,924 LUTs, 65 RAMB36 and
 3 RAMB18. Vivado 2024.1 routed the combined runtime design and wrote a
 bitstream with setup WNS +0.221 ns, hold WHS +0.027 ns, no failing constrained
 endpoints and DRC 0 errors/26 warnings. The HDMI audio-clock and other
-external I/O timing limitations described below still apply. A public
-prerelease, SD-card installation and physical SMS test are pending.
+external I/O timing limitations described below still apply. The public
+prerelease is recorded above; SD-card installation and physical SMS testing
+are pending.
 
 ## 2026-10-16 GG scaling checkpoint and SMS work
 
