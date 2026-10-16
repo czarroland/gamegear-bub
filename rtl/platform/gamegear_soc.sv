@@ -178,7 +178,9 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275)(
                             32'h14: if(host_word<=5 && mapper!=host_word[3:0]) begin
                                 mapper<=host_word[3:0]; reset_count<=32; clear_wram<=1;
                             end
-                            32'h1c: scale_mode<=host_word[1:0];
+                            // Legacy 4x/3.5x values and all other invalid
+                            // 32-bit values return to the GG default (3x).
+                            32'h1c: scale_mode<=(host_word==32'd1) ? 2'd1 : 2'd0;
                             32'h20: if(host_word[0]) begin reset_count<=32; clear_wram<=1; end
                             default: last_error<=1;
                         endcase

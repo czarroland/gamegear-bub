@@ -1,14 +1,5 @@
 --- a/rtl/T80/T80s.vhd
 +++ b/rtl/T80/T80s.vhd
-@@ -35,7 +35,7 @@
- -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- -- POSSIBILITY OF SUCH DAMAGE.
- --
---- Please report bugs to the author, but before you do so, please
-+-- Please report bugs to the author, but before you z80_dout so, please
- -- make sure that this is not a derivative work and that
- -- you have the latest version of this file.
- --
 @@ -94,10 +94,10 @@
  		OUT0        : in  std_logic := '0';  -- 0 => OUT(C),0, 1 => OUT(C),255
  		A				: out std_logic_vector(15 downto 0);

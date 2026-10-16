@@ -28,6 +28,7 @@ def main():
             if 'PASS' in line:print(line)
     for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py']:
         run(script.removesuffix('.py'),[sys.executable,ROOT/'scripts'/script])
+    run('staging-tests',[sys.executable,ROOT/'tests/test_prepare_sources.py'])
     run('engine-analysis',[sys.executable,ROOT/'scripts/analyze_engine.py','--synthesize'])
     ghdl=executable('ghdl');ivl=executable('iverilog');vvp=executable('vvp');verilator=executable('verilator')
     ivl_args=[ivl]

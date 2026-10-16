@@ -1,6 +1,6 @@
 --- a/rtl/vdp_sprites.vhd
 +++ b/rtl/vdp_sprites.vhd
-@@ -95,20 +95,20 @@
+@@ -97,20 +97,20 @@
  	end generate;
  
  	with smode_M4 & state select
@@ -34,7 +34,7 @@
  					
  					(others=>'0') when others;
  
-@@ -159,7 +159,7 @@
+@@ -161,7 +161,7 @@
  					--overflow <= '0';
  					
  					case smode_M4 & state is
@@ -43,7 +43,7 @@
  						if d9=208 and smode_M1='0' and smode_M3='0' then  -- hD0 stops only in 192 mode
  							state <= WAITING; -- stop
  					--	elsif delta(8 downto 4)="00000" and (delta(3)='0' or tall='1' or wide='1') then
-@@ -187,7 +187,7 @@
+@@ -189,7 +189,7 @@
  							end if;
  						end if;
  						
@@ -52,7 +52,7 @@
  						data_address(13) <= char_high_bits(2);
  						data_address(12 downto 6) <= vram_d(7 downto 1);
  						if tall='0' -- or wide='1' 
-@@ -196,23 +196,23 @@
+@@ -198,23 +198,23 @@
  						end if;
  						state <= LOAD_X;
  						
@@ -81,7 +81,7 @@
  						spr_d3(count)	<= vram_d;
  						enable(count)	<= true;
  						state	<= COMPARE;
-@@ -221,7 +221,7 @@
+@@ -223,7 +223,7 @@
  						
  					-- mode 2  -----------
  	
@@ -90,7 +90,7 @@
  						if d9=208 then
  							state <= WAITING ;
  						elsif delta(8 downto 5)="0000" and 
-@@ -246,7 +246,7 @@
+@@ -248,7 +248,7 @@
  							end if;
  						end if;
  						
@@ -99,7 +99,7 @@
  						if tall='1' then
  							data_address(10 downto 4) <= vram_d(7 downto 1); -- quadrant C
  						else
-@@ -254,14 +254,14 @@
+@@ -256,14 +256,14 @@
  						end if;
  						state <= LOAD_0;
  
@@ -116,7 +116,7 @@
  						if m2_flags(7)='0' then
  							spr_x(count)	<= vram_d-1;
  						else
-@@ -269,7 +269,7 @@
+@@ -271,7 +271,7 @@
  						end if;
  						state <= LOAD_1;
  						
@@ -125,7 +125,7 @@
  						-- in m2 mode, spr_d0 & 1 contains 16-bit shift data
  						-- and color goes to spr_d3
  						spr_d0(count) <= vram_d;
-@@ -279,7 +279,7 @@
+@@ -281,7 +281,7 @@
  						data_address(10 downto 4) <= data_address(10 downto 4)+1 ; -- quadrants B & D
  						state	<= LOAD_2 ;
  						

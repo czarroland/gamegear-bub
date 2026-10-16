@@ -1,26 +1,29 @@
 # Game Gear on Gamebub
 
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
-rev4. The current core runs native Game Gear games: the diagnostic ROM and Sonic
-Triple Trouble have both run on hardware. It includes the Sega CPU, VDP and
-JT89 sound engine, a Gamebub host loader, SDRAM controller, 160×144 video,
-stereo audio, input mapping, and 32 KiB cartridge RAM. Battery save export has
-been verified on hardware; import verification is in progress. The source
-repository does not include a bitstream, firmware UF2, retail ROM, or BIOS.
+rev4. The published alpha releases run native Game Gear games: the diagnostic
+ROM and Sonic Triple Trouble have both run on hardware. They include the Sega
+CPU, VDP and JT89 sound engine, a Gamebub host loader, SDRAM controller,
+160×144 video, stereo audio, input mapping, and 32 KiB cartridge RAM. Battery
+save export has been verified on hardware; import verification is in progress.
+The source repository does not include a bitstream, firmware UF2, retail ROM,
+or BIOS.
 
-The current rev4 development package is the
+The last published Game Gear development package is the
 [v0.1.0-alpha.2 pre-release](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.2).
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
 
-A separate rev4 trial confirmed integer 3× and 2× screen sizes on hardware.
-The centered 4× zoom option also works on hardware; it crops 12 Game Gear
-lines from the top and bottom. The 3.5× bilinear option works on hardware
-and crops about 3–4 source lines at each vertical edge. All four sizes remain
-selectable.
+The implementation branch now exposes only sharp integer 3× and 2× sizes.
+Stored 4× and 3.5× preferences normalize to 3×. This source change has not yet
+been qualified on hardware or published as a new package. Earlier alpha
+releases still contain the 4× and 3.5× experiments; their reports remain as
+historical test results.
 
-The target is [SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) feature
-parity where the Bub hardware and firmware permit it. See the
+The target is one rev4 core package for Game Gear and Master System, with FM
+sound and runtime machine selection, following the pinned
+[SMS_MiSTer](https://github.com/MiSTer-devel/SMS_MiSTer) engine where the Bub
+hardware and firmware permit it. See the
 [feature roadmap](docs/NEXT_FEATURES.md), [build and hardware test instructions](docs/BUILD_AND_TEST.md),
 [recorded results](reports/STATUS.md), and [source notices](NOTICE.md).
 
