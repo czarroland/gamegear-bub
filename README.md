@@ -1,6 +1,13 @@
 # Game Gear on Gamebub
 
-**AI-developed port:** OpenAI Codex writes this port's implementation, tests, and release packages with human direction and testing on Gamebub hardware.
+**Original Game Gear core credit:** [GreyRogue](https://github.com/greyrogue)
+authored [Game Gear support for the MiSTer Sega Master System core](https://github.com/MiSTer-devel/SMS_MiSTer/pull/8),
+then contributed Game Gear button and stereo audio fixes. This project ports
+and adapts that MiSTer engine for Gamebub; it did not originate the Game Gear
+emulation core. Credit also belongs to the MiSTer-devel SMS/GG contributors
+and to Ben's earlier Papilio Master System implementation. See [source notices](NOTICE.md).
+
+**AI-developed Gamebub port:** OpenAI Codex writes the Gamebub adaptation, tests, and release packages with human direction and testing on Gamebub hardware.
 
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
 rev4. The current core runs native Game Gear games: the diagnostic ROM and Sonic
