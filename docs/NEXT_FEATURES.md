@@ -14,6 +14,7 @@ on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Outside this implementation slice |
 | Master System | GG/SMS NTSC alpha.4 trial fails on hardware; alpha.5 received an initial successful rev4 play check. Alpha.6 retains its bitstream with the **GG and SMS Bub** menu name; broader compatibility remains open |
+| System Auto and ROM picker | The current firmware provides no extension hint, so some community-tested `.sms` games require a forced Master System setting. One picker remembers one last ROM folder. A source-only firmware hint patch exists; no Bub firmware build has been installed or verified |
 | Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; hardware smoke testing passed. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |

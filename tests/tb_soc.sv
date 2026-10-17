@@ -215,6 +215,21 @@ module tb_soc;
         command(16'h0300,0,0,0,0); // A clean reload recovers from the rejected hint.
         expect_read(32'h110,0); expect_read(32'h30,0); expect_read(32'h118,0);
         $readmemh("diagnostics/sms-pause-diagnostic.hex",rom);
+        // A valid SMS image without a TMR SEGA header is unresolved under the
+        // older firmware, which cannot send the .sms filename to this core.
+        for(i=32'h7ff0;i<32'h7ff8;i=i+1) rom[i]=8'hff;
+        rom[32'h7fff]=8'hff;
+        for(i=0;i<32768;i=i+4) host(1,32'h30000000+i,{rom[i+3],rom[i+2],rom[i+1],rom[i]},1);
+        mem_enable=0;
+        command(16'h0301,0,32768,0,0);
+        timeout=0;
+        while(!dut.profile_error && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_error || dut.active_type!=0)
+            $fatal(1,"Headerless SMS Auto must remain unresolved without a loader hint");
+        expect_read(32'h118,0);
+        expect_read(32'h110,8);
+        command(16'h0300,0,0,0,0);
+        expect_read(32'h110,0); expect_read(32'h118,0);
         host(1,32'h30,2,0);
         for(i=0;i<32768;i=i+4) host(1,32'h30000000+i,{rom[i+3],rom[i+2],rom[i+1],rom[i]},1);
         mem_enable=0;

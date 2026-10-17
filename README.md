@@ -19,6 +19,15 @@ uses one GG/SMS NTSC core entry. This update changes the menu name while
 retaining the alpha.5 bitstream and its internal core ID, so existing settings
 continue to apply. FM audio and PAL timing remain unimplemented.
 
+With the current v1.1-beta firmware, **System: Auto** can identify a ROM only
+from a consistent `TMR SEGA` header. If an `.sms` game does not start under
+Auto, select **System: Master System** and reload it; for an unrecognized
+`.gg` game, select **Game Gear**. The filename extension alone does not reach
+this firmware's core loader. The optional extension-hint firmware patch is
+source only and has not been installed or verified on a Bub. The one ROM
+picker remembers its last directory, so switching between separate GG and SMS
+folders currently requires navigation.
+
 The GG-only alpha.3 release runs native Game Gear games: the diagnostic
 ROM and Sonic Triple Trouble have both run on hardware. It includes the Sega
 CPU, VDP and JT89 sound engine, a Gamebub host loader, SDRAM controller,

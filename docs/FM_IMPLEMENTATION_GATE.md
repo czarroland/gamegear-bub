@@ -1,13 +1,13 @@
 # FM implementation gate
 
-Status: research checkpoint, 2026-10-16. The public `v0.1.0-alpha.5` core has
+Status: research checkpoint, 2026-10-16. The public `v0.1.0-alpha.6` core has
 PSG audio only. No FM source or FM-enabled bitstream is included in this repo or
 its releases.
 
 The target remains one Game Gear / Master System bitstream with YM2413 FM,
 normal PSG mixing, and a selectable SMS FM setting. FM register writes and
 `$F2` detection/mute behavior must match the pinned MiSTer source before the
-Gamebub audio adapter is evaluated. The hardware report for alpha.5 does not
+Gamebub audio adapter is evaluated. The hardware report for alpha.5/alpha.6 does not
 cover FM.
 
 ## Source routes examined
@@ -47,6 +47,17 @@ constitute a legal determination.
   The runner reproduced that exact hash on 2026-10-16. Startup unknown-value
   warnings end by 385 ns. This is one smoke trace, not a validated parity
   oracle or an FM-enabled Gamebub build.
+- The same pinned OPLL now produces a second deterministic CSV from original
+  stimuli in `tests/tb_fm_vectors.vhdl`: all 15 preset instruments with key
+  on/off, a user instrument assigned to all nine melodic channels, selective
+  key release and reset, plus rhythm entry, simultaneous percussion, partial
+  release and exit. Each register pair is separated by two complete 72-enable
+  OPLL frames. The CSV records both the raw unsigned 14-bit value and its
+  signed interpretation. GHDL 4.1 produced 1,520 samples with SHA-256
+  `5636351bd79a3d803214d8ded633a375d050a770ae9807c0e752bffff93155c1`.
+  This tests the OPLL component directly. It does not cover the shared Sega
+  system's `$F0`/`$F1` decode, `$F2` control/readback, PSG mixing, region
+  policy, Gamebub resampling, or DAC/HDMI delivery.
 - The Gamebub 48 kHz adapter now divides each signed accumulation by its
   actual 1,118- or 1,119-clock window length. An independent sample-by-sample
   test model passed 107 varying windows, and the signed-audio regression
@@ -58,9 +69,10 @@ constitute a legal determination.
 1. Resolve the selected FM source's redistribution terms and the patched
    framework's combined-work obligations before any public FM source,
    bitstream, or prerelease. A private experiment does not clear this gate.
-2. Build a deterministic native FM reference trace from the pinned MiSTer
-   implementation: bus writes, instruments, rhythm, `$F2`, region, FM toggle,
-   and GG→SMS→GG resets. Pin input bytes and clock alignment.
+2. Extend the deterministic reference beyond the direct OPLL vectors into
+   the pinned MiSTer system: `$F0`/`$F1` bus writes, `$F2` detection and
+   mixing, region, live FM toggle, and GG→SMS→GG resets. Pin input bytes and
+   clock alignment.
 3. Integrate one licensed FM engine into the shared machine, preserve the
    native bus and mixer policy, and compare PCM against the reference. Measure
    the Gamebub audio adapter separately.

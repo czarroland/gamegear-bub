@@ -1,5 +1,26 @@
 # GG and SMS Bub — rev4 hardware diagnostic checkpoint
 
+## 2026-10-17 community alpha.6 feedback and Auto reproduction
+
+A community tester reports that the alpha.6 build has loaded the games they
+tried, but some `.sms` titles start only when **System** is forced to **Master
+System**. The tester has not yet supplied the ROM names, hashes, firmware
+version, or run lengths, so this is a limited compatibility report. Another
+tester reports that the published source built locally; this is not an
+independent hardware result. The shared ROM picker remembers the last used
+folder for this one core, which adds navigation when GG and SMS ROMs live in
+separate directories. Community members demonstrated a two-ID workaround,
+but the planned release still targets one selectable core and one bitstream.
+
+The pinned v1.1-beta firmware does not pass `.sms` or `.gg` extensions to the
+core. The integrated SoC test now loads a headerless SMS diagnostic with no
+hint and confirms that Auto halts with error 8; after a fresh load with the
+SMS hint, the same image selects SMS and reaches the normal runtime checks.
+The extended test passes in Verilator. The companion firmware source patch
+contains the guarded extension hint, but no firmware build or hardware check
+has established this Auto fix on the handheld. Forced System remains the
+alpha.6 workaround.
+
 ## 2026-10-16 menu name package
 
 [`v0.1.0-alpha.6`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.6)

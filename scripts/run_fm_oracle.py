@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Reproduce a native VM2413 smoke trace without vendoring its restricted source.
+"""Reproduce native VM2413 register-stream traces without vendoring its source.
 
 The pinned MiSTer checkout must already exist locally. All copied/modified
 VM2413 files, compiler products, and the trace stay under ignored build/.
-This checks one keyed tone only; it is not FM parity or redistribution clearance.
+These fixed vectors are reference stimuli, not FM parity or redistribution
+clearance for a Gamebub bitstream.
 """
 
 import argparse
@@ -19,7 +20,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_TRACE_SHA256 = "5f930230e6a62c83708ec97ab97d7a39e77175d16a9cab346fda8df6d7513f6b"
+EXPECTED_VECTOR_SHA256 = "5636351bd79a3d803214d8ded633a375d050a770ae9807c0e752bffff93155c1"
 SAMPLE = re.compile(r"\(report note\): sample\s+(\d+)\s+(\d+)")
+VECTOR = re.compile(r"\(report note\): vector\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)")
 
 
 def run(command, log=None):
@@ -129,8 +132,23 @@ def main():
         for name in order:
             run([ghdl, "-a", *flags[1:], stage / name], log)
         run([ghdl, "-a", *flags[1:], ROOT / "tests/tb_fm_oracle.vhdl"], log)
+        run([ghdl, "-a", *flags[1:], ROOT / "tests/tb_fm_vectors.vhdl"], log)
         run([ghdl, "-e", *flags[1:], "tb_fm_oracle"], log)
+        run([ghdl, "-e", *flags[1:], "tb_fm_vectors"], log)
         simulation = run([ghdl, "-r", *flags[1:], "tb_fm_oracle", "--stop-time=110us"], log)
+        vector_rows = []
+        for scenario in (1, 2, 3):
+            output = run([ghdl, "-r", *flags[1:], "tb_fm_vectors",
+                          f"-gSCENARIO={scenario}", "--stop-time=1ms"], log)
+            if f"vector_done {scenario}" not in output:
+                raise RuntimeError(f"FM vector scenario {scenario} did not finish")
+            rows = [tuple(map(int, values)) for values in VECTOR.findall(output)]
+            expected_rows = {1: 960, 2: 280, 3: 280}[scenario]
+            if len(rows) != expected_rows or any(row[0] != scenario for row in rows):
+                raise RuntimeError(f"FM vector scenario {scenario}: expected {expected_rows} samples, found {len(rows)}")
+            if len({row[3] for row in rows}) < 8:
+                raise RuntimeError(f"FM vector scenario {scenario} produced insufficient variation")
+            vector_rows.extend(rows)
     samples = [(int(cycle), int(value)) for cycle, value in SAMPLE.findall(simulation)]
     if len(samples) != 125 or len(set(cycle for cycle, _ in samples)) != 125:
         raise RuntimeError(f"Expected 125 unique FM samples, found {len(samples)}")
@@ -142,8 +160,19 @@ def main():
     digest = hashlib.sha256(trace.read_bytes()).hexdigest()
     if digest != EXPECTED_TRACE_SHA256:
         raise RuntimeError(f"FM reference trace changed: {digest}; expected {EXPECTED_TRACE_SHA256}")
+    vector_trace = ROOT / "build/fm-oracle-vectors.csv"
+    with vector_trace.open("w", newline="") as output:
+        writer = csv.writer(output, lineterminator="\n")
+        writer.writerow(["scenario", "phase", "cycle", "mixout_unsigned", "mixout_signed"])
+        for scenario, phase, cycle, value in vector_rows:
+            writer.writerow([scenario, phase, cycle, value,
+                             value - 16384 if value & 8192 else value])
+    vector_digest = hashlib.sha256(vector_trace.read_bytes()).hexdigest()
+    if vector_digest != EXPECTED_VECTOR_SHA256:
+        raise RuntimeError(f"FM vector trace changed: {vector_digest}; expected {EXPECTED_VECTOR_SHA256}")
     print(f"PASS pinned VM2413 tone trace: {len(samples)} samples, SHA-256 {digest}")
-    print(f"Private outputs: {trace}, {log_path}")
+    print(f"PASS pinned VM2413 vector trace: {len(vector_rows)} samples, SHA-256 {vector_digest}")
+    print(f"Private outputs: {trace}, {vector_trace}, {log_path}")
 
 
 if __name__ == "__main__":
