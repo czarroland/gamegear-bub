@@ -13,7 +13,7 @@ on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
 | Native Game Gear, stereo PSG, Sega mapper | Runs diagnostic and Sonic Triple Trouble on rev4; broader compatibility pending |
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Outside this implementation slice |
-| Master System | GG/SMS NTSC alpha.4 trial fails on hardware; alpha.5 display handoff candidate is published and installed, awaiting gameplay confirmation |
+| Master System | GG/SMS NTSC alpha.4 trial fails on hardware; alpha.5 is published and installed, with an initial successful rev4 play check and broader compatibility still open |
 | Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; hardware smoke testing passed. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
@@ -78,8 +78,8 @@ This framebuffer path generated Chisel RTL and the ownership revision
 passed a rev4 route with +0.168 ns setup and +0.049 ns hold slack. The later
 alpha.4 package passed timing and was installed, but games stalled on their
 first screen in hardware tests. The alpha.5 package changes the LCD handoff
-and capture edge, passed timing, and is published and installed for on-device
-verification.
+and capture edge, passed timing, and is published and installed. An initial
+rev4 play check reports it working well; exact ROMs/settings are not recorded.
 The first native-versus-staged MiSTer decoder fixture passes in GHDL for
 cartridge selection and bank addressing, including the `$3E` no-BIOS SMS fix.
 This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
@@ -97,7 +97,7 @@ line and epoch flush. The next working SoC revision now applies the selected
 GG/SMS profile after the ROM bus drains and a cold restart completes. It is
 passing integrated simulation and rev4 timing. The alpha.4 GG/SMS hardware
 package is a diagnostic prerelease and is not playable. The alpha.5 trial
-remains unqualified until GG and SMS gameplay is checked on the BUB.
+has an initial successful on-device report but no broad compatibility result.
 The loader must convey a
 guarded `.gg`/`.sms` type hint, with System Auto and a manual override. SMS
 requires its full palette, 256-column raster with 192/224/240-line modes,

@@ -11,7 +11,9 @@ matching the local package. The bitstream SHA-256 is
 `0db7c3113fa11391654b0d7ba51dff70d86b4022b45db4404687e47ee14f58ba`.
 All 13 package files were installed on the mounted BUB card and read back
 byte for byte. The alpha.3 rollback bitstream, settings, and saves were
-preserved. Actual GG and SMS gameplay on this build remains unverified.
+preserved. An initial Gamebub rev4 play check on 2026-10-16 reports the build
+working well. Exact ROM variants, size settings, duration, and save behavior
+were not recorded; broader GG/SMS compatibility remains open.
 
 ## 2026-10-16 SMS NTSC community prerelease
 

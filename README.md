@@ -1,5 +1,8 @@
 # Game Gear on Gamebub
 
+**AI-developed port:** OpenAI Codex writes this port's implementation, tests,
+and release packages with human direction and testing on Gamebub hardware.
+
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
 rev4. The GG-only alpha.3 release runs native Game Gear games: the diagnostic
 ROM and Sonic Triple Trouble have both run on hardware. It includes the Sega
@@ -24,7 +27,8 @@ was released and installed, but hardware tests found that games do not
 progress beyond their first screen. The
 [alpha.5 GG/SMS display handoff trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.5)
 is published and installed on the BUB card for hardware verification of a
-candidate fix. Alpha.3 remains the playable GG build until that trial passes.
+candidate fix. An initial rev4 play check reports it working well, with exact
+ROMs and settings not yet recorded. Alpha.3 remains the known-good GG rollback.
 PAL and FM remain later work. Earlier
 4× and 3.5× trials remain documented as historical results.
 
