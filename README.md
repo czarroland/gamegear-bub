@@ -1,5 +1,7 @@
 # Game Gear on Gamebub
 
+**AI-developed port:** OpenAI Codex writes this port's implementation, tests, and release packages with human direction and testing on Gamebub hardware.
+
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
 rev4. The current core runs native Game Gear games: the diagnostic ROM and Sonic
 Triple Trouble have both run on hardware. It includes the Sega CPU, VDP and

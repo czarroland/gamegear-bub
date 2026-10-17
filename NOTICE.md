@@ -1,5 +1,7 @@
 # Source notices
 
+This Gamebub port is developed with OpenAI Codex, an AI coding agent. Human hardware testing informs the implementation. This attribution does not change the licenses or notices of the upstream components listed below.
+
 New Game Gear adapter, memory, test, and tooling code in this port is provided
 under GPL-3.0-or-later; see `LICENSE-GPL-V3`. Original upstream files retain
 their original notices and licensing. The source manifests and patches identify
