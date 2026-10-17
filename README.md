@@ -1,4 +1,4 @@
-# Game Gear on Gamebub
+# GG and SMS Bub
 
 **Original Game Gear core credit:** [GreyRogue](https://github.com/greyrogue)
 authored [Game Gear support for the MiSTer Sega Master System core](https://github.com/MiSTer-devel/SMS_MiSTer/pull/8),
@@ -9,6 +9,8 @@ and to Ben's earlier Papilio Master System implementation. See [source notices](
 
 **AI-developed Gamebub port:** OpenAI Codex writes the Gamebub adaptation, tests, and release packages with human direction and testing on Gamebub hardware.
 
+**Current unified prerelease:** [GG and SMS Bub alpha.6](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.6) uses one GG/SMS NTSC core entry and the tested alpha.5 FPGA bitstream under the simpler menu name. Its source is on the [unified development branch](https://github.com/czarroland/gamegear-bub/tree/codex/sega8bit-unified). FM audio and PAL timing remain in development. This default branch retains the earlier GG-only source baseline.
+
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
 rev4. The current core runs native Game Gear games: the diagnostic ROM and Sonic
 Triple Trouble have both run on hardware. It includes the Sega CPU, VDP and
@@ -17,7 +19,7 @@ stereo audio, input mapping, and 32 KiB cartridge RAM. Battery save export has
 been verified on hardware; import verification is in progress. The source
 repository does not include a bitstream, firmware UF2, retail ROM, or BIOS.
 
-The current rev4 development package is the
+The GG-only package from this default-branch baseline is the
 [v0.1.0-alpha.2 pre-release](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.2).
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the `GameGear.Dev` core ID and requires the custom core-loading firmware.
