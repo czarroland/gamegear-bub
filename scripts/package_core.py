@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--core-id',help='Package under a separate core ID for hardware trials')
     parser.add_argument('--core-name',help='Display name for a separate hardware trial')
     parser.add_argument('--source-commit',help='Public source commit for this exact bitstream build')
+    parser.add_argument('--package-source-commit',help='Public source commit for package metadata when repackaging an existing bitstream')
     args=parser.parse_args()
     bitstream=args.bitstream.read_bytes()
     if not bitstream.startswith(b'\x00\x09\x0f\xf0\x0f\xf0\x0f\xf0\x0f\xf0\x00\x00\x01a'):
@@ -80,6 +81,7 @@ def main():
         'crc32':f'{zlib.crc32(bitstream):08x}',
         'sha256':hashlib.sha256(bitstream).hexdigest(),
         'source_bitstream':args.bitstream.name,
-        'source_commit':args.source_commit},indent=2)+'\n')
+        'source_commit':args.source_commit,
+        'package_source_commit':args.package_source_commit or args.source_commit},indent=2)+'\n')
     print(folder.resolve())
 if __name__=='__main__':main()
