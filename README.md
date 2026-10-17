@@ -13,6 +13,10 @@ and to Ben's earlier Papilio Master System implementation. See [source notices](
 
 **Current alpha.6 Auto limitation:** The v1.1-beta firmware does not pass `.gg`/`.sms` filename extensions to the core. Auto works only when a ROM has a consistent `TMR SEGA` header. For an `.sms` title that does not start under Auto, choose **System: Master System** and reload it; choose **Game Gear** for an unrecognized `.gg` title. The extension-hint firmware patch on the development branch is source only and has not been installed or verified on a Bub. The single ROM picker remembers its last folder, so switching between separate GG and SMS folders requires navigation.
 
+## Why Game Gear and Master System share one core
+
+The [MiSTer core this port comes from](https://github.com/MiSTer-devel/SMS_MiSTer) already runs both systems in one engine. They share much of the CPU, video, cartridge, and PSG sound path; the Gamebub port changes the machine profile at runtime for the screen, palette, controls, and audio. One bitstream lets those parts be reused instead of packaging two emulator engines. Some games sold for Game Gear actually run in [Master System compatibility mode](https://www.smspower.org/Tags/SMS-GG), so both modes are needed for accurate Game Gear coverage. Upstream notes that those titles may need an `.sms` extension; with the current Gamebub firmware, select **System: Master System** manually instead. The current build has one ROM picker and one remembered folder, as described above.
+
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
 rev4. The current core runs native Game Gear games: the diagnostic ROM and Sonic
 Triple Trouble have both run on hardware. It includes the Sega CPU, VDP and
