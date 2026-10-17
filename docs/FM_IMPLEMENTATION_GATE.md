@@ -40,6 +40,11 @@ constitute a legal determination.
   Startup unknown-value warnings end by 385 ns. This is one smoke trace, not
   a validated parity oracle. Neither the changed copy nor testbench is in
   source control.
+- The Gamebub 48 kHz adapter now divides each signed accumulation by its
+  actual 1,118- or 1,119-clock window length. An independent sample-by-sample
+  test model passed 107 varying windows, and the signed-audio regression
+  passed. This corrects a small PSG gain error and prepares the shared adapter
+  for FM; it does not validate FM synthesis or the DAC/HDMI transport.
 
 ## Release gate and next implementation steps
 

@@ -10,6 +10,10 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
     localparam integer REM_WIDTH=$clog2(MEAN_CYCLES+1)+1;
     localparam integer COUNT_WIDTH=$clog2(ACC_WIDTH+1);
     reg [31:0] phase=0;
+    // The 48 kHz phase accumulator yields either MEAN_CYCLES or one more
+    // input clock per window. Use the actual count for its signed mean.
+    reg [REM_WIDTH-1:0] window_count=0;
+    reg [REM_WIDTH-1:0] window_divisor=REM_WIDTH'(MEAN_CYCLES);
     reg signed [ACC_WIDTH-1:0] sum_left=0,sum_right=0;
     wire signed [ACC_WIDTH-1:0] next_left=sum_left+$signed({{(ACC_WIDTH-16){raw_left[15]}},raw_left});
     wire signed [ACC_WIDTH-1:0] next_right=sum_right+$signed({{(ACC_WIDTH-16){raw_right[15]}},raw_right});
@@ -28,8 +32,8 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
     reg [REM_WIDTH-1:0] remainder_left=0,remainder_right=0;
     wire [REM_WIDTH-1:0] trial_left={remainder_left[REM_WIDTH-2:0],dividend_left[ACC_WIDTH-1]};
     wire [REM_WIDTH-1:0] trial_right={remainder_right[REM_WIDTH-2:0],dividend_right[ACC_WIDTH-1]};
-    wire take_left=trial_left>=REM_WIDTH'(MEAN_CYCLES);
-    wire take_right=trial_right>=REM_WIDTH'(MEAN_CYCLES);
+    wire take_left=trial_left>=window_divisor;
+    wire take_right=trial_right>=window_divisor;
     wire [ACC_WIDTH-1:0] quotient_next_left={quotient_shift_left[ACC_WIDTH-2:0],take_left};
     wire [ACC_WIDTH-1:0] quotient_next_right={quotient_shift_right[ACC_WIDTH-2:0],take_right};
     function automatic signed [15:0] clip(input signed [31:0] sample);
@@ -39,7 +43,8 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
     endfunction
     always @(posedge clk) begin
         if(reset) begin
-            phase<=0; sum_left<=0; sum_right<=0; left<=0; right<=0;
+            phase<=0; window_count<=0; window_divisor<=REM_WIDTH'(MEAN_CYCLES);
+            sum_left<=0; sum_right<=0; left<=0; right<=0;
             window_left<=0; window_right<=0; quotient_left<=0; quotient_right<=0;
             window_valid<=0; quotient_valid<=0; sample_tick<=0;
             divide_active<=0; bits_left<=0; negative_left<=0; negative_right<=0;
@@ -62,8 +67,8 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
             end else if(divide_active) begin
                 dividend_left<={dividend_left[ACC_WIDTH-2:0],1'b0};
                 dividend_right<={dividend_right[ACC_WIDTH-2:0],1'b0};
-                remainder_left<=take_left ? trial_left-REM_WIDTH'(MEAN_CYCLES) : trial_left;
-                remainder_right<=take_right ? trial_right-REM_WIDTH'(MEAN_CYCLES) : trial_right;
+                remainder_left<=take_left ? trial_left-window_divisor : trial_left;
+                remainder_right<=take_right ? trial_right-window_divisor : trial_right;
                 quotient_shift_left<=quotient_next_left;
                 quotient_shift_right<=quotient_next_right;
                 bits_left<=bits_left-1'b1;
@@ -82,11 +87,14 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
             end
             if(phase>=CLOCK_HZ-48000) begin
                 phase<=phase+48000-CLOCK_HZ;
+                window_divisor<=window_count+1'b1;
+                window_count<=0;
                 sum_left<=0; sum_right<=0;
                 window_left<=next_left; window_right<=next_right;
                 window_valid<=1;
             end else begin
                 phase<=phase+48000;
+                window_count<=window_count+1'b1;
                 sum_left<=mute ? 0 : next_left;
                 sum_right<=mute ? 0 : next_right;
             end
