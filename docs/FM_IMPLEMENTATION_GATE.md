@@ -30,16 +30,23 @@ constitute a legal determination.
   Verilator 5.020 linted its top and eight supporting Verilog files without a
   fatal error. Width warnings remain; this is not a parity or synthesis pass.
 - The pinned MiSTer VM2413 sources remain only in ignored
-  `build/upstream-sms`. A disposable copy with GHDL VHDL-93 syntax and binding
-  changes now compiles all 19 source files under GHDL 4.1 with
-  `-fsynopsys -fexplicit -C`. A private register-write simulation produced
+  `build/upstream-sms`. The original test stimulus and
+  `scripts/run_fm_oracle.py` are tracked; the restricted upstream files and
+  their disposable GHDL-compatible copies remain ignored. The runner verifies
+  all 19 source hashes and `OPLL.qip` against
+  `manifests/fm_oracle_sources.json`, then compiles them in dependency order
+  under GHDL 4.1 with `-fsynopsys -fexplicit -C`. From the repository root,
+  run `python3 scripts/run_fm_oracle.py` when GHDL is installed, or use the
+  existing local test container with
+  `docker run --rm --platform linux/amd64 -v "$PWD":/work -w /work gamegear-test:latest python3 scripts/run_fm_oracle.py`.
+  A private register-write simulation produced
   125 nonconstant samples from one keyed tone (`$30=$10`, `$10=$AA`,
   `$20=$15`) after the writes were held across complete chip frames. The
   unsigned `mixout` samples span 0–511; the local CSV SHA-256 is
   `5f930230e6a62c83708ec97ab97d7a39e77175d16a9cab346fda8df6d7513f6b`.
-  Startup unknown-value warnings end by 385 ns. This is one smoke trace, not
-  a validated parity oracle. Neither the changed copy nor testbench is in
-  source control.
+  The runner reproduced that exact hash on 2026-10-16. Startup unknown-value
+  warnings end by 385 ns. This is one smoke trace, not a validated parity
+  oracle or an FM-enabled Gamebub build.
 - The Gamebub 48 kHz adapter now divides each signed accumulation by its
   actual 1,118- or 1,119-clock window length. An independent sample-by-sample
   test model passed 107 varying windows, and the signed-audio regression
