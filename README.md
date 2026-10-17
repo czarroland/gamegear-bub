@@ -11,6 +11,8 @@ and to Ben's earlier Papilio Master System implementation. See [source notices](
 
 **Current unified prerelease:** [GG and SMS Bub alpha.6](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.6) uses one GG/SMS NTSC core entry and the tested alpha.5 FPGA bitstream under the simpler menu name. Its source is on the [unified development branch](https://github.com/czarroland/gamegear-bub/tree/codex/sega8bit-unified). FM audio and PAL timing remain in development. This default branch retains the earlier GG-only source baseline.
 
+**Current alpha.6 Auto limitation:** The v1.1-beta firmware does not pass `.gg`/`.sms` filename extensions to the core. Auto works only when a ROM has a consistent `TMR SEGA` header. For an `.sms` title that does not start under Auto, choose **System: Master System** and reload it; choose **Game Gear** for an unrecognized `.gg` title. The extension-hint firmware patch on the development branch is source only and has not been installed or verified on a Bub. The single ROM picker remembers its last folder, so switching between separate GG and SMS folders requires navigation.
+
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
 rev4. The current core runs native Game Gear games: the diagnostic ROM and Sonic
 Triple Trouble have both run on hardware. It includes the Sega CPU, VDP and
