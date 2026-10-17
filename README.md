@@ -1,4 +1,4 @@
-# Game Gear on Gamebub
+# GG and SMS Bub
 
 **Original Game Gear core credit:** [GreyRogue](https://github.com/greyrogue)
 added Game Gear support to the
@@ -14,7 +14,12 @@ implementation and the work of other MiSTer-devel contributors. See
 tests, and release packages with human direction and testing on Gamebub hardware.
 
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
-rev4. The GG-only alpha.3 release runs native Game Gear games: the diagnostic
+rev4. The current [GG and SMS Bub alpha.6 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.6)
+uses one GG/SMS NTSC core entry. This update changes the menu name while
+retaining the alpha.5 bitstream and its internal core ID, so existing settings
+continue to apply. FM audio and PAL timing remain unimplemented.
+
+The GG-only alpha.3 release runs native Game Gear games: the diagnostic
 ROM and Sonic Triple Trouble have both run on hardware. It includes the Sega
 CPU, VDP and JT89 sound engine, a Gamebub host loader, SDRAM controller,
 160×144 video, stereo audio, input mapping, and 32 KiB cartridge RAM. Battery
@@ -22,7 +27,7 @@ save export has been verified on hardware; import verification is in progress.
 The source repository does not include a bitstream, firmware UF2, retail ROM,
 or BIOS.
 
-The current playable Game Gear development package is the
+The separate GG-only rollback package is the
 [v0.1.0-alpha.3 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3).
 Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the separate `GameGear.Scale23` core ID and requires the existing
@@ -36,9 +41,9 @@ active viewport. Its
 was released and installed, but hardware tests found that games do not
 progress beyond their first screen. The
 [alpha.5 GG/SMS display handoff trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.5)
-is published and installed on the BUB card for hardware verification of a
-candidate fix. An initial rev4 play check reports it working well, with exact
-ROMs and settings not yet recorded. Alpha.3 remains the known-good GG rollback.
+received an initial successful rev4 play check, with exact ROMs and settings
+not yet recorded. Alpha.6 packages that same bitstream under the clearer menu
+name and is installed on the BUB card. Alpha.3 remains the GG-only rollback.
 PAL and FM remain later work. Earlier
 4× and 3.5× trials remain documented as historical results.
 

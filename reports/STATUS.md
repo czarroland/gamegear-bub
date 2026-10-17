@@ -1,4 +1,23 @@
-# Sega 8-bit port — rev4 hardware diagnostic checkpoint
+# GG and SMS Bub — rev4 hardware diagnostic checkpoint
+
+## 2026-10-16 menu name package
+
+[`v0.1.0-alpha.6`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.6)
+is a public prerelease whose menu name is **GG and SMS Bub**. The existing
+internal `Sega8bit.Dev` ID remains so saved settings keep their path. The
+package source commit is `b17062b412307cc49898b66432aac31286dcf4d0`;
+the bitstream source commit remains
+`13cb76b9cd948ddb1afdfe4cb4fb5459785b2366`. Its bitstream is identical
+to alpha.5, SHA-256
+`0db7c3113fa11391654b0d7ba51dff70d86b4022b45db4404687e47ee14f58ba`.
+The uploaded and locally built ZIP SHA-256 is
+`b08956c12abc8a80da4baa6f67caec99ac52af578de7fb22bd794a6c34cc47af`.
+All 13 ZIP files were copied to `/Volumes/BUB` and read back byte for byte;
+the existing settings file SHA-256 stayed
+`972829a6ae3e38dbe2ea66bda1ad31d3dcfe9b8368622f4b30ce0560389fe8d9`.
+The previous unified-core card files are backed up locally in ignored
+`build/card-backup-alpha6`. The menu label has not yet been observed on the
+handheld after this copy.
 
 ## 2026-10-16 GG/SMS display handoff hardware trial
 

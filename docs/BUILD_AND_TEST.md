@@ -1,11 +1,12 @@
-# Game Gear on Gamebub — rev4 build and hardware test record
+# GG and SMS Bub — rev4 build and hardware test record
 
 The published Game Gear alpha releases and earlier scaling trials are hardware
 test records. The diagnostic ROM and Sonic Triple Trouble run on rev4 under
 the GG-only build. The unified GG/SMS NTSC development branch uses one SoC and
-a shared 256×240 framebuffer. Its alpha.4 bitstream was released and installed,
-but hardware tests found that GG and SMS games do not progress past their first
-screen. Use alpha.3 for playable GG testing while this regression is investigated.
+a shared 256×240 framebuffer. Alpha.4 exposed a first-screen video regression;
+alpha.5 received an initial successful hardware play check. The alpha.6
+prerelease uses the same bitstream with the **GG and SMS Bub** menu name and
+is installed on the BUB SD card. Alpha.3 remains the GG-only rollback.
 FM and PAL remain later work. See `docs/SEGA_RUNTIME_ABI.md` for the unified
 package's registers, defaults, and compatibility limits; the records below
 describe the earlier GG-only hardware checkpoints.
