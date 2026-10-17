@@ -104,6 +104,8 @@ requires its full palette, 256-column raster with 192/224/240-line modes,
 Pause NMI and console Reset semantics. Runtime PAL/NTSC timing and a shared FM
 synthesizer must fit in that same bitstream. FM redistribution requires the
 licensing gate described in the implementation plan before any public build.
+The current [FM implementation gate](FM_IMPLEMENTATION_GATE.md) records the
+pinned source's restrictions, candidate alternatives, and private tool checks.
 
 `patches/firmware-load-type-hint.patch` is a companion source patch against the
 pinned core-loading firmware. It adds an optional, guarded extension hint and
