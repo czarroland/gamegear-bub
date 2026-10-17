@@ -28,6 +28,19 @@ source only and has not been installed or verified on a Bub. The one ROM
 picker remembers its last directory, so switching between separate GG and SMS
 folders currently requires navigation.
 
+## Why Game Gear and Master System share one core
+
+The [MiSTer core this port comes from](https://github.com/MiSTer-devel/SMS_MiSTer)
+already runs both systems in one engine. They share much of the CPU, video,
+cartridge, and PSG sound path; the Gamebub port changes the machine profile at
+runtime for the screen, palette, controls, and audio. One bitstream lets those
+parts be reused instead of packaging two emulator engines. Some games sold for
+Game Gear actually run in [Master System compatibility mode](https://www.smspower.org/Tags/SMS-GG),
+so both modes are needed for accurate Game Gear coverage. Upstream notes that
+those titles may need an `.sms` extension; with the current Gamebub firmware,
+select **System: Master System** manually instead. The current build has one
+ROM picker and one remembered folder, as described above.
+
 The GG-only alpha.3 release runs native Game Gear games: the diagnostic
 ROM and Sonic Triple Trouble have both run on hardware. It includes the Sega
 CPU, VDP and JT89 sound engine, a Gamebub host loader, SDRAM controller,
