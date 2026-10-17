@@ -30,11 +30,16 @@ constitute a legal determination.
   Verilator 5.020 linted its top and eight supporting Verilog files without a
   fatal error. Width warnings remain; this is not a parity or synthesis pass.
 - The pinned MiSTer VM2413 sources remain only in ignored
-  `build/upstream-sms`. A local GHDL 4.1 analysis with VHDL-93,
-  `-fsynopsys -fexplicit -C`, and package-first order reached
-  `controller.vhd` and stopped on `ch_type'range` and incomplete case choices.
-  Identifier and syntax portability work is still needed for an independent
-  private oracle. No modified copy has been added to source control.
+  `build/upstream-sms`. A disposable copy with GHDL VHDL-93 syntax and binding
+  changes now compiles all 19 source files under GHDL 4.1 with
+  `-fsynopsys -fexplicit -C`. A private register-write simulation produced
+  125 nonconstant samples from one keyed tone (`$30=$10`, `$10=$AA`,
+  `$20=$15`) after the writes were held across complete chip frames. The
+  unsigned `mixout` samples span 0–511; the local CSV SHA-256 is
+  `5f930230e6a62c83708ec97ab97d7a39e77175d16a9cab346fda8df6d7513f6b`.
+  Startup unknown-value warnings end by 385 ns. This is one smoke trace, not
+  a validated parity oracle. Neither the changed copy nor testbench is in
+  source control.
 
 ## Release gate and next implementation steps
 
