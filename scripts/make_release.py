@@ -62,6 +62,11 @@ the known-good GG rollback.
 Source commit: {args.source_commit}
 Bitstream SHA-256: {sha256(args.bitstream)}
 
+Original Game Gear support in the MiSTer Sega core was authored by GreyRogue:
+https://github.com/MiSTer-devel/SMS_MiSTer/pull/8
+This is an AI-developed Gamebub port of the MiSTer engine, with human
+direction and hardware testing. See NOTICE.md for full upstream credits.
+
 Extract this ZIP at the root of the BUB SD card. It adds cores/Sega8bit.Dev
 and original, redistributable test ROMs under roms/GameGear and
 roms/MasterSystem. Keep the existing GameGear.Scale23 package for rollback.

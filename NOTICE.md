@@ -1,16 +1,27 @@
 # Source notices
 
+**Original Game Gear core credit:**
+[GreyRogue](https://github.com/greyrogue) authored the
+[Game Gear support](https://github.com/MiSTer-devel/SMS_MiSTer/pull/8)
+merged into the MiSTer Sega Master System core in November 2018, followed by
+[Game Gear button](https://github.com/MiSTer-devel/SMS_MiSTer/commit/1118108)
+and [stereo audio](https://github.com/MiSTer-devel/SMS_MiSTer/commit/7ae2d7a)
+fixes. The Sega engine used here is a port and adaptation of that upstream
+work, not an emulator core originated by this repository. Credit also belongs
+to the [MiSTer-devel SMS/GG contributors](https://github.com/MiSTer-devel/SMS_MiSTer)
+and to Ben's earlier Papilio Sega Master System implementation, which the
+MiSTer repository identifies as its starting point.
+
 This Gamebub port is developed with OpenAI Codex, an AI coding agent. Human
-hardware testing informs the implementation. This attribution does not change
-the licenses or notices of the upstream components listed below.
+hardware testing informs the adaptation. That attribution does not replace
+upstream authorship or change the licenses and notices below.
 
 New Game Gear adapter, memory, test, and tooling code in this port is provided
 under GPL-3.0-or-later; see `LICENSE-GPL-V3`. Original upstream files retain
 their original notices and licensing. The source manifests and patches identify
 every selected original Sega file and its staged derivative.
 
-The Sega implementation originates from Ben's Papilio Sega Master System core,
-as credited in SMS_MiSTer's upstream README. T80 retains its embedded source
+T80 retains its embedded source
 notices. JT89 retains Jose Tejada Gomez's GPL-3.0-or-later notices. The selected
 engine subset preserves the upstream author's source text; headerless upstream
 files are recorded by their exact repository and revision, not relicensed here.
