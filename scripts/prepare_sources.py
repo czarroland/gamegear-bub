@@ -83,6 +83,25 @@ def patch_system(s):
     replace_once('\t\tCEN\t\t=> ce_z80,', '\t\tCEN\t\t=> ce_z80,\n\t\tWAIT_n => rom_wait_n,')
     return s
 
+def patch_video(s):
+    """Correct the pinned PAL 240-line counter to the documented 313 lines.
+
+    The upstream 266->482 skip yields 297 lines. For PAL 240 lines, the V
+    counter is 00-FF, 00-0A, D2-FF: 267 + 46 = 313 scanlines.
+    Keep the vendored snapshot byte-for-byte and apply this only to staging.
+    """
+    replacements = (
+        ('conv_std_logic_vector(482, 9)', 'conv_std_logic_vector(466, 9)', 2),
+        ('conv_std_logic_vector(482,9)', 'conv_std_logic_vector(466,9)', 1),
+        ('elsif vcount = 482 then', 'elsif vcount = 466 then', 1),
+        ('elsif vcount = 485 then', 'elsif vcount = 469 then', 1),
+    )
+    for old, new, expected in replacements:
+        if s.count(old) != expected:
+            raise ValueError(f'Expected {expected} PAL 240-line video anchors: {old!r}')
+        s = s.replace(old, new)
+    return s
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--upstream', type=Path)
@@ -129,7 +148,7 @@ def main():
             text = raw.decode('utf-8').replace('\r\n','\n')
         except UnicodeDecodeError as error:
             raise ValueError(f'Unsupported source encoding: rtl/{rel}') from error
-        patched = patch_system(text) if rel == 'system.vhd' else text
+        patched = patch_system(text) if rel == 'system.vhd' else patch_video(text) if rel == 'video.vhd' else text
         # Vivado unifies VHDL and Verilog library names. The upstream package
         # named jt89 shadows the Verilog jt89 module, leaving its component a
         # black box. Keep the component name and rename only the package.

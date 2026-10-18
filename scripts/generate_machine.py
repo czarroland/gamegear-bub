@@ -17,7 +17,7 @@ def main():
       'j1_up':'not buttons(0)','j1_down':'not buttons(1)','j1_left':'not buttons(2)',
       'j1_right':'not buttons(3)','j1_tl':'not buttons(4)','j1_tr':'not buttons(5)',
       'pause':'not pause_pressed','soft_reset':'console_reset','region':'region',
-      'pal':'tv_pal',
+      'pal':'tv_pal','fm_ena':'fm_enabled',
       'j1_th':"'1'", 'j2_up':"'1'",'j2_down':"'1'",'j2_left':"'1'",'j2_right':"'1'",
       'j2_tl':"'1'",'j2_tr':"'1'",'j2_th':"'1'",'gg_link_in':"(others => '1')",
       'mapper_lock':'force_sega','mapper_codies_force':'force_codies',
@@ -49,7 +49,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity gamegear_machine is
   port(clk,reset_n,clear_wram,freeze:in std_logic;
-       machine_sms,tv_pal,pause_pressed,console_reset:in std_logic;
+       machine_sms,tv_pal,fm_enabled,pause_pressed,console_reset:in std_logic;
        ce_cpu,ce_vdp,ce_pix,ce_sp,rom_wait_n:in std_logic;
        buttons:in std_logic_vector(6 downto 0); region:in std_logic;
        mapper:in std_logic_vector(3 downto 0);

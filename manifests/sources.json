@@ -160,7 +160,7 @@
       "sha256": "a8fe0918542739ed44e520d9df9d32446801d3b5a8bb46e420da54fc831361c0",
       "newline_normalization": "CRLF to LF",
       "staged": "rtl/generated/video.vhdl",
-      "staged_sha256": "6df89ba99db4a6728f7740cf58a175c45e6e593aef1cb84dceb9a2112e71064e"
+      "staged_sha256": "848a110c5603a8f985c475575eb69ab3182d727985021a4633827f55d6c25309"
     },
     {
       "upstream": "rtl/system.vhd",

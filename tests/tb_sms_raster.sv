@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 module tb_sms_raster;
     parameter integer HEIGHT=224;
+    parameter integer PAL=0;
     reg clk=0; always #10 clk=~clk;
     reg reset_n=0,clear_wram=0,load_we=0;
     reg [23:0] load_address=0;
@@ -23,7 +24,7 @@ module tb_sms_raster;
     wire [15:0] frame_id;
     gg_enables enables(clk,1'b0,ce_cpu,ce_vdp,ce_pix,ce_sp);
     gamegear_machine dut(.clk(clk),.reset_n(reset_n),.clear_wram(clear_wram),.freeze(1'b0),
-        .machine_sms(1'b1),.tv_pal(1'b0),.pause_pressed(1'b0),.console_reset(1'b0),
+        .machine_sms(1'b1),.tv_pal(PAL[0]),.fm_enabled(1'b0),.pause_pressed(1'b0),.console_reset(1'b0),
         .ce_cpu(ce_cpu),.ce_vdp(ce_vdp),.ce_pix(ce_pix),.ce_sp(ce_sp),.rom_wait_n(1'b1),
         .buttons(7'd0),.region(1'b0),.mapper(4'd1),
         .load_we(load_we),.load_address(load_address),.load_data(load_data),
@@ -34,7 +35,8 @@ module tb_sms_raster;
         .debug_cpu(debug_cpu),.debug_vdp(debug_vdp),.debug_cram(debug_cram),
         .debug_io(debug_io),.debug_mapper(debug_mapper));
     gg_video viewport(.clk(clk),.reset(!reset_n),.run(reset_n && !wram_busy),
-        .freeze(1'b0),.ce_pix(ce_pix),.machine_sms(1'b1),.tv_pal(1'b0),.epoch(8'd1),
+        .freeze(1'b0),.ce_pix(ce_pix),.machine_sms(1'b1),.tv_pal(PAL[0]),.epoch(8'd1),
+        .overlay_active(1'b0),.overlay_step(3'd0),
         .color(color),.native_hblank(hblank),.native_vblank(vblank),
         .red(),.green(),.blue(),.data_enable(),.hblank(),.vblank(),
         .frame_complete(frame_complete),.frame_valid(frame_valid),
@@ -43,8 +45,13 @@ module tb_sms_raster;
         .completed_tv_pal(completed_tv_pal),.frame_id(frame_id));
 
     integer active_pixels=0,active_rows=0,line_pixels=0,complete_frames=0;
+    integer system_cycles=0,last_frame_cycle=0;
+    // PAL 240-line mode uses the staged 266->466 correction (D2-FF) so all
+    // PAL modes have 313 lines; the vendored MiSTer snapshot is unchanged.
+    localparam integer FRAME_LINES=PAL ? 313 : 262;
     reg previous_hblank=1,previous_vblank=1,frame_started=0;
     always @(posedge clk) if(reset_n) begin
+        system_cycles=system_cycles+1;
         if(previous_vblank && !vblank) frame_started=1;
         if(frame_started && ce_pix && !hblank && !vblank) begin
             active_pixels=active_pixels+1;
@@ -60,6 +67,10 @@ module tb_sms_raster;
             if(complete_frames>0 && (active_rows!=HEIGHT || active_pixels!=256*HEIGHT))
                 $fatal(1,"SMS %0d-line mode: frame has %0d rows/%0d pixels",
                     HEIGHT,active_rows,active_pixels);
+            if(last_frame_cycle!=0 && system_cycles-last_frame_cycle!=342*FRAME_LINES*10)
+                $fatal(1,"SMS %0d-line PAL=%0d cadence was %0d clocks",
+                    HEIGHT,PAL,system_cycles-last_frame_cycle);
+            last_frame_cycle=system_cycles;
             complete_frames=complete_frames+1;
             active_rows=0;
             active_pixels=0;
@@ -69,7 +80,8 @@ module tb_sms_raster;
     end
     integer i;
     initial begin
-        if(HEIGHT==224) $readmemh("diagnostics/sms-raster-224.hex",rom);
+        if(HEIGHT==192) $readmemh("diagnostics/sms-raster-192.hex",rom);
+        else if(HEIGHT==224) $readmemh("diagnostics/sms-raster-224.hex",rom);
         else if(HEIGHT==240) $readmemh("diagnostics/sms-raster-240.hex",rom);
         else $fatal(1,"Unsupported test height %0d",HEIGHT);
         repeat(20) @(negedge clk);
@@ -79,13 +91,13 @@ module tb_sms_raster;
         end
         load_we=0;
         repeat(20) @(negedge clk); reset_n=1;
-        repeat(2200000) @(negedge clk);
+        repeat(PAL ? 2750000 : 2200000) @(negedge clk);
         if(complete_frames<2 || !frame_valid || active_width!==9'd256 ||
            active_height!==HEIGHT || completed_epoch!==8'd1 ||
-           !completed_machine_sms || completed_tv_pal || frame_id==0)
-            $fatal(1,"SMS %0d-line viewport failed: frames=%0d valid=%b %0dx%0d",
-                HEIGHT,complete_frames,frame_valid,active_width,active_height);
-        $display("PASS real SMS %0d-line native raster and completed viewport",HEIGHT);
+           !completed_machine_sms || completed_tv_pal!==PAL[0] || frame_id==0)
+            $fatal(1,"SMS %0d-line PAL=%0d viewport failed: frames=%0d valid=%b %0dx%0d",
+                HEIGHT,PAL,complete_frames,frame_valid,active_width,active_height);
+        $display("PASS real SMS %0d-line PAL=%0d native raster and completed viewport",HEIGHT,PAL);
         $finish;
     end
     initial begin #100000000; $fatal(1,"SMS raster test timed out"); end

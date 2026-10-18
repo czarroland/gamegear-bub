@@ -16,7 +16,9 @@ if {[string first "videoViewport_activeWidth" $core_rtl] < 0 ||
 file mkdir $output
 # The Apple Silicon Docker VM has 4 GiB of RAM; cap Vivado's Linux default
 # thread count to avoid swapping heavily during synthesis and implementation.
-set_param general.maxThreads 2
+set threads [expr {[info exists ::env(GG_VIVADO_THREADS)] ? $::env(GG_VIVADO_THREADS) : 2}]
+if {$threads < 1 || $threads > 2} {error "GG_VIVADO_THREADS must be 1 or 2"}
+set_param general.maxThreads $threads
 create_project -in_memory -part xc7a100tcsg324-1
 set_property XPM_LIBRARIES {XPM_CDC XPM_FIFO XPM_MEMORY} [current_project]
 set_property verilog_define {BOARD_REV_4=1} [current_fileset]
@@ -49,6 +51,7 @@ foreach name {
 read_xdc [file join $root framework verilog handheld rev_4.xdc]
 read_xdc [file join $root framework verilog handheld common.xdc]
 read_xdc [file join $root rtl platform gg_sdram.xdc]
+read_xdc [file join $root rtl platform gg_pal_clocks.xdc]
 synth_design -top top_handheld -part xc7a100tcsg324-1
 report_utilization -hierarchical -file [file join $output utilization_synth.rpt]
 opt_design

@@ -1,13 +1,13 @@
 # Sega 8-bit development core ABI (SEG2)
 
-This describes the unified GG/SMS NTSC development bitstream. The public
+This describes the unified GG/SMS NTSC/PAL development bitstream. The public
 Game Gear alpha.3 package retains its earlier `GGB1` ABI and core ID.
 
 | Offset | Access | Meaning |
 | --- | --- | --- |
 | `0x00` | Read | `0x53454732` (`SEG2`) |
 | `0x04` | Read | `0x00020000` ABI version |
-| `0x08` | Read | Capability bits: 0 GG, 1 stereo, 2 cartridge SRAM, 3 diagnostics, 4 SMS NTSC |
+| `0x08` | Read | Capability bits: 0 GG, 1 stereo, 2 cartridge SRAM, 3 diagnostics, 4 SMS, 5 PAL |
 | `0x0c` | Read | Active machine: 0 none, 1 GG, 2 SMS |
 | `0x10` / `0x14` | Read/write | Region and mapper, retained setting IDs 1 and 2 |
 | `0x18` | Read | Fixed storage capacity: width 256, height 240 |
@@ -16,7 +16,11 @@ Game Gear alpha.3 package retains its earlier `GGB1` ABI and core ID.
 | `0x28` | Read | Latest completed active width/height; zero when the frame tracker is invalid |
 | `0x2c` | Read/write | Requested System: 0 Auto, 1 GG, 2 SMS; setting ID 6 |
 | `0x30` | Read/write | Loader type hint: 0 unknown, 1 GG, 2 SMS; write only after ROM load start and before its first byte |
-| `0x38` | Read/write | SMS size: 1 sharp 2× (default), 0 sharp 3× crop; other values normalize to 1; setting ID 8 |
+| `0x38` | Read/write | SMS size: 1 sharp 2× (default), 0 sharp 3× crop, 2 sharp 4× crop; other values normalize to 1; setting ID 8 |
+| `0x3c` | Read/write | SMS TV: 0 NTSC (default), 1 PAL; setting ID 9. Changes restart the machine profile |
+| `0x40` | Write/read | Write 1 to open the six-step on-screen press-to-bind mapper; write 2 to restore default bindings. Read active and current step. Setting IDs 10 and 12 |
+| `0x44` | Read/write | SMS Select: 0 disabled (default), 1 hold for one second to pulse console Reset. Setting ID 11 |
+| `0x48` | Read/write | Swap mapped A/B: 0 normal (default), 1 swapped. Setting ID 13 |
 | `0x110` | Read | Last host error, or 8 while System Auto has unresolved ROM type |
 | `0x118` | Read | Type evidence: selected type bits 1:0, source bits 3:2 (1 override, 2 hint, 3 header), header bits 5:4, header-conflict bit 6 |
 | `0x120` | Read | Last completed frame's valid, TV, system, epoch and frame ID (development diagnostic) |
@@ -37,10 +41,21 @@ System Auto uses the current load's extension hint first, then a consistent
 `TMR SEGA` header. It does not guess from ROM size. The optional hint metadata
 is ignored by the pinned older firmware; under that firmware a headerless ROM
 needs a forced System setting. Unresolved Auto remains halted, with profile
-error and code 8 available for diagnostics. The current image has **SMS NTSC
-only**. PAL clock selection and FM synthesis are not offered by this ABI or
-package yet. SMS 3× intentionally crops the top and bottom on the LCD and
-also crops eight source columns on each side of 720-pixel HDMI output.
+error and code 8 available for diagnostics. The PAL profile selects an
+approximately 53.205128 MHz system clock and a 313-line native frame for SMS.
+PAL ROMs and the included raster diagnostics have been played on the separate
+local PAL trial. The next combined build still requires its own hardware test.
+FM synthesis is not offered by this ABI or package yet. SMS 3× crops the top
+and bottom on the LCD and eight source columns on each side of 720-pixel HDMI.
+SMS 4× displays a 180×120 source viewport; L moves the picture up one source
+pixel and R moves it down, with bounds set by the current native height.
+
+The on-screen mapper captures one physical D-pad or A/B/X/Y press for each of
+Up, Down, Left, Right, A and B. Start exits; Select keeps the current binding
+and advances. It suspends gameplay controls while visible. Its bindings are
+session state and reset at core power-up. The separate Swap A/B menu setting
+is stored by the firmware. SMS Start is debounced before reaching Pause, and
+Select has no reset action unless the one-second option is explicitly chosen.
 
 The firmware's dependent `.sav` path replaces the ROM extension. GG and SMS
 files with the same basename in the same directory therefore share a save

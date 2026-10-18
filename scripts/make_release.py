@@ -14,9 +14,15 @@ ROOT=Path(__file__).resolve().parents[1]
 DIAGNOSTICS={
     'gamegear-diagnostic.gg':'GameGear',
     'sms-pause-diagnostic.sms':'MasterSystem',
+    'sms-raster-192.sms':'MasterSystem',
     'sms-raster-224.sms':'MasterSystem',
     'sms-raster-240.sms':'MasterSystem',
 }
+TEST_LOGS=('engine.log','engine-four-state.log','sms_engine.log',
+           'sms_fm_control.log','soc.log','sms-pause.log',
+           'input-mapper.log','video-viewport.log') + tuple(
+               f'sms-raster-{height}{suffix}.log'
+               for suffix in ('','-pal') for height in (192,224,240))
 
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -28,13 +34,17 @@ def main():
     parser.add_argument('--package-source-commit',help='Metadata commit when reusing an earlier bitstream')
     parser.add_argument('--bitstream',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--test-log-dir',type=Path,
+                        help='Directory containing passing diagnostic ROM simulation logs')
     args=parser.parse_args()
     suffix=args.tag.removeprefix('v0.1.0-alpha.')
     if (not args.tag.startswith('v0.1.0-alpha.') or not suffix.isdecimal() or
         int(suffix)<4 or str(int(suffix))!=suffix):
-        raise SystemExit('Expected a v0.1.0-alpha.N SMS NTSC tag with N >= 4')
+        raise SystemExit('Expected a v0.1.0-alpha.N tag with N >= 4')
     if len(args.source_commit)!=40 or any(c not in '0123456789abcdef' for c in args.source_commit):
         raise SystemExit('Pass the exact 40-character public source commit SHA')
+    if int(suffix)>=7 and not args.test_log_dir:
+        raise SystemExit('Alpha.7 and later require --test-log-dir')
     package_commit=args.package_source_commit or args.source_commit
     if len(package_commit)!=40 or any(c not in '0123456789abcdef' for c in package_commit):
         raise SystemExit('Pass the exact 40-character package source commit SHA')
@@ -56,6 +66,28 @@ def main():
         shutil.copyfile(source,target)
     for filename in ('LICENSE-GPL-V3','NOTICE.md'):
         shutil.copyfile(ROOT/filename,stage/filename)
+    if args.test_log_dir:
+        log_dir=args.test_log_dir.resolve()
+        summary=json.loads((log_dir/'test-results.json').read_text())
+        checks={entry['check']:entry['result'] for entry in summary['checks']}
+        for label in (name.removesuffix('.log') for name in TEST_LOGS):
+            if checks.get(label)!='pass':
+                raise SystemExit(f'Missing passing check in test-results.json: {label}')
+        destination=stage/'test-logs'
+        destination.mkdir()
+        shutil.copyfile(log_dir/'test-results.json',destination/'test-results.json')
+        for filename in TEST_LOGS:
+            shutil.copyfile(log_dir/filename,destination/filename)
+        (destination/'README.txt').write_text(
+            'These logs are simulations of original, redistributable diagnostic ROMs\n'
+            'and platform logic. They are not retail ROM test results or proof of\n'
+            'operation on Gamebub hardware. The current release still needs a\n'
+            'device play check. No commercial ROM bytes are included.\n\n'
+            'The FM control diagnostic checks register writes/readback only.\n'
+            'It does not test or enable audible FM synthesis.\n\n'
+            'Separate PAL trial hardware feedback, 2026-10-17: several PAL\n'
+            'ROMs played and the requested test ROMs ran. Filenames, hashes,\n'
+            'firmware version, and per-game observations were not provided.\n')
     regression_note='''Alpha.4 showed commercial-game video failures on hardware. For this newer tag,
 verify the diagnostic Start color change and the transition into gameplay in
 both GG and SMS games before treating the build as playable. Alpha.3 remains
@@ -89,7 +121,17 @@ diagnostics. Boot one of those headered diagnostics first to reach the menu
 before selecting a forced System for a headerless title. No firmware image
 is bundled or installed by this package.
 
-This is an SMS NTSC test checkpoint. PAL timing, FM synthesis, save states,
+SMS PAL is selectable under Master System TV. The source branch also adds
+4x crop with L/R one-pixel picture movement, an on-screen press-to-bind
+mapper, a persistent Swap A/B menu choice, Start/Pause debounce, and a safe
+SMS Select default. Open Map controls in the core Settings menu, then press
+one button for each prompted action. Start exits; Select keeps a binding.
+The on-screen custom bindings last until the core powers off. The Swap A/B
+menu choice is saved by firmware. SMS Select defaults to no action; the
+optional Hold 1s Reset setting restores a guarded reset shortcut.
+
+The included test-logs directory records simulations with original test ROMs.
+This combined build needs its own device play check. FM synthesis, save states,
 complete mapper/EEPROM coverage and long hardware soaks are not verified.
 {regression_note}Back up saves. The firmware derives .sav from the ROM basename, so GG and
 SMS files with the same basename in one directory share a save path. Keep

@@ -23,7 +23,7 @@ module tb_sms_engine;
     wire [7:0] rom_data=rom[rom_address[14:0]];
     gg_enables enables(clk,1'b0,ce_cpu,ce_vdp,ce_pix,ce_sp);
     gamegear_machine dut(.clk(clk),.reset_n(reset_n),.clear_wram(clear_wram),.freeze(1'b0),
-        .machine_sms(1'b1),.tv_pal(1'b0),.pause_pressed(pause_pressed),
+        .machine_sms(1'b1),.tv_pal(1'b0),.fm_enabled(1'b0),.pause_pressed(pause_pressed),
         .console_reset(console_reset),
         .ce_cpu(ce_cpu),.ce_vdp(ce_vdp),.ce_pix(ce_pix),.ce_sp(ce_sp),.rom_wait_n(1'b1),
         .buttons(7'd0),.region(1'b0),.mapper(4'd1),
@@ -36,6 +36,7 @@ module tb_sms_engine;
         .debug_io(debug_io),.debug_mapper(debug_mapper));
     gg_video viewport(.clk(clk),.reset(!reset_n),.run(reset_n && !wram_busy),
         .freeze(1'b0),.ce_pix(ce_pix),.machine_sms(1'b1),.tv_pal(1'b0),.epoch(8'd1),
+        .overlay_active(1'b0),.overlay_step(3'd0),
         .color(color),.native_hblank(hblank),.native_vblank(vblank),
         .red(),.green(),.blue(),.data_enable(),.hblank(),.vblank(),
         .frame_complete(frame_complete),.frame_valid(frame_valid),

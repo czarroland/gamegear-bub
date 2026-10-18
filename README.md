@@ -14,10 +14,11 @@ implementation and the work of other MiSTer-devel contributors. See
 tests, and release packages with human direction and testing on Gamebub hardware.
 
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
-rev4. The current [GG and SMS Bub alpha.6 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.6)
-uses one GG/SMS NTSC core entry. This update changes the menu name while
-retaining the alpha.5 bitstream and its internal core ID, so existing settings
-continue to apply. FM audio and PAL timing remain unimplemented.
+rev4. The [GG and SMS Bub alpha.7 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.7)
+uses one GG/SMS core entry with selectable SMS NTSC or PAL. It includes
+on-screen button mapping, plus the crop, Pause and Select fixes requested in
+issues #3–#6. The combined build passed simulation and needs device play
+checks. FM synthesis is still absent.
 
 With the current v1.1-beta firmware, **System: Auto** can identify a ROM only
 from a consistent `TMR SEGA` header. If an `.sms` game does not start under
@@ -55,9 +56,10 @@ Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the separate `GameGear.Scale23` core ID and requires the existing
 custom core-loading firmware.
 
-The unified development branch exposes only sharp integer 3× and 2× sizes.
-Stored 4× and 3.5× GG preferences normalize to 3×. It now selects GG or SMS
-NTSC at runtime in one SoC, with a shared 256×240 framebuffer pair and native
+The unified core offers sharp integer 3× and 2× for GG, plus
+2×, 3× crop and 4× crop for SMS. Stored 4× and 3.5× GG preferences normalize
+to 3×. It selects GG, SMS NTSC or SMS PAL at runtime in one SoC, with a shared
+256×240 framebuffer pair and native
 active viewport. Its
 [alpha.4 GG/SMS trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
 was released and installed, but hardware tests found that games do not
@@ -65,9 +67,21 @@ progress beyond their first screen. The
 [alpha.5 GG/SMS display handoff trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.5)
 received an initial successful rev4 play check, with exact ROMs and settings
 not yet recorded. Alpha.6 packages that same bitstream under the clearer menu
-name and is installed on the BUB card. Alpha.3 remains the GG-only rollback.
-PAL and FM remain later work. Earlier
+name. Alpha.3 remains the GG-only rollback.
+Several PAL games and the original raster diagnostics played on a separate
+local PAL trial; the alpha.7 combined build has not yet passed its own device test.
+FM remains later work. Earlier
 4× and 3.5× trials remain documented as historical results.
+
+The development controls menu includes **Map controls**, which opens a
+six-step on-screen prompt for Up, Down, Left, Right, A and B. Each step
+captures one physical D-pad or A/B/X/Y press; Select keeps the existing
+binding and advances, and Start exits. These custom bindings last for the
+current core session. **Swap A/B** is a separate saved menu choice. SMS 4×
+crop uses L and R to move the picture one source pixel per press. SMS Start
+acts as Pause after debounce. SMS Select does nothing by default, with an
+optional one-second hold to reset the console. See the [runtime ABI](docs/SEGA_RUNTIME_ABI.md)
+for register details.
 
 The target is one rev4 core package for Game Gear and Master System, with FM
 sound and runtime machine selection, following the pinned

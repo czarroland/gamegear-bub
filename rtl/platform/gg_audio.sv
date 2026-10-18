@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 `timescale 1ns/1ps
-module gg_audio #(parameter integer CLOCK_HZ=53691275)(
-    input wire clk,reset,mute,
+module gg_audio #(parameter integer CLOCK_HZ=53691275,
+                  parameter integer PAL_CLOCK_HZ=53205128)(
+    input wire clk,reset,mute,pal_mode,
     input wire signed [15:0] raw_left,raw_right,
     output reg signed [15:0] left,right,
     output reg sample_tick);
-    localparam integer MEAN_CYCLES=CLOCK_HZ/48000;
+    localparam integer MEAN_CYCLES=(CLOCK_HZ>PAL_CLOCK_HZ ? CLOCK_HZ : PAL_CLOCK_HZ)/48000;
+    wire [31:0] active_clock_hz=pal_mode ? PAL_CLOCK_HZ : CLOCK_HZ;
     localparam integer ACC_WIDTH=16+$clog2(MEAN_CYCLES+2);
     localparam integer REM_WIDTH=$clog2(MEAN_CYCLES+1)+1;
     localparam integer COUNT_WIDTH=$clog2(ACC_WIDTH+1);
@@ -85,8 +87,8 @@ module gg_audio #(parameter integer CLOCK_HZ=53691275)(
                 left<=mute ? 16'sd0 : clip(quotient_left);
                 right<=mute ? 16'sd0 : clip(quotient_right);
             end
-            if(phase>=CLOCK_HZ-48000) begin
-                phase<=phase+48000-CLOCK_HZ;
+            if(phase>=active_clock_hz-48000) begin
+                phase<=phase+48000-active_clock_hz;
                 window_divisor<=window_count+1'b1;
                 window_count<=0;
                 sum_left<=0; sum_right<=0;

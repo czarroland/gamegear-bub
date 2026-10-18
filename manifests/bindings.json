@@ -689,8 +689,8 @@
     "port": "fm_ena",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'0'",
-    "explicit": false
+    "binding": "fm_enabled",
+    "explicit": true
   },
   {
     "port": "dbr",

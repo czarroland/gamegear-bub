@@ -7,7 +7,11 @@ a shared 256×240 framebuffer. Alpha.4 exposed a first-screen video regression;
 alpha.5 received an initial successful hardware play check. The alpha.6
 prerelease uses the same bitstream with the **GG and SMS Bub** menu name and
 is installed on the BUB SD card. Alpha.3 remains the GG-only rollback.
-FM and PAL remain later work. See `docs/SEGA_RUNTIME_ABI.md` for the unified
+The published alpha.6 build has no FM or PAL. A separate local PAL trial
+passed routed timing and several PAL ROMs played on hardware. Alpha.7 includes
+PAL raster and clock selection plus the four control fixes. Its combined image
+passed routed timing and still needs its own device test.
+FM synthesis remains gated. See `docs/SEGA_RUNTIME_ABI.md` for the unified
 package's registers, defaults, and compatibility limits; the records below
 describe the earlier GG-only hardware checkpoints.
 
@@ -20,7 +24,7 @@ mapper detector receives every committed ROM byte in address order. Auto,
 Sega, Codemasters, Dahjee, Linear, and Zemina settings are exposed; only Auto
 and Sega have been exercised by this checkpoint's diagnostic.
 
-The currently published port fixes GG mode and omits the BIOS, FM chip, cheats,
+The first GG-only checkpoint fixes GG mode and omits the BIOS, FM chip, cheats,
 System E decryption, and save-state frontend. The unified GG/SMS/FM target is
 described in `docs/NEXT_FEATURES.md`. Game Gear serial-link support is disabled.
 The 224-line VDP mode's GG crop and retail-game compatibility are unverified.
@@ -257,8 +261,21 @@ The `Game Gear size` setting (ID 4, register `0x1c`) offers literal sharp 3×
 and any other invalid 32-bit value normalize to 3×; register readback reports
 the effective choice. The framework patch keeps a coherent multi-bit CDC
 handshake and applies the selected size at a display frame boundary. Each game
-framebuffer has one read port. The patch has no 4× address path, extra corner
-samples, bilinear arithmetic, or fractional viewport calculation.
+framebuffer has one read port. The SMS-only 4× crop path samples a 180×120
+source viewport and centers it on LCD/HDMI output; L/R moves its vertical
+source origin one pixel per stable press. There are no extra corner samples,
+bilinear arithmetic, or fractional viewport calculations.
+
+The SMS TV menu setting selects NTSC or PAL. The original 192, 224, and 240
+line raster diagnostics should show a stable picture at both rates. The
+on-screen Map controls action prompts for Up, Down, Left, Right, A and B in
+order. Press one physical D-pad or A/B/X/Y button for each; Select retains an
+existing binding and advances, and Start exits. This mapping lasts for the
+current core session. The separate Swap A/B menu choice persists in settings.
+During an SMS game, Start acts as Pause after a stable press. Select has no
+game action by default; the optional Hold 1s Reset choice enables a guarded
+console reset. Verify these on a disposable save before treating a device
+check as passed.
 
 Use a clean copy of the pinned framework when applying the patch. A copy that
 has already received an earlier scaling patch can retain obsolete logic even
@@ -291,11 +308,14 @@ new routed report.
 3. Include FM after its redistribution route is resolved, then qualify NTSC/PAL
    native timing, audio, SDRAM deadlines and long hardware sessions in the same
    bitstream. Keep unverified profiles and mappers explicit.
-4. For each hardware-usable checkpoint, publish an accurately labeled GitHub
-   prerelease and install its byte-identical package on the BUB SD card. Record
-   the release tag, source and bitstream hashes, firmware identity, copied path,
-   Bub test results and rollback package. Do not publish a simulated-only or
-   timing-failing build as a usable community release.
+4. For each hardware-usable checkpoint, install a test package on the BUB SD
+   card and publish an accurately labeled GitHub prerelease of the identical
+   package after simulation and routed timing pass. The separate PAL trial
+   received a positive device smoke report; the combined controls build still
+   needs its own device test and must be labeled accordingly. Record the
+   release tag, source and bitstream hashes, firmware identity, copied path,
+   Bub test results and rollback package. Do not publish a timing-failing
+   build as a usable community release.
 
 Preserve original source notices and keep framework modifications as a
 reviewable patch when preparing a release.

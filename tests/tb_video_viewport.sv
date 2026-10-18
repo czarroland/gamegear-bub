@@ -2,6 +2,8 @@
 module tb_video_viewport;
     reg clk=0; always #10 clk=~clk;
     reg reset=1,run=0,freeze=0,ce_pix=1,machine_sms=0,tv_pal=0;
+    reg overlay_active=0;
+    reg [2:0] overlay_step=0;
     reg [7:0] epoch=0;
     reg [11:0] color=12'h456;
     reg native_hblank=1,native_vblank=1;

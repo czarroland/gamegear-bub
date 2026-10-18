@@ -4,9 +4,12 @@ The diagnostic ROM and Sonic Triple Trouble now run on hardware. Preserve the
 current bitstream and core package as the known-good Game Gear baseline.
 The target is one Gamebub rev4 core entry, ROM picker and bitstream for Game
 Gear and Master System (NTSC/PAL), including FM sound. A feature is complete
-only after simulation, a routed build and a named hardware test. Publish each
-usable test checkpoint as a GitHub prerelease and install the identical package
-on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
+only after simulation, a routed build and a named hardware test. Prepare a
+test package on the Bub SD card, then publish the identical package as a GitHub
+prerelease when its simulation and timing gates pass. The tester has reported
+several PAL ROMs playing on the separate trial and authorized the next alpha
+with PAL and the four open control fixes. Keep the existing
+Game Gear release as a rollback baseline.
 
 | Upstream feature | Gamebub port status |
 | --- | --- |
@@ -17,8 +20,9 @@ on the Bub SD card. Keep the existing Game Gear release as a rollback baseline.
 | System Auto and ROM picker | The current firmware provides no extension hint, so some community-tested `.sms` games require a forced Master System setting. One picker remembers one last ROM folder. A source-only firmware hint patch exists; no Bub firmware build has been installed or verified |
 | Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; hardware smoke testing passed. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
-| SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
-| PAL timing and FM sound | Planned in the same unified bitstream; not yet connected |
+| SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present. A local trial package can upload up to 16 MiB for Evolution, but no full flash/gameplay or device compatibility test exists; see [ROM compatibility audit](ROM_COMPATIBILITY.md) |
+| PAL timing and FM sound | Native 192/224/240-line PAL raster checks pass. Several PAL ROMs played on the separate rev4 trial. The alpha.7 combined build passes routed timing but needs its own device check. FM control-port readback passes through the real SMS CPU. A private VM2413 synthesis probe passed, but the release still has PSG only |
+| Controls | Alpha.7 adds SMS 4× crop position on L/R, a six-step on-screen press-to-bind mapper, A/B swap, debounced Start/Pause, and Select reset only on explicit one-second hold. Device verification remains |
 | Extra sprites, extended GG resolution, Z80 turbo | Outside the normal-speed parity profile |
 | BIOS loading, cheats, EEPROM cartridges | Not integrated |
 | Advanced controllers and Gear-to-Gear link | Gamebub controls/physical connectivity need separate evaluation |
@@ -87,9 +91,15 @@ This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
 diagnostic also passes in simulation: Pause reaches the Z80 NMI handler with
 maskable interrupts disabled, a held press does not repeat, console Reset
 appears at port `$DD`, and the native raster produces a full 256×192 frame.
-Separate real-engine diagnostics also confirm 256×224 and 256×240 frame
-boundaries and their completed descriptors. These are NTSC simulation cases;
-PAL clock behavior and on-device presentation remain unverified.
+Separate real-engine diagnostics now confirm 256×192/224/240 frame boundaries
+and their completed descriptors in both NTSC and PAL simulation modes. The
+pinned MiSTer raster runs PAL 192/224 at 313 lines, but PAL 240 at 297 lines
+because its counter jumps from 266 to 482. The staged Gamebub copy changes
+that 240-line jump to 466, matching the documented D2-FF VCounter interval
+and 313-line target; the pinned upstream snapshot is preserved. PAL
+system-clock selection and PAL-aware audio now pass SoC simulation. A rev4
+PAL/NTSC route closed timing with setup WNS +0.058 ns and hold WHS +0.054 ns;
+clock measurement and on-device presentation remain unverified.
 The ROM type resolver accepts a load-epoch hint and falls back to a validated
 Sega header; its host transaction path passes the integrated SoC test. The
 video adapter now records dimensions, mode and epoch after a complete frame;

@@ -1,0 +1,35 @@
+--- a/rtl/video.vhd
++++ b/rtl/video.vhd
+@@ -70,7 +70,7 @@
+ 							end if;
+ 						elsif smode_M3 = '1' and smode_M2 = '1' then
+ 							if video_state_in(12 downto 4) = 266 then
+-								vcounter_cpu_reg <= conv_std_logic_vector(482, 9);
++								vcounter_cpu_reg <= conv_std_logic_vector(466, 9);
+ 							else
+ 								vcounter_cpu_reg <= video_state_in(12 downto 4) + 1;
+ 							end if;
+@@ -120,7 +120,7 @@
+ 						elsif smode_M3 = '1' and smode_M2 = '1' then
+ 							-- PAL 240-line mode
+ 							if vcount = 266 then
+-								vcounter_cpu_reg <= conv_std_logic_vector(482, 9);
++								vcounter_cpu_reg <= conv_std_logic_vector(466, 9);
+ 							else
+ 								vcounter_cpu_reg <= vcount + 1;
+ 							end if;
+@@ -176,10 +176,10 @@
+ 							end if;
+ 						elsif smode_M3='1' and smode_M2='1' then
+ 							if vcount = 266 then
+-								vcount <= conv_std_logic_vector(482,9);
+-							elsif vcount = 482 then
+-								vsync_reg <= '1';
+-							elsif vcount = 485 then
++								vcount <= conv_std_logic_vector(466,9);
++							elsif vcount = 466 then
++								vsync_reg <= '1';
++							elsif vcount = 469 then
+ 								vsync_reg <= '0';
+ 							end if;
+ 						else

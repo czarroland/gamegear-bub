@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 module gg_video(input wire clk,reset,run,freeze,ce_pix,machine_sms,tv_pal,
+    input wire overlay_active,input wire [2:0] overlay_step,
     input wire [7:0] epoch,
     input wire [11:0] color,input wire native_hblank,native_vblank,
     output reg [3:0] red,green,blue,
@@ -14,6 +15,9 @@ module gg_video(input wire clk,reset,run,freeze,ce_pix,machine_sms,tv_pal,
     reg [8:0] line_pixels=0,frame_rows=0;
     reg [7:0] last_epoch=0;
     reg frame_machine_sms=0,frame_tv_pal=0;
+    wire [11:0] overlay_color;
+    mapper_overlay mapper_prompt(.machine_sms(machine_sms),.step(overlay_step),
+        .x(line_pixels),.y(frame_rows),.color(overlay_color));
     wire [8:0] expected_width=machine_sms ? 9'd256 : 9'd160;
     wire valid_height=machine_sms ?
         (frame_rows==9'd192 || frame_rows==9'd224 || frame_rows==9'd240) :
@@ -62,7 +66,9 @@ module gg_video(input wire clk,reset,run,freeze,ce_pix,machine_sms,tv_pal,
                     end
                 end
             end
-            red<=color[3:0]; green<=color[7:4]; blue<=color[11:8];
+            red<=overlay_active ? overlay_color[3:0] : color[3:0];
+            green<=overlay_active ? overlay_color[7:4] : color[7:4];
+            blue<=overlay_active ? overlay_color[11:8] : color[11:8];
             hblank<=native_hblank;
             vblank<=native_vblank || !armed;
             data_enable<=armed && !native_hblank && !native_vblank;

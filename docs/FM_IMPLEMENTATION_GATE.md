@@ -63,6 +63,28 @@ constitute a legal determination.
   test model passed 107 varying windows, and the signed-audio regression
   passed. This corrects a small PSG gain error and prepares the shared adapter
   for FM; it does not validate FM synthesis or the DAC/HDMI transport.
+- The generated shared-machine wrapper now binds `fm_ena` to an explicit
+  `fm_enabled` input. An original 32 KiB SMS ROM writes all eight `$F2`
+  values, reads back `$F8`–`$FF` through the real Z80, writes `$F0`/`$F1`,
+  and leaves a completion marker. The Verilator CPU/system test passes. The
+  SoC ties `fm_enabled` low and the staged OPLL output is zero, so this only
+  verifies the control-port path; it is not an FM-enabled build.
+- `scripts/probe_private_fm.py` verified the pinned MiSTer VM2413 hashes,
+  substituted its OPLL instance into a disposable copy of the staged shared
+  system, and synthesized the shared `gamegear_machine` wrapper with GHDL 4.1.
+  The probe passed locally on 2026-10-17. Its VM2413 copy and generated
+  Verilog live only in ignored `build/private-fm-probe`; no FM source or FM
+  netlist is in the routed PAL bitstream. This is a technical feasibility
+  check, not a redistribution clearance, sound parity check or FPGA fit.
+- The original SMS FM diagnostic now holds both `$F0` address and `$F1` data
+  phases across complete OPLL frames, then keys on one preset tone. A private
+  Verilator run using the synthesized VM2413 and real SMS CPU observed
+  changing mixed audio after the completion marker (left channel 0–4088).
+  The same control/readback ROM still passes against the public PSG-only
+  engine. Run the repeatable private check with
+  `python3 scripts/probe_private_fm.py --simulate-tone` inside the local test
+  container. This is a bus-to-mixer smoke test; it does not compare the tone
+  to an audio oracle or exercise Gamebub output hardware.
 
 ## Release gate and next implementation steps
 
@@ -76,5 +98,6 @@ constitute a legal determination.
 3. Integrate one licensed FM engine into the shared machine, preserve the
    native bus and mixer policy, and compare PCM against the reference. Measure
    the Gamebub audio adapter separately.
-4. Route the combined core, close timing, then publish a new immutable
-   prerelease and install the identical ZIP on the BUB card for hardware tests.
+4. Route the combined core, close timing, then install a local test package on
+   the BUB card. Hold GitHub Releases until the requested hardware test is
+   complete; after approval, publish the identical package as a prerelease.

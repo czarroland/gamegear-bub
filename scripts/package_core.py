@@ -47,7 +47,7 @@ def validate_metadata(core,files,settings):
                 raise ValueError('list default must be the first firmware fallback item')
             if len({item['value'] for item in items})!=len(items):
                 raise ValueError('duplicate setting values')
-    if setting_ids!={1,2,3,4,6,8}:
+    if setting_ids!={1,2,3,4,6,8,9,10,11,12,13}:
         raise ValueError('unexpected SEG2 setting IDs')
 
 def main():

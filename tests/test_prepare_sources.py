@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from prepare_sources import rename_vhdl_identifiers
+from prepare_sources import rename_vhdl_identifiers, patch_video
 
 
 class RenameVhdlIdentifiersTest(unittest.TestCase):
@@ -21,6 +21,15 @@ class RenameVhdlIdentifiersTest(unittest.TestCase):
             'z80_dout <= z80_registers and bg_priority;\n'
         )
         self.assertEqual(rename_vhdl_identifiers(source), expected)
+
+    def test_pal_240_counter_patch(self):
+        source = (Path(__file__).resolve().parents[1] /
+                  'vendor/sms_mister/rtl/video.vhd').read_text()
+        patched = patch_video(source)
+        self.assertEqual(patched.count('conv_std_logic_vector(466, 9)'), 2)
+        self.assertEqual(patched.count('conv_std_logic_vector(466,9)'), 2)
+        self.assertIn('elsif vcount = 466 then', patched)
+        self.assertIn('elsif vcount = 469 then', patched)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,93 @@
 # GG and SMS Bub — rev4 hardware diagnostic checkpoint
 
+## 2026-10-17 alpha.7 candidate: PAL and control fixes
+
+The unified core now selects SMS NTSC or PAL and includes fixes for the four
+open input/display issues: L/R adjusts the SMS 4× crop one source pixel per
+press; an on-screen six-step mapper binds D-pad or A/B/X/Y to the emulated
+directions and fire buttons; the menu can swap A/B; Select no longer resets
+SMS by default; and Start/Pause uses a stable press/release guard. The
+optional Select reset requires a one-second hold. Custom on-screen bindings
+last for the current core session.
+
+The full `scripts/run_tests.py --four-state` run passed 51 checks, including
+the original GG and SMS diagnostic ROMs, SMS 192/224/240 native rasters in
+both NTSC and PAL, PAL audio division, mapper prompt logic, Pause bounce and
+the integrated host/SoC path. The final one-line crop/mapper isolation change
+was followed by another passing integrated SoC test. Vivado 2024.1 then
+routed the combined image with +0.389 ns setup WNS and +0.034 ns hold WHS,
+zero failing constrained endpoints, and zero DRC errors. The DRC reported 26
+warnings, chiefly asynchronous controls of inferred block RAM and existing
+framework constraints; the HDMI audio clock remains untimed. The bitstream
+SHA-256 is `5bef888d4e6915e638d382c30e24e7d3127c2b033763f7fb80c9c2648ec0c871`.
+These are build and simulation results; the combined image still needs a
+device play check. FM register control is exercised, but FM synthesis is absent.
+
+## 2026-10-17 local PAL hardware trial; no GitHub release
+
+After the trial was installed, the device tester reported that several PAL
+ROMs played and that the requested original test ROMs ran. Exact game names,
+hashes, firmware version, audio rates, and save outcomes were not supplied.
+This is a successful PAL smoke report for the separate trial, not a play test
+of the newer combined controls build. FM was not included.
+
+The rev4 PAL/NTSC bitstream built from local commit
+`6ed7d78177866764c8593e086b1faeacf6cdf45c` has SHA-256
+`ceaf3e539206829f0a224710a67e6b9617b4a1d321c6c2027617cc2de74626fe`.
+The local test ZIP is `build/pal-trial-20261017/GG-and-SMS-Bub-PAL-local-test-rev4.zip`
+with SHA-256
+`e4ad66f7bbbeec20696940f6bd7f3142c0299b5a5ed2ca4e5247f066d1ef8632`.
+It packages the separate `Sega8bit.PALTrial` core ID as **GG and SMS Bub
+Test**, includes original GG/SMS diagnostics, and states that FM is absent.
+All five core files and the new SMS 192-line diagnostic were installed on the
+mounted BUB card, synced, and read back with matching SHA-256. Existing
+`Sega8bit.Dev` alpha.6 and `GameGear.Scale23` rollback files were not
+overwritten. PAL video, game progression, audio speed, 16 MiB transfer, and
+save behavior were not measured individually on device. No GitHub release or
+source push was made for this separate candidate. The tester later authorized
+a new alpha with PAL and the four control issue fixes.
+
+## 2026-10-17 PAL, FM control, and 16 MiB loader source checks
+
+An original SMS diagnostic and the pinned native engine now exercise 192,
+224 and 240 active lines in both NTSC and PAL simulation modes. The completed
+viewport descriptor carries the correct TV flag and dimensions. Cadence checks
+pass for 262-line NTSC and 313-line PAL after a Gamebub staging correction
+to the pinned upstream's PAL 240-line `266 -> 482` jump, which yielded 297
+lines. The staged counter now jumps `266 -> 466`, matching the documented
+PAL 240-line VCounter sequence. The vendored MiSTer source remains unchanged.
+These raster tests count system clocks. The development SoC now has a
+**Master System TV** setting, a glitchless dual-MMCM system-clock choice,
+and PAL-aware 48 kHz audio averaging. Its PAL MMCM target is 53.205128 MHz
+(about 33 ppm above MiSTer's 53.203424 MHz). SoC and audio simulations
+pass. Vivado 2024.1 routed the rev4 PAL/NTSC build and wrote a bitstream with
+setup WNS +0.058 ns, hold WHS +0.054 ns, no failing constrained endpoints,
+and no DRC errors. The existing framework HDMI buffer warning and untimed
+HDMI audio clock remain. Actual PAL clock/video output and game compatibility
+still require device testing. Alpha.6 remains NTSC only.
+
+An original SMS ROM now writes all eight `$F2` control values and reads them
+back through the real Z80, then writes `$F0` and `$F1`. The generated wrapper
+passes `fm_enabled` into the upstream system; this source test passes with
+that input asserted. The shipping SoC ties it low, and its OPLL remains a
+zero-output stub pending the FM licensing and synthesis gate. This test does
+not establish audible FM, mixing, or Gamebub audio output. A separate
+local-only GHDL synthesis of the pinned MiSTer VM2413 inside the shared
+machine passed. Its generated netlist stays ignored and is not part of the
+routed PAL trial or any public source/bitstream. A private Verilator check
+also sent a keyed tone through the real SMS CPU `$F0`/`$F1` ports into that
+VM2413 and observed changing mixed audio. This remains a local feasibility
+check, not a released FM feature or an audio-parity result.
+
+The development ROM host window and metadata now accept up to 16 MiB, matching
+the size of MiSTer's TecToy Evolution/Noza flash input. An integrated test
+skips a synthetic upload's middle, writes its last four bytes through the
+normal SoC/SDRAM path, and verifies the final length and mask. It does not
+test a complete 16 MiB transfer or the Evolution game/mapper path. The public
+alpha.6 package remains unchanged; per the current test hold, no GitHub
+release is being published. See
+[ROM compatibility audit](../docs/ROM_COMPATIBILITY.md).
+
 ## 2026-10-17 community alpha.6 feedback and Auto reproduction
 
 A community tester reports that the alpha.6 build has loaded the games they

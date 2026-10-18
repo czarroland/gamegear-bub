@@ -1,12 +1,12 @@
 `timescale 1ns/1ps
-module tb_audio_division;
+module tb_audio_division #(parameter integer PAL=0);
     reg clk=0; always #10 clk=~clk;
-    reg reset=1,mute=0;
+    reg reset=1,mute=0,pal_mode=PAL[0];
     reg signed [15:0] raw_left=0,raw_right=0;
     wire signed [15:0] left,right;
     wire sample_tick;
     gg_audio dut(.*);
-    localparam integer CLOCK_HZ=53691275;
+    localparam integer CLOCK_HZ=PAL ? 53205128 : 53691275;
     integer expected_left=0,expected_right=0;
     integer sum_left=0,sum_right=0,window_cycles=0,phase=0;
     integer samples=0,i,short_windows=0,long_windows=0;
@@ -18,8 +18,8 @@ module tb_audio_division;
         if(phase>=CLOCK_HZ-48000) begin
             expected_left=sum_left/window_cycles;
             expected_right=sum_right/window_cycles;
-            if(window_cycles==1118) short_windows=short_windows+1;
-            else if(window_cycles==1119) long_windows=long_windows+1;
+            if(window_cycles==CLOCK_HZ/48000) short_windows=short_windows+1;
+            else if(window_cycles==CLOCK_HZ/48000+1) long_windows=long_windows+1;
             else $fatal(1,"Unexpected audio window length %0d",window_cycles);
             phase=phase+48000-CLOCK_HZ;
             sum_left=0;sum_right=0;window_cycles=0;
@@ -43,8 +43,8 @@ module tb_audio_division;
         if(samples<100) $fatal(1,"Too few audio samples: %0d",samples);
         if(short_windows==0 || long_windows==0)
             $fatal(1,"Missing fractional window sizes %0d/%0d",short_windows,long_windows);
-        $display("PASS exact signed audio division across %0d varying windows (%0d/%0d cycles)",
-            samples,short_windows,long_windows);
+        $display("PASS exact signed PAL=%0d audio division across %0d varying windows (%0d/%0d cycles)",
+            PAL,samples,short_windows,long_windows);
         $finish;
     end
 endmodule

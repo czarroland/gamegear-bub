@@ -2,7 +2,7 @@
 	"files": [
         {"id": 0, "label": "Sega ROM", "extensions": ["gg", "sms"],
          "optional": false, "read_only": true, "user_selected": true,
-         "address": "0x30000000", "max_size": "0x00400000", "max_transfer_speed": 5000,
+         "address": "0x30000000", "max_size": "0x01000000", "max_transfer_speed": 5000,
          "load_type_hint": {"guard_address": "0x00000000", "guard_value": "0x53454732",
                             "address": "0x00000030", "extensions": {"gg": 1, "sms": 2}}},
         {"id": 1, "label": "Cartridge save", "extensions": ["sav"],

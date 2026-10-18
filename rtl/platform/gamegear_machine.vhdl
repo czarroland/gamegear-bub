@@ -5,7 +5,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity gamegear_machine is
   port(clk,reset_n,clear_wram,freeze:in std_logic;
-       machine_sms,tv_pal,pause_pressed,console_reset:in std_logic;
+       machine_sms,tv_pal,fm_enabled,pause_pressed,console_reset:in std_logic;
        ce_cpu,ce_vdp,ce_pix,ce_sp,rom_wait_n:in std_logic;
        buttons:in std_logic_vector(6 downto 0); region:in std_logic;
        mapper:in std_logic_vector(3 downto 0);
@@ -172,7 +172,7 @@ begin
       psg_enables => (others => '0'),
       audioL => audio_left,
       audioR => audio_right,
-      fm_ena => '0',
+      fm_ena => fm_enabled,
       dbr => '1',
       sp64 => '0',
       ram_a => wram_a,
