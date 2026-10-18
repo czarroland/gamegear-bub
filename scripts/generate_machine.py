@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate an audited GG-only binding for every upstream system port."""
+"""Generate the audited shared Sega-engine binding for every upstream port."""
 import json,re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
@@ -10,12 +10,14 @@ def main():
     explicit={
       'clk_sys':'clk','ce_cpu':'ce_cpu and not freeze','ce_vdp':'ce_vdp and not freeze',
       'ce_pix':'ce_pix and not freeze','ce_sp':'ce_sp and not freeze',
-      'reset_n':'effective_reset_n','rom_wait_n':'rom_wait_n','gg':"'1'",'ggres':"'1'",'dbr':"'1'",
+      'reset_n':'effective_reset_n','rom_wait_n':'rom_wait_n','gg':'not machine_sms',
+      'ggres':'not machine_sms','dbr':"'1'",
       'romen':'load_we','romcl':'clk','romad':"'0' & load_address",'romdt':'load_data',
       'rom_rd':'rom_read','rom_a':'rom_address','rom_do':'rom_data',
       'j1_up':'not buttons(0)','j1_down':'not buttons(1)','j1_left':'not buttons(2)',
       'j1_right':'not buttons(3)','j1_tl':'not buttons(4)','j1_tr':'not buttons(5)',
-      'pause':'not buttons(6)', 'region':'region',
+      'pause':'not pause_pressed','soft_reset':'console_reset','region':'region',
+      'pal':'tv_pal','fm_ena':'fm_enabled',
       'j1_th':"'1'", 'j2_up':"'1'",'j2_down':"'1'",'j2_left':"'1'",'j2_right':"'1'",
       'j2_tl':"'1'",'j2_tr':"'1'",'j2_th':"'1'",'gg_link_in':"(others => '1')",
       'mapper_lock':'force_sega','mapper_codies_force':'force_codies',
@@ -47,6 +49,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity gamegear_machine is
   port(clk,reset_n,clear_wram,freeze:in std_logic;
+       machine_sms,tv_pal,fm_enabled,pause_pressed,console_reset:in std_logic;
        ce_cpu,ce_vdp,ce_pix,ce_sp,rom_wait_n:in std_logic;
        buttons:in std_logic_vector(6 downto 0); region:in std_logic;
        mapper:in std_logic_vector(3 downto 0);
@@ -110,8 +113,8 @@ begin
   save_ram:entity work.dpram generic map(widthad_a=>15,init_file=>"ff")
     port map(clock_a=>clk,clock_b=>clk,address_a=>save_mem_a,address_b=>save_host_address,
       data_a=>save_mem_d,data_b=>(others=>'0'),wren_a=>save_mem_we,wren_b=>'0',q_a=>save_q,q_b=>save_host_q);
-  raster:entity work.video port map(clk=>clk,ce_pix=>ce_pix and not freeze,pal=>'0',border=>'0',
-    ggres=>'1',mask_column=>'0',cut_mask=>'0',smode_M1=>m1,smode_M2=>m2,smode_M3=>m3,smode_M4=>m4,
+  raster:entity work.video port map(clk=>clk,ce_pix=>ce_pix and not freeze,pal=>tv_pal,border=>'0',
+    ggres=>not machine_sms,mask_column=>'0',cut_mask=>'0',smode_M1=>m1,smode_M2=>m2,smode_M3=>m3,smode_M4=>m4,
     video_state_out=>open,x=>x,y=>y,vcounter_cpu=>vcounter,hsync=>open,vsync=>open,hblank=>hblank,vblank=>vblank);
   sega:entity work.system generic map(MAX_SPPL=>7)
     port map(

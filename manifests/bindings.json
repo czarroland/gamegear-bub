@@ -45,14 +45,14 @@
     "port": "gg",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'1'",
+    "binding": "not machine_sms",
     "explicit": true
   },
   {
     "port": "ggres",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'1'",
+    "binding": "not machine_sms",
     "explicit": true
   },
   {
@@ -332,15 +332,15 @@
     "port": "pause",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "not buttons(6)",
+    "binding": "not pause_pressed",
     "explicit": true
   },
   {
     "port": "soft_reset",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'0'",
-    "explicit": false
+    "binding": "console_reset",
+    "explicit": true
   },
   {
     "port": "E0Type",
@@ -584,8 +584,8 @@
     "port": "pal",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'0'",
-    "explicit": false
+    "binding": "tv_pal",
+    "explicit": true
   },
   {
     "port": "region",
@@ -689,8 +689,8 @@
     "port": "fm_ena",
     "direction": "in",
     "type": "STD_LOGIC",
-    "binding": "'0'",
-    "explicit": false
+    "binding": "fm_enabled",
+    "explicit": true
   },
   {
     "port": "dbr",

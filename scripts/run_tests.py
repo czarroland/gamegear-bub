@@ -26,26 +26,66 @@ def main():
         results.append({'check':label,'result':'pass','seconds':round(time.monotonic()-start,2)})
         for line in log.read_text().splitlines():
             if 'PASS' in line:print(line)
-    for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py']:
+    for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py',
+                   'make_sms_pause_diagnostic.py','make_sms_raster_diagnostics.py',
+                   'make_sms_fm_control_diagnostic.py']:
         run(script.removesuffix('.py'),[sys.executable,ROOT/'scripts'/script])
+    run('staging-tests',[sys.executable,ROOT/'tests/test_prepare_sources.py'])
     run('engine-analysis',[sys.executable,ROOT/'scripts/analyze_engine.py','--synthesize'])
+    run('memory-decode-oracle',[sys.executable,ROOT/'scripts/run_memory_decode_oracle.py'])
     ghdl=executable('ghdl');ivl=executable('iverilog');vvp=executable('vvp');verilator=executable('verilator')
     ivl_args=[ivl]
     if os.environ.get('IVL_BASE'):ivl_args+=['-B',os.environ['IVL_BASE']]
+    run('rom-type-compile',ivl_args+['-g2012','-s','tb_rom_type','-o',BUILD/'tb_rom_type',
+                                   'rtl/platform/sega_rom_type.sv','tests/tb_rom_type.sv'])
+    run('rom-type',[vvp,BUILD/'tb_rom_type'])
+    run('sms-pause-compile',ivl_args+['-g2012','-s','tb_sms_pause_guard','-o',BUILD/'tb_sms_pause_guard',
+                                     'rtl/platform/sms_pause_guard.sv','tests/tb_sms_pause_guard.sv'])
+    run('sms-pause',[vvp,BUILD/'tb_sms_pause_guard'])
+    run('input-mapper-compile',ivl_args+['-g2012','-s','tb_input_mapper','-o',BUILD/'tb_input_mapper',
+                                      'rtl/platform/input_mapper.sv','rtl/platform/mapper_overlay.sv',
+                                      'tests/tb_input_mapper.sv'])
+    run('input-mapper',[vvp,BUILD/'tb_input_mapper'])
+    run('video-viewport-compile',ivl_args+['-g2012','-s','tb_video_viewport','-o',BUILD/'tb_video_viewport',
+                                           'rtl/platform/mapper_overlay.sv','rtl/platform/gg_video.sv','tests/tb_video_viewport.sv'])
+    run('video-viewport',[vvp,BUILD/'tb_video_viewport'])
+    run('sega-profile-compile',ivl_args+['-g2012','-s','tb_sega_profile','-o',BUILD/'tb_sega_profile',
+                                      'rtl/platform/sega_profile.sv','tests/tb_sega_profile.sv'])
+    run('sega-profile',[vvp,BUILD/'tb_sega_profile'])
     run('memory-compile',[ghdl,'-a','--std=08','--workdir='+str(BUILD/'ghdl'),ROOT/'tests/tb_memory.vhdl'])
     run('memory',[ghdl,'-r','--std=08','--workdir='+str(BUILD/'ghdl'),'tb_memory','--assert-level=error'])
     for name,sources in [('audio',['rtl/platform/gg_audio.sv','tests/tb_audio.sv']),
+                         ('audio_division',['rtl/platform/gg_audio.sv','tests/tb_audio_division.sv']),
                          ('sdram',['rtl/platform/gg_sdram.sv','tests/sdram_model.sv','tests/tb_sdram.sv'])]:
         run(name+'-compile',ivl_args+['-g2012','-s','tb_'+name,'-o',BUILD/('tb_'+name)]+sources)
         run(name,[vvp,BUILD/('tb_'+name)])
+    run('audio_division_pal-compile',ivl_args+['-g2012','-s','tb_audio_division',
+        '-Ptb_audio_division.PAL=1','-o',BUILD/'tb_audio_division_pal',
+        'rtl/platform/gg_audio.sv','tests/tb_audio_division.sv'])
+    run('audio_division_pal',[vvp,BUILD/'tb_audio_division_pal'])
     engine=['build/gamegear_machine.v']+sorted(str(p.relative_to(ROOT)) for p in (ROOT/'rtl/generated/jt89').glob('*.v'))+['rtl/platform/gg_enables.sv']
-    for name,extra in [('engine',[]),('soc',['rtl/platform/gg_audio.sv','rtl/platform/gg_video.sv',
+    for name,extra in [('engine',[]),('sms_engine',['rtl/platform/mapper_overlay.sv','rtl/platform/gg_video.sv']),
+                       ('sms_fm_control',[]),
+                       ('soc',['rtl/platform/gg_audio.sv','rtl/platform/mapper_overlay.sv',
+                      'rtl/platform/gg_video.sv','rtl/platform/input_mapper.sv',
+                      'rtl/platform/sega_profile.sv',
+                      'rtl/platform/sms_pause_guard.sv','rtl/platform/button_tap.sv',
+                      'rtl/platform/sega_rom_type.sv',
                       'rtl/platform/gamegear_soc.sv','rtl/platform/gg_sdram.sv','tests/sdram_model.sv'])]:
         sources=engine+extra+['tests/tb_'+name+'.sv']
         run(name+'-verilator-build',[verilator,'--binary','--timing','-Wno-fatal',
             '-MAKEFLAGS','VK_PCH_I_FAST= VK_PCH_I_SLOW=','--top-module','tb_'+name,
             '--Mdir',BUILD/('verilator_'+name),'-j','4']+sources)
         run(name,[BUILD/('verilator_'+name)/('Vtb_'+name)])
+    for pal in (0,1):
+        for height in (192,224,240):
+            name=f'sms-raster-{height}' + ('-pal' if pal else '')
+            directory=BUILD/f'verilator_sms_raster_{height}_{pal}'
+            run(name+'-verilator-build',[verilator,'--binary','--timing','-Wno-fatal',
+                '-MAKEFLAGS','VK_PCH_I_FAST= VK_PCH_I_SLOW=',f'-GHEIGHT={height}',f'-GPAL={pal}',
+                '--top-module','tb_sms_raster','--Mdir',directory,'-j','4']+
+            engine+['rtl/platform/mapper_overlay.sv','rtl/platform/gg_video.sv','tests/tb_sms_raster.sv'])
+            run(name,[directory/'Vtb_sms_raster'])
     if args.four_state:
         run('engine-four-state-compile',ivl_args+['-g2012','-s','tb_engine','-o',BUILD/'tb_engine']+engine+['tests/tb_engine.sv'])
         run('engine-four-state',[vvp,BUILD/'tb_engine'])

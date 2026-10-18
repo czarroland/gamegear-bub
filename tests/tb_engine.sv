@@ -21,6 +21,8 @@ module tb_engine;
     wire [7:0] rom_data=rom[rom_address[15:0]];
     gg_enables enables(clk,1'b0,ce_cpu,ce_vdp,ce_pix,ce_sp);
     gamegear_machine dut(.clk(clk),.reset_n(reset_n),.clear_wram(clear_wram),.freeze(1'b0),
+        .machine_sms(1'b0),.tv_pal(1'b0),.fm_enabled(1'b0),
+        .pause_pressed(buttons[6]),.console_reset(1'b0),
         .ce_cpu(ce_cpu),.ce_vdp(ce_vdp),.ce_pix(ce_pix),.ce_sp(ce_sp),.rom_wait_n(1'b1),
         .buttons(buttons),.region(1'b0),.mapper(4'd1),.load_we(load_we),.load_address(load_address),.load_data(load_data),
         .rom_read(rom_read),.rom_address(rom_address),.rom_data(rom_data),

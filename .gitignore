@@ -9,4 +9,5 @@ xsim.dir/
 .DS_Store
 /framework/
 /generated/handheld_rev4/
+/rtl/generated/
 /diagnostics/*.hex

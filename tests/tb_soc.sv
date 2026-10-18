@@ -4,6 +4,9 @@ module tb_soc;
     reg clk=0; always #10 clk=~clk;
     reg reset=1;
     reg [6:0] buttons=0;
+    reg select_button=0;
+    reg [1:0] shoulder_buttons=0;
+    reg [1:0] face_buttons=0;
     reg mem_enable=0,mem_write=0,command_request=0;
     reg [31:0] mem_address=0,mem_data_write=0;
     wire mem_done,command_busy,command_done,command_error;
@@ -14,13 +17,19 @@ module tb_soc;
     wire [3:0] red,green,blue;
     wire data_enable,hblank,vblank;
     wire [1:0] display_scale_mode;
+    wire viewport_valid,viewport_system_sms,viewport_tv_pal,clock_pal;
+    wire [8:0] viewport_width,viewport_height,viewport_x0,viewport_y0;
+    wire [7:0] viewport_epoch;
+    wire [15:0] viewport_frame_id;
     wire signed [15:0] audio_left,audio_right;
     wire cke,cs,ras,cas,we,data_dir;
     wire [1:0] dqm,bank;
     wire [12:0] sa;
     wire [15:0] data_in,data_out;
     wire [31:0] refreshes;
-    gamegear_soc dut(.*);
+    gamegear_soc #(.PAUSE_DEBOUNCE_CYCLES(8),.CROP_DEBOUNCE_CYCLES(8),
+                       .MAPPER_DEBOUNCE_CYCLES(8),
+                       .RESET_HOLD_CYCLES(16)) dut(.*);
     gg_sdram #(.INIT_CYCLES(20)) memory(.clk(clk),.reset(reset),.request(memory_request),
         .write(memory_write),.address(memory_address),.data_write(memory_data_write),
         .ready(memory_ready),.done(memory_done),.data_read(memory_data_read),.initialized(memory_initialized),
@@ -112,17 +121,27 @@ module tb_soc;
         $readmemh("diagnostics/gamegear-diagnostic.hex",rom);
         repeat(5) @(negedge clk); reset=0;
         wait(memory_initialized); @(negedge clk);
+        expect_read(32'h0,32'h53454732); // SEG2 unified ABI.
+        expect_read(32'h4,32'h00020000);
+        expect_read(32'h8,32'h0000003f);
+        expect_read(32'hc,0);
+        expect_read(32'h18,32'h010000f0);
+        expect_read(32'h38,1); // SMS defaults to literal 2x.
         if(display_scale_mode!==0) $fatal(1,"Default screen scale must be 3x");
         expect_read(32'h1c,0);
         host(1,32'h1c,1,0);
         expect_read(32'h1c,1);
         if(display_scale_mode!==1) $fatal(1,"2x scale control did not change");
         host(1,32'h1c,2,0);
-        expect_read(32'h1c,2);
-        if(display_scale_mode!==2) $fatal(1,"4x scale control did not change");
+        expect_read(32'h1c,0);
+        if(display_scale_mode!==0) $fatal(1,"Legacy 4x must normalize to 3x");
         host(1,32'h1c,3,0);
-        expect_read(32'h1c,3);
-        if(display_scale_mode!==3) $fatal(1,"3.5x scale control did not change");
+        expect_read(32'h1c,0);
+        if(display_scale_mode!==0) $fatal(1,"Legacy 3.5x must normalize to 3x");
+        host(1,32'h1c,5,0);
+        expect_read(32'h1c,0);
+        host(1,32'h1c,32'h10000001,0);
+        expect_read(32'h1c,0);
         host(1,32'h1c,0,0);
         expect_read(32'h1c,0);
         if(display_scale_mode!==0) $fatal(1,"3x scale control did not restore");
@@ -139,6 +158,7 @@ module tb_soc;
         command(16'h0301,0,65536,0,0);
         expect_read(32'h100,65536); expect_read(32'h104,65536);
         expect_read(32'h108,DIAGNOSTIC_CRC);
+        expect_read(32'h118,32'h35); // GG selected from a committed header without a new loader.
         command(16'h0300,1,0,0,0);
         host(1,32'h40000000,32'h44332211,0);
         command(16'h0301,1,4,0,0);
@@ -158,6 +178,13 @@ module tb_soc;
         check_frames=1;
         while(frames<3) @(negedge clk);
         check_frames=0;
+        expect_read(32'h28,32'h00a00090);
+        if(!viewport_valid || viewport_width!==160 || viewport_height!==144 ||
+           viewport_x0!==0 || viewport_y0!==0 || viewport_system_sms!==0 ||
+           viewport_tv_pal!==0 || viewport_frame_id==0)
+            $fatal(1,"GG completed viewport sideband was not wired: valid=%b %0dx%0d at %0d,%0d mode=%b/%b frame=%0d",
+                viewport_valid,viewport_width,viewport_height,viewport_x0,viewport_y0,
+                viewport_system_sms,viewport_tv_pal,viewport_frame_id);
         if(total_red<10000 || total_green<10000) $fatal(1,"Diagnostic image lacks both colors");
         if(audio_left===0 || audio_right!==0) $fatal(1,"Stereo output failed %h/%h",audio_left,audio_right);
         // A save read freezes the real CPU, while SDRAM keeps refreshing.
@@ -168,9 +195,151 @@ module tb_soc;
         command(16'h0303,1,0,0,0);
         command(16'h0101,0,0,0,0);
         command(16'h0302,1,0,0,0);expect_read(32'h40000000,32'h4433225a);command(16'h0303,1,0,0,0);
+        host(1,32'h2c,2,0); expect_read(32'h118,32'h16); // Manual SMS wins over GG header.
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready) $fatal(1,"Same-ROM SMS override did not complete");
+        expect_read(32'hc,2);
+        command(16'h0302,1,0,0,0);
+        expect_read(32'h40000000,32'h4433225a); // Profile reset retains cartridge SRAM.
+        command(16'h0303,1,0,0,0);
+        host(1,32'h2c,32'h10000002,0); expect_read(32'h2c,0);
+        expect_read(32'h118,32'h35);
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready) $fatal(1,"Same-ROM GG override did not complete");
+        expect_read(32'hc,1);
+        command(16'h0300,0,0,0,0); // New load epoch clears all previous type evidence.
+        expect_read(32'h118,0);
+        host(1,32'h30,2,0); expect_read(32'h30,2);
+        expect_read(32'h118,32'h22); // Loader-owned SMS hint before bytes.
+        host(1,32'h30000000,32'h000000f3,0);
+        host(1,32'h30,1,0); // A late hint must fail without changing the selection.
+        expect_read(32'h110,7); expect_read(32'h30,2);
+        command(16'h0300,0,0,0,0); // A clean reload recovers from the rejected hint.
+        expect_read(32'h110,0); expect_read(32'h30,0); expect_read(32'h118,0);
+        $readmemh("diagnostics/sms-pause-diagnostic.hex",rom);
+        // A valid SMS image without a TMR SEGA header is unresolved under the
+        // older firmware, which cannot send the .sms filename to this core.
+        for(i=32'h7ff0;i<32'h7ff8;i=i+1) rom[i]=8'hff;
+        rom[32'h7fff]=8'hff;
+        for(i=0;i<32768;i=i+4) host(1,32'h30000000+i,{rom[i+3],rom[i+2],rom[i+1],rom[i]},1);
+        mem_enable=0;
+        command(16'h0301,0,32768,0,0);
+        timeout=0;
+        while(!dut.profile_error && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_error || dut.active_type!=0)
+            $fatal(1,"Headerless SMS Auto must remain unresolved without a loader hint");
+        expect_read(32'h118,0);
+        expect_read(32'h110,8);
+        command(16'h0300,0,0,0,0);
+        expect_read(32'h110,0); expect_read(32'h118,0);
+        host(1,32'h30,2,0);
+        for(i=0;i<32768;i=i+4) host(1,32'h30000000+i,{rom[i+3],rom[i+2],rom[i+1],rom[i]},1);
+        mem_enable=0;
+        command(16'h0301,0,32768,0,0);
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready || dut.active_type!=2 || display_scale_mode!=1)
+            $fatal(1,"Committed SMS ROM did not apply its runtime profile/default 2x size");
+        expect_read(32'hc,2);
+        expect_read(32'h18,32'h010000f0);
+        command(16'h0100,0,0,0,0);
+        command(16'h0200,1,0,0,0);
+        timeout=0;
+        while((!viewport_valid || viewport_width!=256 || viewport_height!=192 ||
+               !viewport_system_sms) && timeout<2400000) begin
+            @(negedge clk); timeout=timeout+1;
+        end
+        if(timeout==2400000 || viewport_tv_pal || viewport_frame_id==0)
+            $fatal(1,"Same SoC did not publish the SMS 256x192 viewport");
+        repeat(100) @(negedge clk);
+        buttons[6]=1; repeat(100) @(negedge clk);
+        if(!dut.sms_pause_pressed) $fatal(1,"Bub Start did not reach SMS Pause");
+        buttons[6]=0; select_button=1; repeat(100) @(negedge clk);
+        if(dut.sms_console_reset) $fatal(1,"Default Select unexpectedly reset SMS");
+        select_button=0;
+        expect_read(32'h44,0);
+        host(1,32'h44,1,0); expect_read(32'h44,1);
+        select_button=1; repeat(8) @(negedge clk);
+        if(dut.sms_console_reset) $fatal(1,"Short Select press reset SMS");
+        repeat(20) @(negedge clk);
+        if(!dut.sms_console_reset) $fatal(1,"Explicit long Select did not reach SMS console Reset");
+        select_button=0; repeat(2) @(negedge clk);
+        if(dut.sms_console_reset) $fatal(1,"SMS console Reset stuck after Select release");
+        host(1,32'h44,0,0); expect_read(32'h44,0);
+        host(1,32'h38,0,0); expect_read(32'h38,0);
+        if(display_scale_mode!==0 || !dut.profile_ready)
+            $fatal(1,"SMS sharp 3x setting restarted the emulator or did not apply");
+        host(1,32'h38,2,0); expect_read(32'h38,2);
+        if(display_scale_mode!==2 || viewport_width!==180 || viewport_height!==120 ||
+           viewport_x0!==38 || viewport_y0!==36)
+            $fatal(1,"SMS 4x center crop descriptor incorrect: %0dx%0d at %0d,%0d",
+                viewport_width,viewport_height,viewport_x0,viewport_y0);
+        repeat(20) @(negedge clk); // Debounce a released shoulder after entering crop mode.
+        shoulder_buttons[0]=1; repeat(20) @(negedge clk);
+        if(viewport_y0!==37) $fatal(1,"L did not move SMS 4x picture up one source pixel");
+        repeat(30) @(negedge clk);
+        if(viewport_y0!==37) $fatal(1,"Held L repeated SMS crop movement");
+        shoulder_buttons[0]=0; repeat(20) @(negedge clk);
+        shoulder_buttons[1]=1; repeat(20) @(negedge clk);
+        if(viewport_y0!==36) $fatal(1,"R did not move SMS 4x picture down one source pixel");
+        shoulder_buttons[1]=0; repeat(20) @(negedge clk);
+        host(1,32'h38,1,0); expect_read(32'h38,1);
+        if(display_scale_mode!==1) $fatal(1,"SMS sharp 2x setting did not restore");
+        host(1,32'h40,1,0);
+        if(!dut.mapper_active || dut.mapper_step!==0)
+            $fatal(1,"Map controls action did not open the on-screen prompt");
+        repeat(20) @(negedge clk);
+        face_buttons[0]=1; repeat(20) @(negedge clk);
+        if(dut.mapper_step!==1 || dut.effective_buttons!==0)
+            $fatal(1,"Mapper did not capture X for Up while blocking gameplay input");
+        face_buttons[0]=0; repeat(20) @(negedge clk);
+        buttons[6]=1; repeat(20) @(negedge clk); // Start exits the prompt.
+        if(dut.mapper_active) $fatal(1,"Start did not close the mapper");
+        buttons[6]=0; repeat(20) @(negedge clk);
+        face_buttons[0]=1; repeat(2) @(negedge clk);
+        if(dut.effective_buttons[0]!==1) $fatal(1,"Captured X-to-Up mapping not applied");
+        face_buttons[0]=0;
+        host(1,32'h40,2,0);
+        face_buttons[0]=1; repeat(2) @(negedge clk);
+        if(dut.effective_buttons[0]!==0) $fatal(1,"Restore controls did not restore Up");
+        face_buttons[0]=0;
+        host(1,32'h48,1,0); expect_read(32'h48,1);
+        buttons[5]=1; repeat(2) @(negedge clk);
+        if(dut.effective_buttons[4]!==1 || dut.effective_buttons[5]!==0)
+            $fatal(1,"A/B swap did not route physical A to SMS B");
+        buttons[5]=0;
+        host(1,32'h48,0,0); expect_read(32'h48,0);
+        host(1,32'h3c,1,0); expect_read(32'h3c,1);
+        if(!clock_pal) $fatal(1,"SMS PAL did not request the PAL system clock");
+        timeout=0;
+        while(!dut.profile_ready && timeout<40000) begin @(negedge clk); timeout=timeout+1; end
+        if(!dut.profile_ready) $fatal(1,"SMS PAL profile did not restart");
+        timeout=0;
+        while((!viewport_valid || !viewport_tv_pal) && timeout<2400000) begin
+            @(negedge clk); timeout=timeout+1;
+        end
+        if(timeout==2400000 || viewport_width!=256 || viewport_height!=192)
+            $fatal(1,"SMS PAL viewport descriptor did not complete");
+        host(1,32'h3c,0,0); expect_read(32'h3c,0);
+        if(clock_pal) $fatal(1,"SMS NTSC did not restore the NTSC system clock");
+        // The upstream Evolution flash is 16 MiB. Skip the middle of a
+        // synthetic upload, then exercise the actual SoC/SDRAM path at its
+        // final word; this proves transport bounds, not Evolution gameplay.
+        command(16'h0101,0,0,0,0);
+        command(16'h0300,0,0,0,0);
+        dut.rom_committed=32'h00fffffc;
+        host(1,32'h30fffffc,32'h44332211,0);
+        if(model.ram[24'h7ffffe]!==16'h2211 || model.ram[24'h7fffff]!==16'h4433)
+            $fatal(1,"16 MiB ROM tail was not written to the expected SDRAM bytes");
+        command(16'h0301,0,32'h01000000,0,0);
+        expect_read(32'h100,32'h01000000);
+        if(dut.rom_mask!==24'hffffff)
+            $fatal(1,"16 MiB ROM mask truncated to %h",dut.rom_mask);
         command(16'hffff,0,0,0,1);
-        $display("PASS firmware-to-SDRAM-to-real-GG: host lifecycle, byte order, CRC, lengths, inputs, focus, 160x144 frames, stereo, save freeze/export, retained save, refresh");
+        $display("PASS unified SoC: GG and SMS ROMs in one engine, runtime profile, 160x144/256x192 viewports, SMS Pause/Reset, independent sizes, host/save/refresh");
         $finish;
     end
-    initial begin #200000000; $fatal(1,"SoC test timeout"); end
+    initial begin #300000000; $fatal(1,"SoC test timeout"); end
 endmodule

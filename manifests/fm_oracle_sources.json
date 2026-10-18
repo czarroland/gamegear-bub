@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/MiSTer-devel/SMS_MiSTer",
+  "revision": "8443a0d19a88aff7a5900011bccf386daf146945",
+  "qip_sha256": "2b743bdd5ce66e224925464703ecb7761af554bedf9a3ee4378822f2dcd23831",
+  "files": {
+    "attacktable.vhd": "2e6c9017ea1da4b6256f03e962c301866baed78f21ae6dd8d4cf486a2d8e1d55",
+    "controller.vhd": "273d7066924bc57a015e8db5dbb2d910acc69a2f253edff11e254c2adbdaad39",
+    "envelopegenerator.vhd": "f381a2cd62bcf5d57846f43c651898282bd54b5dab921b8b008e05761354f173",
+    "envelopememory.vhd": "ba68688050923d894b37a5eb863e33ca0aab092640cb6ebc852a3c5a5b2ca019",
+    "feedbackmemory.vhd": "a163906025580c3e068023ee1dfb9d78554327c0e17e1039358103ccc2e45763",
+    "lineartable.vhd": "c1b2c061a2c67038764f65b477e8320b7529d7554876be0c6ef5ee5a9c7b3f8a",
+    "operator.vhd": "ca02263ae5413d6e91d16a9989ed10487b70171937c944a2d9195f7dee1636ab",
+    "outputgenerator.vhd": "1b58a2fb7d1f574edc3b93b1a32aff4ec5bd1d0f3d81b189ccd07f1a757cf9c5",
+    "outputmemory.vhd": "ef7bc8f3ae226965e538752bfa8925ee52df4a79dad2dc77e1eaaaf11decba4d",
+    "phasegenerator.vhd": "97d4fdfe6df593a502e05a7ccd77c33144cdae01b92b610badee139288ab2d6f",
+    "phasememory.vhd": "e56541196512a1997dac51e6befeb704485d10ea5d7b42e8bbfcb7970c5fc049",
+    "registermemory.vhd": "0893a923436351f628dbc414c392d1483d7400f8a4da5036f44d160ab6e06ea1",
+    "sinetable.vhd": "bba8e4af31e1cbb924ed53d811f5e769ac4ba0c5e32faaf1f05e1444fe0979a0",
+    "slotcounter.vhd": "8245fc1d1c69cd04b38eb7275e624cc11d7ad30957888095638b5fa91a6807bd",
+    "temporalmixer.vhd": "e4013cf7fc7efe8686d2fb646e1c6e3ca74f72d6da10aa004cb862aeb6bac3f8",
+    "voicememory.vhd": "c2e59f9561a550d99528ba02b565fbaf6e0620cd9ad8fea04c6a052303d2f739",
+    "voicerom.vhd": "0db86e961ee184bc6b439ba42e299b9a43354753706b3fc5f8b526c77e720c37",
+    "vm2413.vhd": "4f3c512c38f106d8ef1a6494373a3abdb4cc9baccd9df57aebccfb770a8fd95d",
+    "opll.vhd": "d5c4ca6b222ac02352d47aa7edb683a77c0aad4ec0cdea882d4f3b5a887ba020"
+  }
+}

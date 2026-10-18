@@ -18,12 +18,3 @@
      nvram_we <= nv_we_r;
      nvram_a  <= nv_a_r;
      nvram_di <= nv_di_r;
-@@ -146,7 +146,7 @@
-                 -- Always latch inputs for edge detection on every clock cycle
-                 clk_r <= clk_in;
- 
--                -- CS LOW: standby / reset to WAIT_START and drive DO high (1) (matching Genesis Plus GX)
-+                -- CS LOW: standby / reset to WAIT_START and drive z80_dout high (1) (matching Genesis Plus GX)
-                 if cs_in = '0' then
-                     data_o <= '1';
-                     state  <= WAIT_START;

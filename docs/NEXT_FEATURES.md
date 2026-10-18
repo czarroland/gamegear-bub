@@ -1,28 +1,35 @@
-# MiSTer feature parity roadmap after the first rev4 Game Gear run
+# Unified Sega 8-bit core roadmap
 
 The diagnostic ROM and Sonic Triple Trouble now run on hardware. Preserve the
 current bitstream and core package as the known-good Game Gear baseline.
-The target is the [MiSTer SMS/Game Gear core's documented feature set](https://github.com/MiSTer-devel/SMS_MiSTer)
-where Gamebub hardware and firmware permit it, with the user's four requested
-features first. A feature is complete only after a hardware test, not just
-because its upstream logic is present in the source tree.
+The target is one Gamebub rev4 core entry, ROM picker and bitstream for Game
+Gear and Master System (NTSC/PAL), including FM sound. A feature is complete
+only after simulation, a routed build and a named hardware test. Prepare a
+test package on the Bub SD card, then publish the identical package as a GitHub
+prerelease when its simulation and timing gates pass. The tester has reported
+several PAL ROMs playing on the separate trial and authorized the next alpha
+with PAL and the four open control fixes. Keep the existing
+Game Gear release as a rollback baseline.
 
 | Upstream feature | Gamebub port status |
 | --- | --- |
 | Native Game Gear, stereo PSG, Sega mapper | Runs diagnostic and Sonic Triple Trouble on rev4; broader compatibility pending |
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
-| Persistent save states | Not connected to Gamebub frontend |
-| Master System | Engine present, Gamebub mode and video wrapper absent |
-| Selectable scaling and display options | 2×/3×, 4× crop, and 3.5× bilinear confirmed on rev4 |
+| Persistent save states | Outside this implementation slice |
+| Master System | GG/SMS NTSC alpha.4 trial fails on hardware; alpha.5 received an initial successful rev4 play check. Alpha.6 retains its bitstream with the **GG and SMS Bub** menu name; broader compatibility remains open |
+| System Auto and ROM picker | The current firmware provides no extension hint, so some community-tested `.sms` games require a forced Master System setting. One picker remembers one last ROM folder. A source-only firmware hint patch exists; no Bub firmware build has been installed or verified |
+| Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; hardware smoke testing passed. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
-| SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present; no Gamebub packages or mode adapters |
-| PAL timing, FM sound, extra sprites, extended GG resolution, Z80 turbo | Disabled or fixed to NTSC/native settings |
+| SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present. A local trial package can upload up to 16 MiB for Evolution, but no full flash/gameplay or device compatibility test exists; see [ROM compatibility audit](ROM_COMPATIBILITY.md) |
+| PAL timing and FM sound | Native 192/224/240-line PAL raster checks pass. Several PAL ROMs played on the separate rev4 trial. The alpha.7 combined build passes routed timing but needs its own device check. FM control-port readback passes through the real SMS CPU. A private VM2413 synthesis probe passed, but the release still has PSG only |
+| Controls | Alpha.7 adds SMS 4× crop position on L/R, a six-step on-screen press-to-bind mapper, A/B swap, debounced Start/Pause, and Select reset only on explicit one-second hold. Device verification remains |
+| Extra sprites, extended GG resolution, Z80 turbo | Outside the normal-speed parity profile |
 | BIOS loading, cheats, EEPROM cartridges | Not integrated |
 | Advanced controllers and Gear-to-Gear link | Gamebub controls/physical connectivity need separate evaluation |
 
 ## 1. Battery-backed game saves
 
-The current core already imports and exports a 32 KiB cartridge RAM image as
+The current GG core already imports and exports a 32 KiB cartridge RAM image as
 `<ROM name>.sav`. The firmware loads that file on entry and writes it on normal
 exit or power-off preparation. The diagnostic ROM writes `5A` to the first
 byte of this RAM. Normal exit on hardware has created a 32,768-byte
@@ -32,7 +39,7 @@ to verify import. Then test a retail title that actually uses battery-backed RAM
 Only change the bitstream if this test exposes a defect. EEPROM cartridges
 will need a separate save format and implementation.
 
-## 2. Save states
+## 2. Save states (later work)
 
 The MiSTer engine exposes snapshot and restore ports for CPU, VDP, sound,
 mapper, IO, VRAM, and cartridge EEPROM state. They are currently unconnected
@@ -48,32 +55,73 @@ Choose the intended user flow before implementing the serialization protocol.
 
 ## 3. Selectable display scaling
 
-The rev4 LCD scales 160×144 to 480×432 at the default sharp integer 3×. The
-Screen size setting also selects sharp 2× (320×288) and 4× zoom (640×576);
-the user confirmed all three on rev4 hardware. The 4× choice crops 12 native
-lines at each vertical edge. The source now includes a 3.5× bilinear choice
-that renders 560×504 and crops about 3–4 source lines at each edge. It blends
-four neighboring framebuffer pixels using exact sevenths in both axes. The
-panel's display offset compensates for its physical alignment. The optional
-framework interface sends the scale mode through a multi-bit clock-domain
-handshake and applies it at a frame boundary. The framework change is kept as
-`patches/framework-video-scale.patch` against the pinned framework. The 3.5×
-mode has been confirmed on hardware. Evaluate alternative fractional filters
-while keeping all four selectable sizes. The current 3.5× bitstream passes
-post-route timing with +0.008 ns setup margin.
+Only sharp integer 3× and 2× remain selectable. On Game Gear's 160×144 image
+they produce 480×432 and 320×288 respectively. The framework patch retains
+its multi-bit clock-domain handshake and applies a scale change at an output
+frame boundary, with one read port per framebuffer. Legacy stored values 2
+(4×) and 3 (3.5×) normalize to the Game Gear default of 3×. The prior 4× and
+3.5× packages were hardware trials and remain documented as historical results
+in `docs/BUILD_AND_TEST.md`; they are not the target display roadmap. The new
+2×/3× branch passed Chisel generation, the host regression suite and rev4
+post-route timing. The public
+[`v0.1.0-alpha.3`](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.3)
+package was installed under the separate `GameGear.Scale23` ID and verified
+against the public ZIP hash. Hardware smoke testing passed; the precise ROM,
+scale and duration are not yet recorded.
 
-## 4. Master System
+## 4. Master System and FM in the same core
 
-The upstream system supports SMS mode, but the current wrapper ties the Game
-Gear mode inputs high and declares a 160×144 video framebuffer. SMS needs
-mode-appropriate controls, 256×192 video (and later 224-line support), ROM
-extensions, region timing, and mode-aware package metadata. Deliver SMS first
-as a separate selectable core, because the framework currently fixes the
-framebuffer size when the bitstream is built. Verify an SMS diagnostic and
-Pause input before retail games. A later unified core needs a way to select
-the video dimensions and report the ROM type to the FPGA. The final user
-experience should match the MiSTer core's multi-system behavior as closely as
-practical.
+The GG-only alpha.3 wrapper fixes Game Gear mode and declares a 160×144 framebuffer.
+The unified alpha.4 wrapper selects GG or SMS NTSC at runtime. Its framework patch
+allocates one pair of 256×240 framebuffers, publishes completed-frame
+geometry/epoch/buffer ownership coherently, and addresses pixels with a fixed
+256-column stride. The LCD/HDMI output applies the native dimensions at a
+display frame boundary with literal sharp 2×/3× sampling, including the
+specified SMS crop. Captures are dropped rather than overwriting a buffer
+being scanned; host readback masks storage outside the completed viewport.
+This framebuffer path generated Chisel RTL and the ownership revision
+passed a rev4 route with +0.168 ns setup and +0.049 ns hold slack. The later
+alpha.4 package passed timing and was installed, but games stalled on their
+first screen in hardware tests. The alpha.5 package changes the LCD handoff
+and capture edge, passed timing, and is published and installed. An initial
+rev4 play check reports it working well; exact ROMs/settings are not recorded.
+The first native-versus-staged MiSTer decoder fixture passes in GHDL for
+cartridge selection and bank addressing, including the `$3E` no-BIOS SMS fix.
+This is a narrow oracle, not a claim of full engine parity. A real-engine SMS
+diagnostic also passes in simulation: Pause reaches the Z80 NMI handler with
+maskable interrupts disabled, a held press does not repeat, console Reset
+appears at port `$DD`, and the native raster produces a full 256×192 frame.
+Separate real-engine diagnostics now confirm 256×192/224/240 frame boundaries
+and their completed descriptors in both NTSC and PAL simulation modes. The
+pinned MiSTer raster runs PAL 192/224 at 313 lines, but PAL 240 at 297 lines
+because its counter jumps from 266 to 482. The staged Gamebub copy changes
+that 240-line jump to 466, matching the documented D2-FF VCounter interval
+and 313-line target; the pinned upstream snapshot is preserved. PAL
+system-clock selection and PAL-aware audio now pass SoC simulation. A rev4
+PAL/NTSC route closed timing with setup WNS +0.058 ns and hold WHS +0.054 ns;
+clock measurement and on-device presentation remain unverified.
+The ROM type resolver accepts a load-epoch hint and falls back to a validated
+Sega header; its host transaction path passes the integrated SoC test. The
+video adapter now records dimensions, mode and epoch after a complete frame;
+synthetic tests cover GG 160×144 and SMS 256×192/224/240, plus a malformed
+line and epoch flush. The next working SoC revision now applies the selected
+GG/SMS profile after the ROM bus drains and a cold restart completes. It is
+passing integrated simulation and rev4 timing. The alpha.4 GG/SMS hardware
+package is a diagnostic prerelease and is not playable. The alpha.5 trial
+has an initial successful on-device report but no broad compatibility result.
+The loader must convey a
+guarded `.gg`/`.sms` type hint, with System Auto and a manual override. SMS
+requires its full palette, 256-column raster with 192/224/240-line modes,
+Pause NMI and console Reset semantics. Runtime PAL/NTSC timing and a shared FM
+synthesizer must fit in that same bitstream. FM redistribution requires the
+licensing gate described in the implementation plan before any public build.
+The current [FM implementation gate](FM_IMPLEMENTATION_GATE.md) records the
+pinned source's restrictions, candidate alternatives, and private tool checks.
+
+`patches/firmware-load-type-hint.patch` is a companion source patch against the
+pinned core-loading firmware. It adds an optional, guarded extension hint and
+case-insensitive picker matching. The patch has not been compiled into or
+installed as firmware; the current GG package does not use it.
 
 Community testing of the GG-only build found that simply admitting `.sms`
 files is insufficient: some titles need SMS Pause, while SMS palette and

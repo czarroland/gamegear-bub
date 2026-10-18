@@ -1,6 +1,23 @@
+diff --git a/framework/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala b/framework/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala
+new file mode 100644
+index 0000000..8fa6c85
+--- /dev/null
++++ b/framework/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala
+@@ -0,0 +1,9 @@
++package net.gamebub.framework.interface
++
++import chisel3._
++
++/** Optional display scaling control supplied by a core. */
++class VideoScaleV0 extends Bundle {
++  /** 0 = literal 3x, 1 = literal 2x; other values fall back to 3x. */
++  val mode = Output(UInt(2.W))
++}
+diff --git a/framework/src/main/scala/platform/handheld/HandheldTop.scala b/framework/src/main/scala/platform/handheld/HandheldTop.scala
+index e31ba55..77b5da1 100644
 --- a/framework/src/main/scala/platform/handheld/HandheldTop.scala
 +++ b/framework/src/main/scala/platform/handheld/HandheldTop.scala
-@@ -231,6 +231,12 @@
+@@ -231,6 +231,12 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      case None => throw new CoreException("'video' is required")
    }
  
@@ -13,56 +30,7 @@
    // Video filter
    val videoFilterIn = Wire(ColorRGB(videoColorDepthR, videoColorDepthG, videoColorDepthB))
    val videoFilterOut = Wire(ColorRGB(8))
-@@ -541,7 +547,8 @@
-   val framebuffers = (0 until 2).map(_ =>
-     SRAM(
-       videoWidth * videoHeight, UInt((videoColorDepthR + videoColorDepthG + videoColorDepthB).W),
--      readPortClocks = Seq(io.clock_av), writePortClocks = Seq(), readwritePortClocks = Seq(clock)
-+      readPortClocks = Seq.fill(if (core.getInterface("videoScale").isDefined) 4 else 1)(io.clock_av),
-+      writePortClocks = Seq(), readwritePortClocks = Seq(clock)
-     )
-   )
-   /// Last completed frame
-@@ -570,7 +577,38 @@
-     val videoX = Wire(UInt(10.W))
-     val videoY = Wire(UInt(10.W))
-     val framebufferReadAddress = Wire(UInt(log2Ceil(videoWidth * videoHeight).W))
-+    val fractionalReadAddresses = Wire(Vec(3, UInt(log2Ceil(videoWidth * videoHeight).W)))
-+    val fractionalWeightX = Wire(UInt(3.W))
-+    val fractionalWeightY = Wire(UInt(3.W))
-     val overlayReadAddress = Wire(UInt(log2Ceil(overlayWidth * overlayHeight).W))
-+
-+    // Bilinear 7:2 enlargement. The extra read ports fetch the other three
-+    // corners; source coordinates are clamped because blanking is also read.
-+    def fractionalViewport(screenWidth: Int, screenHeight: Int, x: UInt, y: UInt,
-+                           displayOffsetX: Int, readDelayX: Int, readDelayY: Int):
-+        (Seq[UInt], Bool, UInt, UInt) = {
-+      val scaledWidth = videoWidth * 7 / 2
-+      val scaledHeight = videoHeight * 7 / 2
-+      val left = (screenWidth - scaledWidth) / 2 + displayOffsetX
-+      val top = (screenHeight - scaledHeight) / 2
-+      val xOffset = left.max(0)
-+      val yOffset = top.max(0)
-+      val xCrop = (-left).max(0)
-+      val yCrop = (-top).max(0)
-+      val sourceX = (x + xCrop.U - xOffset.U + readDelayX.U) * 2.U
-+      val sourceY = (y + yCrop.U - yOffset.U + readDelayY.U) * 2.U
-+      val x0 = Mux(sourceX / 7.U >= videoWidth.U, (videoWidth - 1).U, sourceX / 7.U)
-+      val y0 = Mux(sourceY / 7.U >= videoHeight.U, (videoHeight - 1).U, sourceY / 7.U)
-+      val x1 = Mux(x0 === (videoWidth - 1).U, x0, x0 + 1.U)
-+      val y1 = Mux(y0 === (videoHeight - 1).U, y0, y0 + 1.U)
-+      val addresses = Seq(y0 * videoWidth.U + x0, y0 * videoWidth.U + x1,
-+        y1 * videoWidth.U + x0, y1 * videoWidth.U + x1)
-+      val bounds = x >= xOffset.U && x < (left + scaledWidth).min(screenWidth).max(0).U &&
-+        y >= yOffset.U && y < (top + scaledHeight).min(screenHeight).max(0).U
-+      val weightX = (((x + xCrop.U - xOffset.U) * 2.U) % 7.U)(2, 0)
-+      val weightY = (((y + yCrop.U - yOffset.U) * 2.U) % 7.U)(2, 0)
-+      (addresses, bounds, weightX, weightY)
-+    }
- 
-     val audioData = XpmCdcHandshake.continuous(clock, coreAudioData)
- 
-@@ -580,18 +618,45 @@
+@@ -580,6 +586,8 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      // Read from the correct framebuffer.
      val framebufferIndex = Wire(UInt(1.W))
      val lastFrameComplete = XpmCdcSingle(clock, regLastFrameComplete.asBool).asUInt
@@ -71,71 +39,18 @@
      for (i <- 0 until 2) {
        framebuffers(i).readPorts(0).enable := framebufferIndex === i.U
        framebuffers(i).readPorts(0).address := framebufferReadAddress
--    }
--    val framebufferRead = MuxLookup(framebufferIndex, 0.U)(
--      (0 until 2).map(i => i.U -> RegNext(RegNext(framebuffers(i).readPorts(0).data)))
--    ).asTypeOf(ColorRGB(videoColorDepthR, videoColorDepthG, videoColorDepthB))
-+      if (core.getInterface("videoScale").isDefined) {
-+        for (j <- 0 until 3) {
-+          framebuffers(i).readPorts(j + 1).enable := framebufferIndex === i.U
-+          framebuffers(i).readPorts(j + 1).address := fractionalReadAddresses(j)
-+        }
-+      }
-+    }
-+    val framebufferSamples = (0 until (if (core.getInterface("videoScale").isDefined) 4 else 1)).map(j =>
-+      MuxLookup(framebufferIndex, 0.U)(
-+        (0 until 2).map(i => i.U -> RegNext(RegNext(framebuffers(i).readPorts(j).data)))
-+      ).asTypeOf(ColorRGB(videoColorDepthR, videoColorDepthG, videoColorDepthB)))
-+    val framebufferRead = framebufferSamples(0)
- 
-     // Apply core video filter
-     videoFilterIn := framebufferRead
-     val framebufferColor = videoFilterOut
-     videoFilterReset := reset_av
-+
-+    val fractionalColor = Wire(ColorRGB(8, 8, 8))
-+    if (core.getInterface("videoScale").isDefined && videoFilterLatency == 0) {
-+      val corners = framebufferSamples.map(_.convertTo(ColorRGB(8, 8, 8)))
-+      def interpolate(a: UInt, b: UInt, c: UInt, d: UInt): UInt = {
-+        val wx = fractionalWeightX
-+        val wy = fractionalWeightY
-+        val upper = a * (7.U - wx) + b * wx
-+        val lower = c * (7.U - wx) + d * wx
-+        ((upper * (7.U - wy) + lower * wy + 24.U) / 49.U)(7, 0)
-+      }
-+      fractionalColor.r := interpolate(corners(0).r, corners(1).r, corners(2).r, corners(3).r)
-+      fractionalColor.g := interpolate(corners(0).g, corners(1).g, corners(2).g, corners(3).g)
-+      fractionalColor.b := interpolate(corners(0).b, corners(1).b, corners(2).b, corners(3).b)
-+    } else {
-+      fractionalColor := framebufferColor
-+    }
- 
-     // Similar for overlay framebuffer.
-     overlayFramebuffer.readPorts(0).enable := true.B
-@@ -613,7 +678,7 @@
-     val overlayInBounds = Wire(Bool())
-     val videoOutput = ColorRGB(8, 8, 8).make(r = 0, g = 0, b = 0)
-     when (framebufferInBounds) {
--      videoOutput := framebufferColor.convertTo(videoOutput)
-+      videoOutput := Mux(frameScaleMode === 3.U, fractionalColor, framebufferColor)
-     }
-     when (overlayRead.a.asBool && overlayInBounds) {
-       videoOutput := overlayRead.convertTo(videoOutput)
-@@ -670,20 +735,42 @@
+@@ -670,20 +678,31 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
        framebufferIndex := regHdmiFrame
        when (hdmiFramePulse && !RegNext(hdmiFramePulse)) {
          regHdmiFrame := lastFrameComplete
--      }
--
--      // Scale and center framebuffer within output video.
 +        frameScaleMode := scaleMode
-+      }
-+
-+      // Center each scale; zoomed modes crop symmetrically at the screen edge.
-       val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
+       }
+ 
+-      // Scale and center framebuffer within output video.
+-      val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
 -      val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2
 -      val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
-+      val scale2 = videoScale.min(2)
++      // Apply literal 3x or 2x at a frame boundary. A 3x image may be cropped.
        val framebufferReadDelay = 3 /* reading */ + videoFilterLatency
 -      framebufferReadAddress :=
 -        (((videoY - videoOffsetY.U) / videoScale.U) * videoWidth.U) +
@@ -160,37 +75,26 @@
 +          videoY >= yOffset.U && videoY < yEnd.U
 +        (address, inBounds)
 +      }
-+      val (defaultAddress, defaultBounds) = viewport(videoScale)
-+      val (smallAddress, smallBounds) = viewport(scale2)
-+      val (zoomAddress, zoomBounds) = viewport(4)
-+      val (fractionalAddresses, fractionalBounds, weightX, weightY) =
-+        fractionalViewport(screenWidth, screenHeight, videoX, videoY, 0,
-+          framebufferReadDelay, 0)
-+      for (j <- 0 until 3) fractionalReadAddresses(j) := fractionalAddresses(j + 1)
-+      fractionalWeightX := weightX
-+      fractionalWeightY := weightY
-+      framebufferReadAddress := MuxLookup(frameScaleMode, defaultAddress)(Seq(
-+        1.U -> smallAddress, 2.U -> zoomAddress, 3.U -> fractionalAddresses(0)))
-+      framebufferInBounds := MuxLookup(frameScaleMode, defaultBounds)(Seq(
-+        1.U -> smallBounds, 2.U -> zoomBounds, 3.U -> fractionalBounds))
++      val (largeAddress, largeBounds) = viewport(3)
++      val (smallAddress, smallBounds) = viewport(2)
++      framebufferReadAddress := Mux(frameScaleMode === 1.U, smallAddress, largeAddress)
++      framebufferInBounds := Mux(frameScaleMode === 1.U, smallBounds, largeBounds)
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -715,22 +802,45 @@
+@@ -715,22 +734,34 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
        videoX := dpiX
        videoY := dpiY
        framebufferIndex := dpiDriverIo.displayFrame
--
--      // Scale and center framebuffer without output video.
 +      when (dpiDriverIo.displayFrame =/= RegNext(dpiDriverIo.displayFrame)) {
 +        frameScaleMode := scaleMode
 +      }
-+
-+      // Scale and center framebuffer on the LCD; crop zoomed modes evenly.
-       val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
+ 
+-      // Scale and center framebuffer without output video.
+-      val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
 -      val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2 + revision.displayOffsetX
 -      val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
-+      val scale2 = videoScale.min(2)
++      // Apply literal 3x or 2x on the LCD. Preserve the panel alignment offset.
        val framebufferReadDelay = 3 /* reading */ + videoFilterLatency
        val framebufferReadDelayX = if (revision.displayRotate) 0 else framebufferReadDelay
        val framebufferReadDelayY = if (revision.displayRotate) framebufferReadDelay else 0
@@ -218,31 +122,10 @@
 +          dpiY >= yOffset.U && dpiY < yEnd.U
 +        (address, inBounds)
 +      }
-+      val (defaultAddress, defaultBounds) = viewport(videoScale)
-+      val (smallAddress, smallBounds) = viewport(scale2)
-+      val (zoomAddress, zoomBounds) = viewport(4)
-+      val (fractionalAddresses, fractionalBounds, weightX, weightY) =
-+        fractionalViewport(screenWidth, screenHeight, dpiX, dpiY, revision.displayOffsetX,
-+          framebufferReadDelayX, framebufferReadDelayY)
-+      for (j <- 0 until 3) fractionalReadAddresses(j) := fractionalAddresses(j + 1)
-+      fractionalWeightX := weightX
-+      fractionalWeightY := weightY
-+      framebufferReadAddress := MuxLookup(frameScaleMode, defaultAddress)(Seq(
-+        1.U -> smallAddress, 2.U -> zoomAddress, 3.U -> fractionalAddresses(0)))
-+      framebufferInBounds := MuxLookup(frameScaleMode, defaultBounds)(Seq(
-+        1.U -> smallBounds, 2.U -> zoomBounds, 3.U -> fractionalBounds))
++      val (largeAddress, largeBounds) = viewport(3)
++      val (smallAddress, smallBounds) = viewport(2)
++      framebufferReadAddress := Mux(frameScaleMode === 1.U, smallAddress, largeAddress)
++      framebufferInBounds := Mux(frameScaleMode === 1.U, smallBounds, largeBounds)
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
---- /dev/null
-+++ b/framework/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala
-@@ -0,0 +1,9 @@
-+package net.gamebub.framework.interface
-+
-+import chisel3._
-+
-+/** Optional display scaling control supplied by a core. */
-+class VideoScaleV0 extends Bundle {
-+  /** 0 = maximum fitting integer scale, 1 = 2x, 2 = 4x crop, 3 = bilinear 3.5x. */
-+  val mode = Output(UInt(2.W))
-+}

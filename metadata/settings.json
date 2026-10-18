@@ -15,10 +15,22 @@
          "items": [{"label": "Auto", "value": "0x0"}, {"label": "Sega", "value": "0x1"},
                    {"label": "Codemasters", "value": "0x2"}, {"label": "Dahjee", "value": "0x3"},
                    {"label": "Linear", "value": "0x4"}, {"label": "Zemina", "value": "0x5"}]},
-        {"id": 3, "label": "Reset game", "address": "0x00000020", "type": "action", "value": "0x1"},
-        {"id": 4, "label": "Screen size", "address": "0x0000001c", "type": "list", "default": "0x0",
-         "items": [{"label": "3x sharp", "value": "0x0"}, {"label": "2x sharp", "value": "0x1"},
-                   {"label": "3.5x smooth", "value": "0x3"},
-                   {"label": "4x zoom (crop)", "value": "0x2"}]}
+        {"id": 3, "label": "Restart game", "address": "0x00000020", "type": "action", "value": "0x1"},
+        {"id": 4, "label": "Game Gear size", "address": "0x0000001c", "type": "list", "default": "0x0",
+         "items": [{"label": "3x sharp", "value": "0x0"}, {"label": "2x sharp", "value": "0x1"}]},
+        {"id": 6, "label": "System", "address": "0x0000002c", "type": "list", "default": "0x0",
+         "items": [{"label": "Auto", "value": "0x0"}, {"label": "Game Gear", "value": "0x1"},
+                   {"label": "Master System", "value": "0x2"}]},
+        {"id": 8, "label": "Master System size", "address": "0x00000038", "type": "list", "default": "0x1",
+         "items": [{"label": "2x sharp", "value": "0x1"}, {"label": "3x zoom/crop", "value": "0x0"},
+                   {"label": "4x crop (L/R shift)", "value": "0x2"}]},
+        {"id": 9, "label": "Master System TV", "address": "0x0000003c", "type": "list", "default": "0x0",
+         "items": [{"label": "NTSC", "value": "0x0"}, {"label": "PAL", "value": "0x1"}]},
+        {"id": 10, "label": "Map controls", "address": "0x00000040", "type": "action", "value": "0x1"},
+        {"id": 11, "label": "SMS Select", "address": "0x00000044", "type": "list", "default": "0x0",
+         "items": [{"label": "No action", "value": "0x0"}, {"label": "Hold 1s Reset", "value": "0x1"}]},
+        {"id": 12, "label": "Restore controls", "address": "0x00000040", "type": "action", "value": "0x2"},
+        {"id": 13, "label": "Swap A/B", "address": "0x00000048", "type": "list", "default": "0x0",
+         "items": [{"label": "Normal", "value": "0x0"}, {"label": "Swapped", "value": "0x1"}]}
 	]
 }

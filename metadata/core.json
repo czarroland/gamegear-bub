@@ -1,10 +1,10 @@
 {
 	"metadata": {
-		"id": "GameGear.Alpha",
-		"name": "Game Gear (development)",
-		"author": "Game Gear port"
+		"id": "Sega8bit.Dev",
+		"name": "GG and SMS Bub",
+		"author": "Gamebub Sega port"
 	},
 	"bitstreams": [
-		{"target": "gamebub_rev4", "filename": "GameGearCore-gamebub_rev4.bit"}
+		{"target": "gamebub_rev4", "filename": "SegaCore-gamebub_rev4.bit"}
 	]
 }

@@ -1,0 +1,408 @@
+diff --git a/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala b/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala
+new file mode 100644
+index 0000000..28934e7
+--- /dev/null
++++ b/src/main/scala/net/gamebub/framework/interface/VideoScaleV0.scala
+@@ -0,0 +1,9 @@
++package net.gamebub.framework.interface
++
++import chisel3._
++
++/** Optional display scaling control supplied by a core. */
++class VideoScaleV0 extends Bundle {
++  /** 0 = literal 3x, 1 = literal 2x, 2 = literal 4x crop. */
++  val mode = Output(UInt(2.W))
++}
+diff --git a/src/main/scala/net/gamebub/framework/interface/VideoViewportV0.scala b/src/main/scala/net/gamebub/framework/interface/VideoViewportV0.scala
+new file mode 100644
+index 0000000..c506664
+--- /dev/null
++++ b/src/main/scala/net/gamebub/framework/interface/VideoViewportV0.scala
+@@ -0,0 +1,19 @@
++package net.gamebub.framework.interface
++
++import chisel3._
++
++/** Optional completed-frame geometry in the core clock domain.
++  * The framework owns the framebuffer index; every other field belongs to the
++  * completed native frame. Width and height are bounded by VideoV0 capacity.
++  */
++class VideoViewportV0 extends Bundle {
++  val valid = Output(Bool())
++  val activeWidth = Output(UInt(9.W))
++  val activeHeight = Output(UInt(9.W))
++  val x0 = Output(UInt(9.W))
++  val y0 = Output(UInt(9.W))
++  val epoch = Output(UInt(8.W))
++  val frameId = Output(UInt(16.W))
++  val systemSms = Output(Bool())
++  val tvPal = Output(Bool())
++}
+diff --git a/src/main/scala/platform/handheld/HandheldTop.scala b/src/main/scala/platform/handheld/HandheldTop.scala
+index e31ba55..3b2da67 100644
+--- a/src/main/scala/platform/handheld/HandheldTop.scala
++++ b/src/main/scala/platform/handheld/HandheldTop.scala
+@@ -231,6 +231,18 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+     case None => throw new CoreException("'video' is required")
+   }
+ 
++  val coreScaleMode = core.getInterface("videoScale") match {
++    case Some(scale: VideoScaleV0) => scale.mode
++    case Some(x) => throw new CoreException("Unknown 'videoScale': " + x.getClass())
++    case None => 0.U(2.W)
++  }
++  val coreViewport = core.getInterface("videoViewport") match {
++    case Some(viewport: VideoViewportV0) => Some(viewport)
++    case Some(x) => throw new CoreException("Unknown 'videoViewport': " + x.getClass())
++    case None => None
++  }
++  val variableViewport = coreViewport.isDefined
++
+   // Video filter
+   val videoFilterIn = Wire(ColorRGB(videoColorDepthR, videoColorDepthG, videoColorDepthB))
+   val videoFilterOut = Wire(ColorRGB(8))
+@@ -546,6 +558,10 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+   )
+   /// Last completed frame
+   val regLastFrameComplete = RegInit(0.U(1.W))
++  // Packed completed-frame record crosses to the display domain as one value.
++  // High bits hold the scale used for this completed frame; the low bit is
++  // the framework-owned buffer index.
++  val regCompletedViewport = RegInit(0.U(66.W))
+ 
+   val overlayWidth = revision.overlayWidth
+   val overlayHeight = revision.overlayHeight
+@@ -566,6 +582,8 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+   io.hdmiClockPowerDown := hdmiClockPowerTimer === 0.U
+ 
+   val reset_av = withClock(io.clock_av) { XpmCdcSyncRst(reset) }
++  val displayOwnedBuffer = Wire(UInt(1.W))
++  val displayHasFrame = Wire(Bool())
+   withClockAndReset (clock = io.clock_av, reset = reset_av) {
+     val videoX = Wire(UInt(10.W))
+     val videoY = Wire(UInt(10.W))
+@@ -580,6 +598,50 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+     // Read from the correct framebuffer.
+     val framebufferIndex = Wire(UInt(1.W))
+     val lastFrameComplete = XpmCdcSingle(clock, regLastFrameComplete.asBool).asUInt
++    val scaleMode = if (variableViewport) 0.U(2.W)
++      else XpmCdcHandshake.continuous(clock, coreScaleMode)
++    val frameScaleMode = RegInit(0.U(2.W))
++    val syncedViewport = if (variableViewport) {
++      Some(XpmCdcHandshake.continuous(clock, regCompletedViewport))
++    } else None
++    val frameViewport = if (variableViewport) Some(RegInit(0.U(66.W))) else None
++    displayOwnedBuffer := (if (variableViewport) frameViewport.get(0) else 0.U)
++    displayHasFrame := (if (variableViewport) frameViewport.get(63).asBool else false.B)
++    def dynamicViewport(x: UInt, y: UInt, screenWidth: Int, screenHeight: Int,
++                        scale: Int, readDelayX: Int, readDelayY: Int,
++                        displayOffsetX: Int): (UInt, Bool) = {
++      val descriptor = frameViewport.get
++      val width = descriptor(62, 54)
++      val height = descriptor(53, 45)
++      val x0 = descriptor(44, 36)
++      val y0 = descriptor(35, 27)
++      val imageWidth = width * scale.U
++      val imageHeight = height * scale.U
++      val centeredLeft = (screenWidth.S(13.W) - imageWidth.zext) / 2.S
++      val centeredTop = (screenHeight.S(13.W) - imageHeight.zext) / 2.S
++      val shiftedLeft = centeredLeft + displayOffsetX.S
++      val availableMargin = screenWidth.S(13.W) - imageWidth.zext
++      // Keep the entire picture visible when it nominally fits the LCD.
++      val left = Mux(imageWidth <= screenWidth.U,
++        Mux(shiftedLeft < 0.S, 0.S,
++          Mux(shiftedLeft > availableMargin, availableMargin, shiftedLeft)),
++        centeredLeft)
++      val dx = x.zext - left
++      val dy = y.zext - centeredTop
++      val inBounds = descriptor(63).asBool && width =/= 0.U && height =/= 0.U &&
++        x0 +& width <= videoWidth.U && y0 +& height <= videoHeight.U &&
++        x < screenWidth.U && y < screenHeight.U &&
++        dx >= 0.S && dx < imageWidth.zext &&
++        dy >= 0.S && dy < imageHeight.zext
++      val sampleX = dx + readDelayX.S
++      val sampleY = dy + readDelayY.S
++      val sourceX = Mux(sampleX < 0.S, 0.U, sampleX.asUInt / scale.U)
++      val sourceY = Mux(sampleY < 0.S, 0.U, sampleY.asUInt / scale.U)
++      val boundedX = Mux(sourceX >= width, width - 1.U, sourceX)
++      val boundedY = Mux(sourceY >= height, height - 1.U, sourceY)
++      val address = ((y0 + boundedY) * videoWidth.U) + x0 + boundedX
++      (Mux(inBounds, address, 0.U), inBounds)
++    }
+     for (i <- 0 until 2) {
+       framebuffers(i).readPorts(0).enable := framebufferIndex === i.U
+       framebuffers(i).readPorts(0).address := framebufferReadAddress
+@@ -624,7 +686,11 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+       /* sourceFramePeriod = */ videoFramePeriod,
+       /* clockHz = */ clockDisplayHz,
+     )
+-    dpiDriverIo.lastRenderedFrame := lastFrameComplete
++    // The viewport descriptor and its buffer index cross as one handshake.
++    // The separate one-bit synchronizer can arrive first and make the LCD
++    // switch buffers before its matching geometry has reached this clock.
++    dpiDriverIo.lastRenderedFrame :=
++      (if (variableViewport) syncedViewport.get(0) else lastFrameComplete)
+     io.lcd := dpiDriverIo.signals
+     val lcdData = videoOutput.convertTo(
+       ColorRGB(
+@@ -667,23 +733,48 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+         }
+       }
+       val hdmiFramePulse = io.hdmiCy === (hdmiFrameHeight - 1).U
+-      framebufferIndex := regHdmiFrame
++      framebufferIndex := (if (variableViewport) frameViewport.get(0) else regHdmiFrame)
+       when (hdmiFramePulse && !RegNext(hdmiFramePulse)) {
+         regHdmiFrame := lastFrameComplete
++        frameScaleMode := (if (variableViewport) syncedViewport.get(65, 64) else scaleMode)
++        if (variableViewport) frameViewport.get := syncedViewport.get
+       }
+ 
+-      // Scale and center framebuffer within output video.
+-      val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
+-      val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2
+-      val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
++      // Apply literal 2x, 3x or 4x at a frame boundary. The core supplies
++      // a bounded sub-viewport when 4x would exceed the display.
+       val framebufferReadDelay = 3 /* reading */ + videoFilterLatency
+-      framebufferReadAddress :=
+-        (((videoY - videoOffsetY.U) / videoScale.U) * videoWidth.U) +
+-          ((videoX - videoOffsetX.U + framebufferReadDelay.U) / videoScale.U)
+-      framebufferInBounds := videoX >= videoOffsetX.U &&
+-        videoX < (videoOffsetX + (videoWidth * videoScale)).U &&
+-        videoY >= videoOffsetY.U &&
+-        videoY < (videoOffsetY + (videoHeight * videoScale)).U
++      def viewport(scale: Int): (UInt, Bool) = {
++        val left = (screenWidth - videoWidth * scale) / 2
++        val top = (screenHeight - videoHeight * scale) / 2
++        val xOffset = left.max(0)
++        val yOffset = top.max(0)
++        val xCrop = (-left).max(0)
++        val yCrop = (-top).max(0)
++        val xEnd = (left + videoWidth * scale).min(screenWidth).max(0)
++        val yEnd = (top + videoHeight * scale).min(screenHeight).max(0)
++        val address =
++          (((videoY + yCrop.U - yOffset.U) / scale.U) * videoWidth.U) +
++            ((videoX + xCrop.U - xOffset.U + framebufferReadDelay.U) / scale.U)
++        val inBounds = videoX >= xOffset.U && videoX < xEnd.U &&
++          videoY >= yOffset.U && videoY < yEnd.U
++        (address, inBounds)
++      }
++      val (largeAddress, largeBounds) = if (variableViewport)
++        dynamicViewport(videoX, videoY, screenWidth, screenHeight, 3,
++          framebufferReadDelay, 0, 0)
++        else viewport(3)
++      val (smallAddress, smallBounds) = if (variableViewport)
++        dynamicViewport(videoX, videoY, screenWidth, screenHeight, 2,
++          framebufferReadDelay, 0, 0)
++        else viewport(2)
++      val (cropAddress, cropBounds) = if (variableViewport)
++        dynamicViewport(videoX, videoY, screenWidth, screenHeight, 4,
++          framebufferReadDelay, 0, 0)
++        else viewport(3)
++      framebufferReadAddress := MuxLookup(frameScaleMode, largeAddress)(Seq(
++        1.U -> smallAddress, 2.U -> cropAddress))
++      framebufferInBounds := MuxLookup(frameScaleMode, largeBounds)(Seq(
++        1.U -> smallBounds, 2.U -> cropBounds))
+ 
+       // Scale overlay
+       val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
+@@ -714,23 +805,48 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+       val dpiY = if (revision.displayRotate) dpiDriverIo.pixelX else dpiDriverIo.pixelY
+       videoX := dpiX
+       videoY := dpiY
+-      framebufferIndex := dpiDriverIo.displayFrame
++      framebufferIndex := (if (variableViewport) frameViewport.get(0) else dpiDriverIo.displayFrame)
++      when (dpiDriverIo.displayFrame =/= RegNext(dpiDriverIo.displayFrame)) {
++        frameScaleMode := (if (variableViewport) syncedViewport.get(65, 64) else scaleMode)
++        if (variableViewport) frameViewport.get := syncedViewport.get
++      }
+ 
+-      // Scale and center framebuffer without output video.
+-      val videoScale = (screenWidth / videoWidth).min(screenHeight / videoHeight)
+-      val videoOffsetX = (screenWidth - (videoWidth * videoScale)) / 2 + revision.displayOffsetX
+-      val videoOffsetY = (screenHeight - (videoHeight * videoScale)) / 2
++      // Apply literal 2x, 3x or 4x on the LCD. Preserve panel alignment.
+       val framebufferReadDelay = 3 /* reading */ + videoFilterLatency
+       val framebufferReadDelayX = if (revision.displayRotate) 0 else framebufferReadDelay
+       val framebufferReadDelayY = if (revision.displayRotate) framebufferReadDelay else 0
+-      framebufferReadAddress :=
+-        (((dpiY - videoOffsetY.U + framebufferReadDelayY.U) / videoScale.U) * videoWidth.U) +
+-          ((dpiX - videoOffsetX.U + framebufferReadDelayX.U) / videoScale.U)
+-      framebufferInBounds :=
+-        dpiX >= videoOffsetX.U &&
+-        dpiX < (videoOffsetX + (videoWidth * videoScale)).U &&
+-        dpiY >= videoOffsetY.U &&
+-        dpiY < (videoOffsetY + (videoHeight * videoScale)).U
++      def viewport(scale: Int): (UInt, Bool) = {
++        val left = (screenWidth - videoWidth * scale) / 2 + revision.displayOffsetX
++        val top = (screenHeight - videoHeight * scale) / 2
++        val xOffset = left.max(0)
++        val yOffset = top.max(0)
++        val xCrop = (-left).max(0)
++        val yCrop = (-top).max(0)
++        val xEnd = (left + videoWidth * scale).min(screenWidth).max(0)
++        val yEnd = (top + videoHeight * scale).min(screenHeight).max(0)
++        val address =
++          (((dpiY + yCrop.U - yOffset.U + framebufferReadDelayY.U) / scale.U) * videoWidth.U) +
++            ((dpiX + xCrop.U - xOffset.U + framebufferReadDelayX.U) / scale.U)
++        val inBounds = dpiX >= xOffset.U && dpiX < xEnd.U &&
++          dpiY >= yOffset.U && dpiY < yEnd.U
++        (address, inBounds)
++      }
++      val (largeAddress, largeBounds) = if (variableViewport)
++        dynamicViewport(dpiX, dpiY, screenWidth, screenHeight, 3,
++          framebufferReadDelayX, framebufferReadDelayY, revision.displayOffsetX)
++        else viewport(3)
++      val (smallAddress, smallBounds) = if (variableViewport)
++        dynamicViewport(dpiX, dpiY, screenWidth, screenHeight, 2,
++          framebufferReadDelayX, framebufferReadDelayY, revision.displayOffsetX)
++        else viewport(2)
++      val (cropAddress, cropBounds) = if (variableViewport)
++        dynamicViewport(dpiX, dpiY, screenWidth, screenHeight, 4,
++          framebufferReadDelayX, framebufferReadDelayY, revision.displayOffsetX)
++        else viewport(3)
++      framebufferReadAddress := MuxLookup(frameScaleMode, largeAddress)(Seq(
++        1.U -> smallAddress, 2.U -> cropAddress))
++      framebufferInBounds := MuxLookup(frameScaleMode, largeBounds)(Seq(
++        1.U -> smallBounds, 2.U -> cropBounds))
+ 
+       // Scale overlay
+       val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
+@@ -827,20 +943,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+     framebuffers(i).readwritePorts(0).writeData := DontCare
+   }
+   val framebufferInterfaceRead = framebufferInterface.enable && !framebufferInterface.write
++  val hostFramebufferAddress = (framebufferInterface.address >> 1.U).asUInt
++  val hostViewportInBounds = if (variableViewport) {
++    val width = regCompletedViewport(62, 54)
++    val height = regCompletedViewport(53, 45)
++    val x0 = regCompletedViewport(44, 36)
++    val y0 = regCompletedViewport(35, 27)
++    val column = hostFramebufferAddress % videoWidth.U
++    val row = hostFramebufferAddress / videoWidth.U
++    regCompletedViewport(63).asBool &&
++      hostFramebufferAddress < (videoWidth * videoHeight).U &&
++      column >= x0 && column < x0 +& width &&
++      row >= y0 && row < y0 +& height
++  } else true.B
+   when (framebufferInterfaceRead) {
+     for (i <- 0 until 2) {
+       when (regLastFrameComplete === i.U) {
+-        framebuffers(i).readwritePorts(0).enable := true.B
+-        framebuffers(i).readwritePorts(0).address := (framebufferInterface.address >> 1.U).asUInt
++        framebuffers(i).readwritePorts(0).enable := hostViewportInBounds
++        framebuffers(i).readwritePorts(0).address :=
++          Mux(hostViewportInBounds, hostFramebufferAddress, 0.U)
+         framebuffers(i).readwritePorts(0).isWrite := false.B
+       }
+     }
+   }
+-  framebufferInterface.dataRead := MuxLookup(regLastFrameComplete, 0.U)(
++  val hostReadIndex = if (variableViewport) RegNext(RegNext(regLastFrameComplete))
++    else regLastFrameComplete
++  val hostReadRaw = MuxLookup(hostReadIndex, 0.U)(
+     (0 until 2).map(i => i.U ->
+       RegNext(RegNext(framebuffers(i).readwritePorts(0).readData))
+     ))
++  framebufferInterface.dataRead := Mux(RegNext(RegNext(hostViewportInBounds)),
++    hostReadRaw, 0.U)
+   framebufferInterface.done := RegNext(RegNext(framebufferInterface.enable))
++  // Transfer ownership and validity together. A frame boundary can change
++  // both; independent bit synchronizers could briefly advertise a new valid
++  // frame with the previous buffer index.
++  val displayOwnershipSync = if (variableViewport)
++    XpmCdcHandshake.continuous(io.clock_av, Cat(displayHasFrame, displayOwnedBuffer))
++    else 0.U(2.W)
++  val displayHasFrameSync = displayOwnershipSync(1)
++  val displayOwnedBufferSync = displayOwnershipSync(0)
+ 
+   //////////////////////////////////
+   // Core Connections
+@@ -848,11 +990,37 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+ 
+   // Framebuffer writes
+   {
+-    val framebufferX = RegInit(0.U(log2Ceil(videoWidth).W))
+-    val framebufferY = RegInit(0.U(log2Ceil(videoHeight).W))
++    val framebufferX = RegInit(0.U(log2Ceil(videoWidth + 1).W))
++    val framebufferY = RegInit(0.U(log2Ceil(videoHeight + 1).W))
+     val framebufferWriteIndex = RegInit(0.U(1.W))
++    val captureEnabled = RegInit(false.B)
++    val captureBad = RegInit(false.B)
++    val droppedCaptures = RegInit(0.U(32.W))
++    dontTouch(droppedCaptures)
++    val vblankStart = !coreVideo.vblank && RegNext(coreVideo.vblank)
++    val captureGranted = !displayHasFrameSync ||
++      framebufferWriteIndex =/= displayOwnedBufferSync.asUInt
++    // The first active pixel may coincide with the falling edge of vblank.
++    // Use the new grant immediately rather than the previous frame's latch.
++    val canCapture = if (variableViewport)
++      Mux(vblankStart, captureGranted, captureEnabled) else true.B
++    if (variableViewport) {
++      when (vblankStart) {
++        captureEnabled := captureGranted
++        captureBad := false.B
++      }
++    }
+ 
+-    when (coreVideo.dataEnable && !framebufferInterfaceRead) {
++    when (coreVideo.dataEnable && !canCapture) {
++      captureBad := true.B
++    }
++    when (coreVideo.dataEnable && canCapture &&
++          (framebufferInterfaceRead || framebufferX >= videoWidth.U ||
++           framebufferY >= videoHeight.U)) {
++      captureBad := true.B
++    }
++    when (coreVideo.dataEnable && canCapture && !framebufferInterfaceRead &&
++          framebufferX < videoWidth.U && framebufferY < videoHeight.U) {
+       // Core framebuffer write and SPI framebuffer read share the same read/write port,
+       // so ensure that they're not activated at the same time (so they can be inferred correctly).
+       val address = (framebufferY * videoWidth.U(10.W)) + framebufferX
+@@ -870,9 +1038,36 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+ 
+     val vblankEdge = coreVideo.vblank && !RegNext(coreVideo.vblank)
+     val hblankEdge = coreVideo.hblank && !RegNext(coreVideo.hblank)
+-    when (vblankEdge) {
+-      regLastFrameComplete := framebufferWriteIndex
+-      framebufferWriteIndex := !framebufferWriteIndex
++    if (variableViewport) {
++      val viewport = coreViewport.get
++      val publishedEpoch = RegInit(0.U(8.W))
++      val publishedFrameId = RegInit(0.U(16.W))
++      val geometryValid = viewport.activeWidth =/= 0.U && viewport.activeHeight =/= 0.U &&
++        viewport.x0 +& viewport.activeWidth <= videoWidth.U &&
++        viewport.y0 +& viewport.activeHeight <= videoHeight.U
++      when (!viewport.valid) {
++        regCompletedViewport := Cat(0.U(2.W), 0.U(37.W), viewport.epoch, 0.U(19.W))
++      }
++      when (vblankEdge && viewport.valid &&
++            (viewport.epoch =/= publishedEpoch || viewport.frameId =/= publishedFrameId)) {
++        when (geometryValid && captureEnabled && !captureBad) {
++          regLastFrameComplete := framebufferWriteIndex
++          regCompletedViewport := Cat(coreScaleMode, 1.U(1.W),
++            viewport.activeWidth, viewport.activeHeight,
++            viewport.x0, viewport.y0, viewport.epoch, viewport.frameId,
++            viewport.systemSms, viewport.tvPal, framebufferWriteIndex)
++          publishedEpoch := viewport.epoch
++          publishedFrameId := viewport.frameId
++          framebufferWriteIndex := !framebufferWriteIndex
++        } .otherwise {
++          droppedCaptures := droppedCaptures + 1.U
++        }
++      }
++    } else {
++      when (vblankEdge) {
++        regLastFrameComplete := framebufferWriteIndex
++        framebufferWriteIndex := !framebufferWriteIndex
++      }
+     }
+ 
+     when (coreVideo.vblank) {
+@@ -917,4 +1112,4 @@ case class Revision(
+   overlayWidth: Int,
+   overlayHeight: Int,
+   numSdramChips: Int,
+-)
+\ No newline at end of file
++)

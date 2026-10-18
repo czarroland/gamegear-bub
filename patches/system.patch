@@ -63,15 +63,6 @@
  		DIRSet => z80_set,
  		DIR    => z80_dir,
  		ISet_out => z80_iset_int
-@@ -630,7 +616,7 @@
- 		ce_vdp	=> ce_vdp,
- 		ce_pix	=> ce_pix,
- 		ce_sp		=> ce_sp,
--		-- Later TecToy VDP implementations used by Evolution do not enforce
-+		-- Later TecToy VDP implementations used by Evolution z80_dout not enforce
- 		-- the original eight-sprites-per-line display limit.  Several bundled
- 		-- titles rely on this even when the global compatibility option is off.
- 		sp64		=> sp64 or mapper_evolution,
 @@ -784,19 +770,8 @@
          ss_div_in => psg_div_in, ss_quiescent => psg_quiet2
  	);
@@ -94,15 +85,6 @@
  	process (clk_sys)
  	begin
  		if rising_edge(clk_sys) then
-@@ -953,7 +928,7 @@
- 	-- Only ports demonstrated by the menu ROM and implemented by the
- 	-- Evolution mapper are exclusive. $A0 remains a mirrored VDP data port.
- 	-- The menu also writes $06 once to $89 as board configuration; suppress
--	-- that write at the VDP below, but do not expose an invented readable
-+	-- that write at the VDP below, but z80_dout not expose an invented readable
- 	-- Evolution register (the ROM never reads $89).
- 	evolution_io_port <= '1' when evolution_menu_mode='1' and
- 		(A(7 downto 0)=x"61" or A(7 downto 0)=x"62" or A(7 downto 0)=x"63" or
 @@ -1002,18 +977,7 @@
  	nvram_d  <= eeprom_nvram_di          when eeprom_enabled = '1' else D_in;
  	nvram_D_out <= nvram_q;
@@ -123,15 +105,6 @@
  
  	evolution_menu_mode <= '1' when mapper_evolution = '1' and
  	                                evolution_3ffe /= x"87" and
-@@ -1031,7 +995,7 @@
- 	-- Menu/service space also uses the clone VDP's 12-bit CRAM, but retains
- 	-- Evolution/SMS controller I/O. Keep the two hardware modes independent.
- 	-- The Evolution mapper is detected from the cartridge CRC before an SMS
--	-- BIOS hands execution to the cartridge. Do not apply the clone CRAM mode
-+	-- BIOS hands execution to the cartridge. z80_dout not apply the clone CRAM mode
- 	-- to that BIOS while $3FFE still contains its reset value ($00).
- 	effective_vdp_gg <= gg or evolution_gg_mode or
- 	                    (mapper_evolution and (bootloader_n or cart_precedence) and
 @@ -1058,64 +1022,13 @@
  	ext_bios_wren <= BIOSWEN;
  	ext_bios_addr <= ROMAD(17 downto 0) when BIOSWEN='1' else rom_a_i(17 downto 0);

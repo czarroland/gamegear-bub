@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 module tb_audio;
     reg clk=0;always #10 clk=~clk;
-    reg reset=1,mute=0;
+    reg reset=1,mute=0,pal_mode=0;
     reg signed [15:0] raw_left=-1234,raw_right=2345;
     wire signed [15:0] left,right;
     wire sample_tick;
