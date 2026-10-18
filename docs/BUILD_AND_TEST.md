@@ -261,17 +261,23 @@ The `Game Gear size` setting (ID 4, register `0x1c`) offers literal sharp 3×
 and any other invalid 32-bit value normalize to 3×; register readback reports
 the effective choice. The framework patch keeps a coherent multi-bit CDC
 handshake and applies the selected size at a display frame boundary. Each game
-framebuffer has one read port. The SMS-only 4× crop path samples a 180×120
+framebuffer has one read port. The SMS-only 3× crop path samples a 256×160
 source viewport and centers it on LCD/HDMI output; L/R moves its vertical
 source origin one pixel per stable press. There are no extra corner samples,
-bilinear arithmetic, or fractional viewport calculations.
+bilinear arithmetic, or fractional viewport calculations. The alpha.9 candidate
+routed with +0.310 ns setup WNS and +0.047 ns hold WHS, zero failing constrained
+endpoints, and zero DRC errors. Its source correction for the missing first SMS
+row needs an on-device check.
 
-The SMS TV menu setting selects NTSC or PAL. The original 192, 224, and 240
-line raster diagnostics should show a stable picture at both rates. The
-on-screen Map controls action prompts for Up, Down, Left, Right, A and B in
-order. Press one physical D-pad or A/B/X/Y button for each; Select retains an
-existing binding and advances, and Start exits. This mapping lasts for the
-current core session. The separate Swap A/B menu choice persists in settings.
+The SMS TV menu setting selects Auto, NTSC or PAL. The original 192, 224, and
+240 line raster diagnostics should show a stable picture at both rates. The
+next alpha's Map controls action prompts for ten commands, including
+Start/Pause, crop up/down and optional Reset. Tap any physical D-pad, face,
+shoulder, Start or Select button to bind; hold a button for one second to keep
+its binding, or hold Start+Select to exit. This mapping lasts for the current
+core session. The separate Swap A/B menu choice persists in settings. After
+selecting Map controls, manually exit the core settings menu to see the
+mapping prompt ([known issue #9](https://github.com/czarroland/gamegear-bub/issues/9)).
 During an SMS game, Start acts as Pause after a stable press. Select has no
 game action by default; the optional Hold 1s Reset choice enables a guarded
 console reset. Verify these on a disposable save before treating a device
@@ -280,8 +286,8 @@ check as passed.
 Use a clean copy of the pinned framework when applying the patch. A copy that
 has already received an earlier scaling patch can retain obsolete logic even
 if the patch file in this repository has changed. Verify the generated RTL and
-routed RAM utilization before claiming hardware resource recovery. The current
-source edit has not yet established a new block-RAM count or FPGA timing result.
+routed RAM utilization before claiming hardware resource recovery. The alpha.9
+candidate has positive timing slack in a new rev4 route.
 
 ### Superseded scaling hardware records
 

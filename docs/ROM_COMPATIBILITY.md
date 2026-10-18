@@ -35,8 +35,10 @@ The mounted Alien 3 (Europe, Brazil) ROM is the cataloged 256 KiB image with
 CRC-32 `B618B144` and SHA-256
 `01e1a84319d4c3c6462ffd79cc77733cfef62aca07cf6c111b5d3c4ed6a364e7`.
 Its Sega header says SMS Export; it does not identify TV timing. Alpha.8
-selects PAL automatically for this exact image, but the alpha.7
-device report is a black screen with no audio under either TV setting. Direct
+selects PAL automatically for this exact image. The alpha.9 Next Trial device
+report is a white flash followed by a black screen with no sound
+([issue #10](https://github.com/czarroland/gamegear-bub/issues/10)); forcing PAL
+and changing the display size have not resolved it. Direct
 engine and integrated SoC/SDRAM simulations produce nonblack video from this
 ROM. Hardware compatibility remains unresolved; the TV default is not claimed
 as a boot fix.

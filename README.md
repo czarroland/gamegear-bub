@@ -24,8 +24,7 @@ With the current v1.1-beta firmware, **System: Auto** can identify a ROM only
 from a consistent `TMR SEGA` header. If an `.sms` game does not start under
 Auto, select **System: Master System** and reload it; for an unrecognized
 `.gg` game, select **Game Gear**. The filename extension alone does not reach
-this firmware's core loader. The optional extension-hint firmware patch is
-source only and has not been installed or verified on a Bub. The one ROM
+this firmware's core loader. The one ROM
 picker remembers its last directory, so switching between separate GG and SMS
 folders currently requires navigation.
 
@@ -62,8 +61,9 @@ preferences normalize to 3×. It selects GG, SMS NTSC or SMS PAL at runtime
 in one SoC, with a shared 256×240 framebuffer pair and native active viewport.
 The Master System TV setting defaults to Auto: the exact known PAL Alien 3 image
 selects PAL, while unknown images use NTSC until manually overridden. The
-alpha.8 package includes these changes. Alien 3 still shows a black screen on
-the reported Gamebub setup, including with PAL forced; Auto TV is not a boot fix.
+alpha.8 package includes these changes. On the alpha.9 Next Trial,
+[Alien 3 flashes white, then goes black with no sound](https://github.com/czarroland/gamegear-bub/issues/10);
+Auto TV is not a boot fix.
 [alpha.4 GG/SMS trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
 was released and installed, but hardware tests found that games do not
 progress beyond their first screen. The
@@ -76,12 +76,15 @@ local PAL trial; the alpha.8 combined build has not yet passed its own device te
 FM remains later work. Earlier
 4× and 3.5× trials remain documented as historical results.
 
-The development controls menu includes **Map controls**, which opens a
-six-step on-screen prompt for Up, Down, Left, Right, A and B. Each step
-captures one physical D-pad or A/B/X/Y press; Select keeps the existing
-binding and advances, and Start exits. These custom bindings last for the
-current core session. **Swap A/B** is a separate saved menu choice. SMS 3×
-crop uses L and R to move the picture one source pixel per press.
+The next alpha's **Map controls** prompt covers Up, Down, Left, Right, A, B,
+Start/Pause, crop up/down, and optional SMS Reset. Any physical D-pad, A/B/X/Y,
+L/R, Start or Select button can be assigned. Tap to bind, hold one button to
+keep a binding, or hold Start+Select to exit. After selecting **Map controls**,
+[manually close the core settings menu](https://github.com/czarroland/gamegear-bub/issues/9)
+to see the prompt. Custom
+bindings last for the current core session. **Swap A/B** is a separate saved
+menu choice. SMS 3× crop defaults to L and R, moving the picture one source
+pixel per press.
 SMS Start
 acts as Pause after debounce. SMS Select does nothing by default, with an
 optional one-second hold to reset the console. See the [runtime ABI](docs/SEGA_RUNTIME_ABI.md)

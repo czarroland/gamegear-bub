@@ -36,7 +36,7 @@ module tb_sms_raster;
         .debug_io(debug_io),.debug_mapper(debug_mapper));
     gg_video viewport(.clk(clk),.reset(!reset_n),.run(reset_n && !wram_busy),
         .freeze(1'b0),.ce_pix(ce_pix),.machine_sms(1'b1),.tv_pal(PAL[0]),.epoch(8'd1),
-        .overlay_active(1'b0),.overlay_step(3'd0),
+        .overlay_active(1'b0),.overlay_step(4'd0),
         .color(color),.native_hblank(hblank),.native_vblank(vblank),
         .red(),.green(),.blue(),.data_enable(),.hblank(),.vblank(),
         .frame_complete(frame_complete),.frame_valid(frame_valid),

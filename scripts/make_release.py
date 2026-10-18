@@ -93,6 +93,27 @@ verify the diagnostic Start color change and the transition into gameplay in
 both GG and SMS games before treating the build as playable. Alpha.3 remains
 the known-good GG rollback.
 ''' if int(suffix)>4 else ''
+    control_note='''This build maps ten commands: directions, A/B, Start/Pause,
+3x crop up/down, and optional SMS Reset. Any D-pad, A/B/X/Y, L/R, Start, or
+Select button can be assigned to each command. Open Map controls in Settings,
+tap one button to bind each prompt, hold one button for a second to keep its
+current binding, or hold Start+Select for a second to exit. The default crop
+buttons are L/R. The on-screen bindings last until the core powers off;
+Swap A/B remains a separate persistent menu setting. SMS Reset is disabled
+by default and requires the Hold 1s Reset setting when enabled.
+
+After selecting Map controls, manually exit the core settings menu to see
+the mapping prompt. This is a known issue:
+https://github.com/czarroland/gamegear-bub/issues/9
+This ZIP does not contain or modify Gamebub firmware.
+''' if int(suffix)>=9 else '''This build adds 3x crop with L/R one-pixel picture
+movement, an on-screen six-command press-to-bind mapper, a persistent Swap A/B
+menu choice, Start/Pause debounce, and a safe SMS Select default. Open Map
+controls in Settings, then press one button for each prompt. Start exits;
+Select keeps a binding. The on-screen bindings last until core power-off.
+SMS Select defaults to no action; the optional Hold 1s Reset setting restores
+a guarded reset shortcut.
+'''
     install=f'''GG and SMS Bub for Gamebub rev4 ({args.tag})
 ================================================================
 
@@ -115,26 +136,20 @@ SMS defaults to sharp 2x. SMS 3x is a zoom with vertical cropping and an
 additional eight-source-column crop on each side of 720-pixel HDMI output.
 
 The existing v1.1-beta custom core-loading firmware can use consistent
-TMR SEGA headers or a forced System setting. Automatic extension hints need
-the optional companion firmware patch and are not required for the included
-diagnostics. Boot one of those headered diagnostics first to reach the menu
-before selecting a forced System for a headerless title. No firmware image
-is bundled or installed by this package.
+TMR SEGA headers or a forced System setting. It does not pass filename
+extension hints to the core. Boot one of the headered diagnostics first to
+reach the menu before selecting a forced System for a headerless title. No
+firmware image is bundled or installed by this package.
 
 SMS PAL is selectable under Master System TV. Auto TV recognizes the exact
-Alien 3 (Europe, Brazil) image and uses NTSC for unknown images. This build adds
-3x crop with L/R one-pixel picture movement, an on-screen press-to-bind
-mapper, a persistent Swap A/B menu choice, Start/Pause debounce, and a safe
-SMS Select default. Open Map controls in the core Settings menu, then press
-one button for each prompted action. Start exits; Select keeps a binding.
-The on-screen custom bindings last until the core powers off. The Swap A/B
-menu choice is saved by firmware. SMS Select defaults to no action; the
-optional Hold 1s Reset setting restores a guarded reset shortcut.
+Alien 3 (Europe, Brazil) image and uses NTSC for unknown images.
+{control_note}
 
 The included test-logs directory records simulations with original test ROMs.
-This combined build needs its own device play check. Alien 3 still shows a
-black screen on the reported Gamebub setup even with PAL forced; Auto TV is
-not a verified boot fix. FM synthesis, save states,
+This combined build needs its own device play check. On the alpha.9 Next
+Trial, Alien 3 flashes white, then stays black with no sound. Auto TV is not
+a verified boot fix; see https://github.com/czarroland/gamegear-bub/issues/10.
+FM synthesis, save states,
 complete mapper/EEPROM coverage and long hardware soaks are not verified.
 {regression_note}Back up saves. The firmware derives .sav from the ROM basename, so GG and
 SMS files with the same basename in one directory share a save path. Keep

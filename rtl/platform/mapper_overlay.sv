@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Native-resolution on-screen prompt for the six sequential button bindings.
+// Native-resolution on-screen prompt for the ten sequential command bindings.
 module mapper_overlay(
     input wire machine_sms,
-    input wire [2:0] step,
+    input wire [3:0] step,
     input wire [8:0] x,y,
     output reg [11:0] color
 );
-    function automatic [7:0] text_char(input [1:0] line,input [3:0] index,input [2:0] stage);
+    function automatic [7:0] text_char(input [1:0] line,input [3:0] index,input [3:0] stage);
         reg [127:0] row;
         begin
             case(line)
@@ -17,10 +17,14 @@ module mapper_overlay(
                     2: row="PRESS FOR LEFT  ";
                     3: row="PRESS FOR RIGHT ";
                     4: row="PRESS FOR A     ";
-                    default: row="PRESS FOR B     ";
+                    5: row="PRESS FOR B     ";
+                    6: row="PRESS START     ";
+                    7: row="PRESS CROP UP   ";
+                    8: row="PRESS CROP DOWN ";
+                    default: row="PRESS RESET     ";
                 endcase
-                2: row="SELECT KEEP     ";
-                default: row="START EXIT      ";
+                2: row="HOLD 1S KEEP    ";
+                default: row="START+SEL EXIT  ";
             endcase
             text_char=row[8*(15-index)+:8];
         end
@@ -53,6 +57,8 @@ module mapper_overlay(
             "X": glyph=35'b10001_10001_01010_00100_01010_10001_10001;
             "Y": glyph=35'b10001_10001_01010_00100_00100_00100_00100;
             "Z": glyph=35'b11111_00001_00010_00100_01000_10000_11111;
+            "1": glyph=35'b00100_01100_00100_00100_00100_00100_01110;
+            "+": glyph=35'b00100_00100_00100_11111_00100_00100_00100;
             default: glyph=35'd0;
         endcase
     endfunction

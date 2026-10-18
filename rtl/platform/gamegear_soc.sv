@@ -3,6 +3,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
                       parameter integer PAUSE_DEBOUNCE_CYCLES=268456,
                       parameter integer CROP_DEBOUNCE_CYCLES=268456,
                       parameter integer MAPPER_DEBOUNCE_CYCLES=268456,
+                      parameter integer MAPPER_HOLD_CYCLES=53691275,
                       parameter integer RESET_HOLD_CYCLES=53691275)(
     input wire clk,reset,input wire [6:0] buttons,input wire select_button,
     input wire [1:0] shoulder_buttons,face_buttons,
@@ -58,22 +59,23 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     wire machine_reset_n=!reset && run && rom_ready && profile_ready;
     wire wram_busy;
     wire machine_running=machine_reset_n && !wram_busy;
-    wire [7:0] physical_buttons={face_buttons[1],face_buttons[0],
+    wire [11:0] physical_buttons={select_button,buttons[6],
+        shoulder_buttons[1],shoulder_buttons[0],face_buttons[1],face_buttons[0],
         buttons[4],buttons[5],buttons[3:0]};
-    wire [5:0] mapped_buttons;
+    wire [9:0] mapped_buttons;
     wire mapper_active;
-    wire [2:0] mapper_step;
+    wire [3:0] mapper_step;
     wire mapper_begin=mem_state==M_REG && host_write && host_address==32'h40 && host_word==1;
     wire mapper_defaults=mem_state==M_REG && host_write && host_address==32'h40 && host_word==2;
-    input_mapper #(.DEBOUNCE_CYCLES(MAPPER_DEBOUNCE_CYCLES)) mapper_ui(
+    input_mapper #(.DEBOUNCE_CYCLES(MAPPER_DEBOUNCE_CYCLES),
+                   .HOLD_CYCLES(MAPPER_HOLD_CYCLES)) mapper_ui(
         .clk(clk),.reset(reset),.begin_mapping(mapper_begin),.reset_mapping(mapper_defaults),
         .running(machine_running),.focus(focus),.physical(physical_buttons),
-        .start_button(buttons[6]),.select_button(select_button),
         .active(mapper_active),.step(mapper_step),.mapped(mapped_buttons));
     wire [5:0] arranged_buttons={swap_ab ? mapped_buttons[5] : mapped_buttons[4],
         swap_ab ? mapped_buttons[4] : mapped_buttons[5],mapped_buttons[3:0]};
     wire [6:0] effective_buttons=(focus && !mapper_active) ?
-        {buttons[6],arranged_buttons} : 7'd0;
+        {mapped_buttons[6],arranged_buttons} : 7'd0;
     wire machine_sms=active_type==2'd2;
     // The Sega header identifies SMS export, not its video frequency. Only
     // exact, verified ROM images can select PAL automatically.
@@ -86,9 +88,9 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     wire crop_eligible=crop_active && machine_running && focus && !freeze && !mapper_active;
     wire crop_up_tap,crop_down_tap;
     button_tap #(.DEBOUNCE_CYCLES(CROP_DEBOUNCE_CYCLES)) crop_up_button(
-        .clk(clk),.reset(reset),.enable(crop_eligible),.raw(shoulder_buttons[0]),.tap(crop_up_tap));
+        .clk(clk),.reset(reset),.enable(crop_eligible),.raw(mapped_buttons[7]),.tap(crop_up_tap));
     button_tap #(.DEBOUNCE_CYCLES(CROP_DEBOUNCE_CYCLES)) crop_down_button(
-        .clk(clk),.reset(reset),.enable(crop_eligible),.raw(shoulder_buttons[1]),.tap(crop_down_tap));
+        .clk(clk),.reset(reset),.enable(crop_eligible),.raw(mapped_buttons[8]),.tap(crop_down_tap));
     reg signed [9:0] crop_shift=0;
     wire [8:0] crop_height=9'd160;
     wire [8:0] crop_extent=(video_height>crop_height) ? video_height-crop_height : 9'd0;
@@ -114,7 +116,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
         !mapper_active && select_reset_enabled;
     wire sms_console_reset=reset_eligible && select_hold_count==RESET_HOLD_CYCLES;
     always @(posedge clk) begin
-        if(reset || !reset_eligible || !select_button) select_hold_count<=0;
+        if(reset || !reset_eligible || !mapped_buttons[9]) select_hold_count<=0;
         else if(select_hold_count<RESET_HOLD_CYCLES)
             select_hold_count<=select_hold_count+1'b1;
     end
@@ -123,7 +125,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     sms_pause_guard #(.DEBOUNCE_CYCLES(PAUSE_DEBOUNCE_CYCLES)) pause_guard(
         .clk(clk),.reset(reset),.machine_sms(machine_sms),
         .running(machine_running),.focus(focus && !mapper_active),.freeze(freeze),
-        .console_reset(sms_console_reset),.start_pressed(buttons[6]),
+        .console_reset(sms_console_reset),.start_pressed(mapped_buttons[6]),
         .pause_pressed(sms_pause_pressed));
     wire rom_start_accepted=command_request && command_state==C_IDLE &&
         host_regs[0][15:0]==16'h0300 && host_regs[1]==0 &&
@@ -365,7 +367,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
                             32'h38: read_word<={30'd0,sms_scale_mode};
                             32'h3c: read_word<={30'd0,sms_tv_mode};
                             32'h44: read_word<={31'd0,select_reset_enabled};
-                            32'h40: read_word<={28'd0,mapper_active,mapper_step};
+                            32'h40: read_word<={27'd0,mapper_active,mapper_step};
                             32'h48: read_word<={31'd0,swap_ab};
                             default: begin read_word<=0; last_error<=1; end
                         endcase

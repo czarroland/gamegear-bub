@@ -39,7 +39,7 @@ index 0000000..c506664
 +  val tvPal = Output(Bool())
 +}
 diff --git a/src/main/scala/platform/handheld/HandheldTop.scala b/src/main/scala/platform/handheld/HandheldTop.scala
-index e31ba55..3b2da67 100644
+index e31ba55..40876cb 100644
 --- a/src/main/scala/platform/handheld/HandheldTop.scala
 +++ b/src/main/scala/platform/handheld/HandheldTop.scala
 @@ -231,6 +231,18 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
@@ -81,7 +81,7 @@ index e31ba55..3b2da67 100644
    withClockAndReset (clock = io.clock_av, reset = reset_av) {
      val videoX = Wire(UInt(10.W))
      val videoY = Wire(UInt(10.W))
-@@ -580,6 +598,50 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -580,6 +598,53 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      // Read from the correct framebuffer.
      val framebufferIndex = Wire(UInt(1.W))
      val lastFrameComplete = XpmCdcSingle(clock, regLastFrameComplete.asBool).asUInt
@@ -121,7 +121,10 @@ index e31ba55..3b2da67 100644
 +        dx >= 0.S && dx < imageWidth.zext &&
 +        dy >= 0.S && dy < imageHeight.zext
 +      val sampleX = dx + readDelayX.S
-+      val sampleY = dy + readDelayY.S
++      // On the rotated LCD the read pipeline lead is along Y. At 2x/3x,
++      // advancing by a whole source row hides native row zero. Retain only
++      // the subpixel phase of that lead so the full native viewport is shown.
++      val sampleY = dy + (readDelayY % scale).S
 +      val sourceX = Mux(sampleX < 0.S, 0.U, sampleX.asUInt / scale.U)
 +      val sourceY = Mux(sampleY < 0.S, 0.U, sampleY.asUInt / scale.U)
 +      val boundedX = Mux(sourceX >= width, width - 1.U, sourceX)
@@ -132,7 +135,7 @@ index e31ba55..3b2da67 100644
      for (i <- 0 until 2) {
        framebuffers(i).readPorts(0).enable := framebufferIndex === i.U
        framebuffers(i).readPorts(0).address := framebufferReadAddress
-@@ -624,7 +686,11 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -624,7 +689,11 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
        /* sourceFramePeriod = */ videoFramePeriod,
        /* clockHz = */ clockDisplayHz,
      )
@@ -145,7 +148,7 @@ index e31ba55..3b2da67 100644
      io.lcd := dpiDriverIo.signals
      val lcdData = videoOutput.convertTo(
        ColorRGB(
-@@ -667,23 +733,48 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -667,23 +736,48 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
          }
        }
        val hdmiFramePulse = io.hdmiCy === (hdmiFrameHeight - 1).U
@@ -206,7 +209,7 @@ index e31ba55..3b2da67 100644
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -714,23 +805,48 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -714,23 +808,48 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
        val dpiY = if (revision.displayRotate) dpiDriverIo.pixelX else dpiDriverIo.pixelY
        videoX := dpiX
        videoY := dpiY
@@ -268,7 +271,7 @@ index e31ba55..3b2da67 100644
  
        // Scale overlay
        val overlayScale = (screenWidth / overlayWidth).min(screenHeight / overlayHeight)
-@@ -827,20 +943,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -827,20 +946,46 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
      framebuffers(i).readwritePorts(0).writeData := DontCare
    }
    val framebufferInterfaceRead = framebufferInterface.enable && !framebufferInterface.write
@@ -318,7 +321,7 @@ index e31ba55..3b2da67 100644
  
    //////////////////////////////////
    // Core Connections
-@@ -848,11 +990,37 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -848,11 +993,37 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
  
    // Framebuffer writes
    {
@@ -359,7 +362,7 @@ index e31ba55..3b2da67 100644
        // Core framebuffer write and SPI framebuffer read share the same read/write port,
        // so ensure that they're not activated at the same time (so they can be inferred correctly).
        val address = (framebufferY * videoWidth.U(10.W)) + framebufferX
-@@ -870,9 +1038,36 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+@@ -870,9 +1041,36 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
  
      val vblankEdge = coreVideo.vblank && !RegNext(coreVideo.vblank)
      val hblankEdge = coreVideo.hblank && !RegNext(coreVideo.hblank)
@@ -399,7 +402,18 @@ index e31ba55..3b2da67 100644
      }
  
      when (coreVideo.vblank) {
-@@ -917,4 +1112,4 @@ case class Revision(
+@@ -881,7 +1079,9 @@ class HandheldTop[T <: Core](coreFactory: () => T, revision: Revision) extends M
+       framebufferY := 0.U
+     } .elsewhen (coreVideo.hblank) {
+       // Line ended
+-      when (hblankEdge) {
++      // A blank line between VBlank and the first active line must not
++      // consume framebuffer row zero.
++      when (hblankEdge && framebufferX =/= 0.U) {
+         framebufferX := 0.U
+         framebufferY := framebufferY + 1.U
+       }
+@@ -917,4 +1117,4 @@ case class Revision(
    overlayWidth: Int,
    overlayHeight: Int,
    numSdramChips: Int,

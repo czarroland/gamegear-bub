@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 module gg_video(input wire clk,reset,run,freeze,ce_pix,machine_sms,tv_pal,
-    input wire overlay_active,input wire [2:0] overlay_step,
+    input wire overlay_active,input wire [3:0] overlay_step,
     input wire [7:0] epoch,
     input wire [11:0] color,input wire native_hblank,native_vblank,
     output reg [3:0] red,green,blue,

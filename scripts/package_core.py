@@ -26,14 +26,6 @@ def validate_metadata(core,files,settings):
             raise ValueError('file extensions exceed firmware limits')
         if entry.get('max_transfer_speed')!=5000:
             raise ValueError('ROM/save SPI speed must use the proven 5000 KB/s setting')
-        hint=entry.get('load_type_hint')
-        if hint:
-            if (int(hint['guard_address'],0)!=0 or
-                int(hint['guard_value'],0)!=0x53454732 or
-                int(hint['address'],0)!=0x30 or
-                hint['extensions']!={'gg':1,'sms':2} or
-                set(extensions)!={'gg','sms'}):
-                raise ValueError('load hint does not match SEG2 ROM picker')
     if ids!={0,1} or files['files'][1].get('dependent_on_0') is not True:
         raise ValueError('expected one ROM picker and its dependent save slot')
     setting_ids=set()

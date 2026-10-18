@@ -1,5 +1,55 @@
 # GG and SMS Bub — rev4 hardware diagnostic checkpoint
 
+## 2026-10-18 alpha.9 candidate: top row, mapping, firmware menu
+
+[Core issue #7](https://github.com/czarroland/gamegear-bub/issues/7)
+reports a missing first SMS pixel row at both sizes. The rev4 framework
+display path had a three-pixel read lead along rotated Y; dividing that lead
+by 2× or 3× skipped native row zero. The candidate keeps only the subpixel
+phase of the lead and prevents an empty HBlank after VBlank from consuming
+framebuffer row zero. The new framework RTL generated. The full 51-check
+regression suite passed, and Vivado 2024.1 routed the rev4 image with
++0.310 ns setup WNS, +0.047 ns hold WHS, zero failing constrained endpoints,
+and zero DRC errors (27 findings: one critical warning and 26 warnings).
+The bitstream SHA-256 is
+`d62f8c53a620f8c232eca25e1b900eb039bff50cc166489153733ea7835262d9`.
+The top-row fix still needs an on-device check.
+
+The core mapper now prompts for ten commands and accepts all 12 game-facing
+buttons for every command. A tap binds, a one-second single-button hold keeps
+the current binding, and holding Start+Select exits. The default SMS 3× crop
+movement remains on L/R, but either direction can be remapped. The current
+Gamebub firmware leaves core settings open after Map controls is selected;
+manually exit the menu to see the mapper
+([known issue #9](https://github.com/czarroland/gamegear-bub/issues/9)).
+The endpoint arrows remain an upstream firmware matter
+([Gamebub issue #58](https://github.com/elipsitz/gamebub/issues/58)).
+This repository does not maintain firmware patches.
+
+Alien 3 remains unresolved. The exact mounted ROM has a valid SMS Export Sega
+header, so the saved System: Auto setting selects SMS; its region header
+does not select TV timing. A new full SoC/SDRAM simulation loaded the exact
+ROM with System: Auto, confirmed SMS header selection and Auto PAL, and
+produced 196,608 nonblack pixels. On the alpha.9 Next Trial device build,
+the game flashes white, then goes black with no sound
+([issue #10](https://github.com/czarroland/gamegear-bub/issues/10)).
+This is a device failure that the simulation has not reproduced. Florin's
+vertical Game Gear port source has not
+yet been supplied for a rev4 build or comparison. Keep compatibility open
+without delaying the other alpha.9 work.
+
+The routed five-file core package was installed on the mounted BUB card at
+`cores/Sega8bit.NextTrial` as **GG and SMS Bub Next Test**. All five files were
+read back with matching SHA-256 values; the existing `Sega8bit.Dev` alpha.8
+core was not replaced. The previous Next Trial package is backed up at
+`build/card-backup-before-alpha9-nexttrial`. The five card files were checked
+again after removing the unused firmware hint from `files.json`; the bitstream
+is unchanged. The public-core-ID release candidate ZIP is
+`build/alpha9-candidate/GG-and-SMS-Bub-v0.1.0-alpha.9-rev4.zip`, SHA-256
+`036b547c1ffa41b38fe9af31b9b7acb97abce8d490815f4e53a2a4f91df18009`.
+No alpha.9 GitHub prerelease or firmware UF2 has been published or installed.
+The Next Trial install is an SD-card file check, not an on-device play check.
+
 ## 2026-10-17 alpha.8 follow-up: crop, TV setting, Alien 3
 
 The alpha.7 prerelease enables L/R movement only for SMS 4× crop. The source
@@ -136,8 +186,8 @@ The pinned v1.1-beta firmware does not pass `.sms` or `.gg` extensions to the
 core. The integrated SoC test now loads a headerless SMS diagnostic with no
 hint and confirms that Auto halts with error 8; after a fresh load with the
 SMS hint, the same image selects SMS and reaches the normal runtime checks.
-The extended test passes in Verilator. The companion firmware source patch
-contains the guarded extension hint, but no firmware build or hardware check
+The extended test passes in Verilator. An earlier source-only firmware
+extension-hint experiment was removed; no firmware build or hardware check
 has established this Auto fix on the handheld. Forced System remains the
 alpha.6 workaround.
 

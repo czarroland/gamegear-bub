@@ -17,12 +17,12 @@ Game Gear release as a rollback baseline.
 | Battery-backed cartridge RAM | Export verified on hardware; import marker test pending |
 | Persistent save states | Outside this implementation slice |
 | Master System | GG/SMS NTSC alpha.4 trial fails on hardware; alpha.5 received an initial successful rev4 play check. Alpha.6 retains its bitstream with the **GG and SMS Bub** menu name; broader compatibility remains open |
-| System Auto and ROM picker | The current firmware provides no extension hint, so some community-tested `.sms` games require a forced Master System setting. One picker remembers one last ROM folder. A source-only firmware hint patch exists; no Bub firmware build has been installed or verified |
+| System Auto and ROM picker | The current firmware provides no extension hint, so some community-tested `.sms` games require a forced Master System setting. One picker remembers one last ROM folder. No firmware extension is maintained in this repository |
 | Selectable scaling and display options | Sharp 2×/3× rev4 build published as `v0.1.0-alpha.3` and installed on BUB; hardware smoke testing passed. Individual ROM/scale results remain to be recorded |
 | Region and mapper override | Exposed; only some mapper paths tested |
 | SG-1000, SC-3000, System E, Evolution/Noza | Upstream logic present. A local trial package can upload up to 16 MiB for Evolution, but no full flash/gameplay or device compatibility test exists; see [ROM compatibility audit](ROM_COMPATIBILITY.md) |
 | PAL timing and FM sound | Native 192/224/240-line PAL raster checks pass. Several PAL ROMs played on the separate rev4 trial. The alpha.7 combined build passes routed timing but needs its own device check. FM control-port readback passes through the real SMS CPU. A private VM2413 synthesis probe passed, but the release still has PSG only |
-| Controls | Alpha.7 adds SMS 4× crop position on L/R, a six-step on-screen press-to-bind mapper, A/B swap, debounced Start/Pause, and Select reset only on explicit one-second hold. Device verification remains |
+| Controls | Alpha.8 moves the SMS 3× crop on L/R. The next alpha candidate expands the on-screen mapper to ten commands and all 12 game-facing buttons; A/B swap, debounced Start/Pause, and optional guarded Reset remain. Device verification remains |
 | Extra sprites, extended GG resolution, Z80 turbo | Outside the normal-speed parity profile |
 | BIOS loading, cheats, EEPROM cartridges | Not integrated |
 | Advanced controllers and Gear-to-Gear link | Gamebub controls/physical connectivity need separate evaluation |
@@ -30,8 +30,10 @@ Game Gear release as a rollback baseline.
 Alpha.8 removes SMS 4×, moves the SMS 3× crop with
 L/R, and makes Auto the default TV setting. Auto currently recognizes only the
 exact Alien 3 (Europe, Brazil) ROM; unknown ROMs use NTSC and can be forced to
-PAL or NTSC. The mounted Alien 3 ROM shows a black screen on the device even
-with PAL forced, although the same image produces video in direct-engine and
+PAL or NTSC. On the alpha.9 Next Trial, the mounted Alien 3 ROM flashes white
+and then stays black without sound
+([issue #10](https://github.com/czarroland/gamegear-bub/issues/10)), although
+the same image produces video in direct-engine and
 SoC/SDRAM simulation. Keep that compatibility issue open without holding the
 other release changes.
 
@@ -126,10 +128,9 @@ licensing gate described in the implementation plan before any public build.
 The current [FM implementation gate](FM_IMPLEMENTATION_GATE.md) records the
 pinned source's restrictions, candidate alternatives, and private tool checks.
 
-`patches/firmware-load-type-hint.patch` is a companion source patch against the
-pinned core-loading firmware. It adds an optional, guarded extension hint and
-case-insensitive picker matching. The patch has not been compiled into or
-installed as firmware; the current GG package does not use it.
+The current firmware does not pass filename extensions to this core. Use the
+System override for a headerless ROM; the core package does not modify the
+firmware picker.
 
 Community testing of the GG-only build found that simply admitting `.sms`
 files is insufficient: some titles need SMS Pause, while SMS palette and

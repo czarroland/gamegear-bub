@@ -28,7 +28,7 @@ module tb_soc;
     wire [15:0] data_in,data_out;
     wire [31:0] refreshes;
     gamegear_soc #(.PAUSE_DEBOUNCE_CYCLES(8),.CROP_DEBOUNCE_CYCLES(8),
-                       .MAPPER_DEBOUNCE_CYCLES(8),
+                       .MAPPER_DEBOUNCE_CYCLES(8),.MAPPER_HOLD_CYCLES(24),
                        .RESET_HOLD_CYCLES(16)) dut(.*);
     gg_sdram #(.INIT_CYCLES(20)) memory(.clk(clk),.reset(reset),.request(memory_request),
         .write(memory_write),.address(memory_address),.data_write(memory_data_write),
@@ -302,12 +302,12 @@ module tb_soc;
             $fatal(1,"Map controls action did not open the on-screen prompt");
         repeat(20) @(negedge clk);
         face_buttons[0]=1; repeat(20) @(negedge clk);
+        face_buttons[0]=0; repeat(20) @(negedge clk);
         if(dut.mapper_step!==1 || dut.effective_buttons!==0)
             $fatal(1,"Mapper did not capture X for Up while blocking gameplay input");
-        face_buttons[0]=0; repeat(20) @(negedge clk);
-        buttons[6]=1; repeat(20) @(negedge clk); // Start exits the prompt.
-        if(dut.mapper_active) $fatal(1,"Start did not close the mapper");
-        buttons[6]=0; repeat(20) @(negedge clk);
+        buttons[6]=1; select_button=1; repeat(45) @(negedge clk);
+        if(dut.mapper_active) $fatal(1,"Start+Select hold did not close the mapper");
+        buttons[6]=0; select_button=0; repeat(20) @(negedge clk);
         face_buttons[0]=1; repeat(2) @(negedge clk);
         if(dut.effective_buttons[0]!==1) $fatal(1,"Captured X-to-Up mapping not applied");
         face_buttons[0]=0;
