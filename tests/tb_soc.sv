@@ -271,22 +271,32 @@ module tb_soc;
         host(1,32'h38,0,0); expect_read(32'h38,0);
         if(display_scale_mode!==0 || !dut.profile_ready)
             $fatal(1,"SMS sharp 3x setting restarted the emulator or did not apply");
-        host(1,32'h38,2,0); expect_read(32'h38,2);
-        if(display_scale_mode!==2 || viewport_width!==180 || viewport_height!==120 ||
-           viewport_x0!==38 || viewport_y0!==36)
-            $fatal(1,"SMS 4x center crop descriptor incorrect: %0dx%0d at %0d,%0d",
+        if(viewport_width!==256 || viewport_height!==160 ||
+           viewport_x0!==0 || viewport_y0!==16)
+            $fatal(1,"SMS 3x center crop descriptor incorrect: %0dx%0d at %0d,%0d",
                 viewport_width,viewport_height,viewport_x0,viewport_y0);
-        repeat(20) @(negedge clk); // Debounce a released shoulder after entering crop mode.
+        repeat(20) @(negedge clk);
         shoulder_buttons[0]=1; repeat(20) @(negedge clk);
-        if(viewport_y0!==37) $fatal(1,"L did not move SMS 4x picture up one source pixel");
+        if(viewport_y0!==17) $fatal(1,"L did not move SMS 3x picture up one source pixel");
         repeat(30) @(negedge clk);
-        if(viewport_y0!==37) $fatal(1,"Held L repeated SMS crop movement");
+        if(viewport_y0!==17) $fatal(1,"Held L repeated SMS 3x crop movement");
         shoulder_buttons[0]=0; repeat(20) @(negedge clk);
         shoulder_buttons[1]=1; repeat(20) @(negedge clk);
-        if(viewport_y0!==36) $fatal(1,"R did not move SMS 4x picture down one source pixel");
+        if(viewport_y0!==16) $fatal(1,"R did not move SMS 3x picture down one source pixel");
         shoulder_buttons[1]=0; repeat(20) @(negedge clk);
+        shoulder_buttons[1]=1; repeat(20) @(negedge clk);
+        if(viewport_y0!==15) $fatal(1,"Second R tap did not move SMS 3x picture");
+        shoulder_buttons[1]=0; repeat(20) @(negedge clk);
+        host(1,32'h38,2,0); expect_read(32'h38,1);
+        if(display_scale_mode!==1 || viewport_width!==256 || viewport_height!==192 ||
+           viewport_x0!==0 || viewport_y0!==0)
+            $fatal(1,"Legacy SMS 4x setting did not normalize to full 2x viewport");
+        host(1,32'h38,0,0); expect_read(32'h38,0);
+        if(viewport_y0!==16) $fatal(1,"SMS 3x crop did not recenter after size change");
         host(1,32'h38,1,0); expect_read(32'h38,1);
-        if(display_scale_mode!==1) $fatal(1,"SMS sharp 2x setting did not restore");
+        if(display_scale_mode!==1 || viewport_width!==256 ||
+           viewport_height!==192 || viewport_y0!==0)
+            $fatal(1,"SMS sharp 2x setting did not restore the full viewport");
         host(1,32'h40,1,0);
         if(!dut.mapper_active || dut.mapper_step!==0)
             $fatal(1,"Map controls action did not open the on-screen prompt");
@@ -323,7 +333,10 @@ module tb_soc;
         if(timeout==2400000 || viewport_width!=256 || viewport_height!=192)
             $fatal(1,"SMS PAL viewport descriptor did not complete");
         host(1,32'h3c,0,0); expect_read(32'h3c,0);
-        if(clock_pal) $fatal(1,"SMS NTSC did not restore the NTSC system clock");
+        if(clock_pal) $fatal(1,"Unknown SMS ROM did not default to NTSC in Auto TV mode");
+        host(1,32'h3c,2,0); expect_read(32'h3c,2);
+        if(clock_pal) $fatal(1,"Forced SMS NTSC did not select the NTSC system clock");
+        host(1,32'h3c,0,0); expect_read(32'h3c,0);
         // The upstream Evolution flash is 16 MiB. Skip the middle of a
         // synthetic upload, then exercise the actual SoC/SDRAM path at its
         // final word; this proves transport bounds, not Evolution gameplay.

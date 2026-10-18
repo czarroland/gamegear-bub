@@ -1,5 +1,37 @@
 # GG and SMS Bub — rev4 hardware diagnostic checkpoint
 
+## 2026-10-17 alpha.8 follow-up: crop, TV setting, Alien 3
+
+The alpha.7 prerelease enables L/R movement only for SMS 4× crop. The source
+now moves the SMS 3× crop by one source line per L/R tap, using a 256×160
+source viewport. SMS 4× has been removed from the menu; its old stored value
+normalizes to 2×. Position resets on a size-setting write. Auto TV defaults
+to NTSC for unknown ROMs and recognizes one exact known PAL image, Alien 3
+(Europe, Brazil), by full-ROM CRC-32 `B618B144`; explicit PAL and NTSC remain
+available. The Sega export header does not encode TV frequency.
+
+The mounted BUB card has six identical 262,144-byte copies of Alien 3 with
+SHA-256 `01e1a84319d4c3c6462ffd79cc77733cfef62aca07cf6c111b5d3c4ed6a364e7`.
+The 32 KiB saves beside two copies are all `FF`. The card's `Sega8bit.Dev`
+bitstream matches the alpha.7 SHA-256 recorded below. The user reports a
+black screen and no audio with the default mapper even under PAL; the core
+menu remains usable and changing display size does not help. A direct-engine
+simulation and a full SoC/SDRAM simulation of that exact ROM both produced
+nonblack video at NTSC timing. With the new Auto TV mode, the integrated
+SoC/SDRAM simulation selected PAL for the exact ROM and again produced
+nonblack video. The full 51-check `scripts/run_tests.py --four-state` suite
+passes with the next-release source changes. Vivado 2024.1 routed the rev4
+test image with +0.340 ns setup WNS and +0.023 ns hold WHS, zero failing
+constrained endpoints, and zero DRC errors (26 warnings). Its bitstream
+SHA-256 is `df6acefda94262a950fbfae69d85b226883e7b226738611f9268a34378c86876`.
+The five core files were installed on the BUB card under the separate
+`Sega8bit.NextTrial` ID, shown as **GG and SMS Bub Next Test**, and read back
+with matching SHA-256 values. The `Sega8bit.Dev` alpha.7 and
+`Sega8bit.PALTrial` bitstreams remain unchanged. This is an SD-card install,
+not an on-device play result. Alien 3 remains a device-only failure to resolve
+before any release claims compatibility. The published alpha.7 ZIP still has
+the original 3× behavior and its manual TV setting.
+
 ## 2026-10-17 alpha.7 candidate: PAL and control fixes
 
 The unified core now selects SMS NTSC or PAL and includes fixes for the four

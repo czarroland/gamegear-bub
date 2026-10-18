@@ -30,3 +30,13 @@ the device, but their filenames and hashes were not recorded. The combined
 PAL and control-fix build needs its own device check. FM synthesis is still
 absent from the shared SoC. Test each title with its actual region, mapper,
 System and TV settings.
+
+The mounted Alien 3 (Europe, Brazil) ROM is the cataloged 256 KiB image with
+CRC-32 `B618B144` and SHA-256
+`01e1a84319d4c3c6462ffd79cc77733cfef62aca07cf6c111b5d3c4ed6a364e7`.
+Its Sega header says SMS Export; it does not identify TV timing. Alpha.8
+selects PAL automatically for this exact image, but the alpha.7
+device report is a black screen with no audio under either TV setting. Direct
+engine and integrated SoC/SDRAM simulations produce nonblack video from this
+ROM. Hardware compatibility remains unresolved; the TV default is not claimed
+as a boot fix.

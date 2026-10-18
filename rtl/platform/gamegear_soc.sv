@@ -31,7 +31,8 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     reg [1:0] byte_index;
     reg [31:0] host_regs[0:3];
     reg setup_complete=0,run=0,focus=0,rom_loading=0,save_loading=0,save_reading=0,rom_ready=0;
-    reg region=0,sms_pal=0,select_reset_enabled=0,swap_ab=0;
+    reg region=0,select_reset_enabled=0,swap_ab=0;
+    reg [1:0] sms_tv_mode=0; // 0 Auto, 1 PAL, 2 NTSC
     reg [1:0] gg_scale_mode=0,sms_scale_mode=1;
     reg [1:0] system_override=0;
     reg [3:0] mapper=0;
@@ -74,9 +75,14 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     wire [6:0] effective_buttons=(focus && !mapper_active) ?
         {buttons[6],arranged_buttons} : 7'd0;
     wire machine_sms=active_type==2'd2;
-    wire tv_pal=machine_sms && sms_pal;
+    // The Sega header identifies SMS export, not its video frequency. Only
+    // exact, verified ROM images can select PAL automatically.
+    wire known_pal_rom=rom_ready && rom_length==32'd262144 &&
+        (crc_state^32'hffffffff)==32'hb618b144; // Alien 3 (Europe, Brazil)
+    wire tv_pal=machine_sms &&
+        (sms_tv_mode==2'd1 || (sms_tv_mode==2'd0 && known_pal_rom));
     assign clock_pal=tv_pal;
-    wire crop_active=machine_sms && sms_scale_mode==2'd2;
+    wire crop_active=machine_sms && sms_scale_mode==2'd0;
     wire crop_eligible=crop_active && machine_running && focus && !freeze && !mapper_active;
     wire crop_up_tap,crop_down_tap;
     button_tap #(.DEBOUNCE_CYCLES(CROP_DEBOUNCE_CYCLES)) crop_up_button(
@@ -84,16 +90,19 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     button_tap #(.DEBOUNCE_CYCLES(CROP_DEBOUNCE_CYCLES)) crop_down_button(
         .clk(clk),.reset(reset),.enable(crop_eligible),.raw(shoulder_buttons[1]),.tap(crop_down_tap));
     reg signed [9:0] crop_shift=0;
-    wire [8:0] crop_extent=(video_height>9'd120) ? video_height-9'd120 : 9'd0;
+    wire [8:0] crop_height=9'd160;
+    wire [8:0] crop_extent=(video_height>crop_height) ? video_height-crop_height : 9'd0;
     wire [8:0] crop_center=crop_extent>>1;
     wire signed [9:0] crop_center_signed=$signed({1'b0,crop_center});
     wire signed [9:0] crop_top_signed=crop_center_signed+crop_shift;
     wire [8:0] crop_top=(crop_top_signed<0) ? 9'd0 :
         (crop_top_signed>$signed({1'b0,crop_extent})) ? crop_extent : crop_top_signed[8:0];
+    wire crop_mode_written=mem_state==M_REG && host_write && host_address==32'h38;
     always @(posedge clk) begin
-        if(reset || rom_start_accepted) crop_shift<=0;
+        if(reset || rom_start_accepted || crop_mode_written) crop_shift<=0;
         else if(crop_eligible && video_frame_valid) begin
-            if(crop_up_tap && !crop_down_tap && crop_shift<crop_center_signed)
+            if(crop_up_tap && !crop_down_tap &&
+               crop_shift<$signed({1'b0,crop_extent-crop_center}))
                 crop_shift<=crop_shift+1'b1;
             else if(crop_down_tap && !crop_up_tap && crop_shift>-crop_center_signed)
                 crop_shift<=crop_shift-1'b1;
@@ -128,7 +137,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     wire profile_setting_change=mem_state==M_REG && host_write && (
         (host_address==32'h10 && host_word<=1 && region!=host_word[0]) ||
         (host_address==32'h14 && host_word<=5 && mapper!=host_word[3:0]) ||
-        (host_address==32'h3c && host_word<=1 && sms_pal!=host_word[0]) ||
+        (host_address==32'h3c && host_word<=2 && sms_tv_mode!=host_word[1:0]) ||
         (host_address==32'h2c &&
             ((host_word<=2 && system_override!=host_word[1:0]) ||
              (host_word>2 && system_override!=0))) ||
@@ -182,9 +191,9 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     assign command_error=command_state==C_ERROR;
     assign display_scale_mode=machine_sms ? sms_scale_mode : gg_scale_mode;
     assign viewport_valid=video_frame_valid;
-    assign viewport_width=crop_active ? 9'd180 : video_width;
-    assign viewport_height=crop_active ? 9'd120 : video_height;
-    assign viewport_x0=crop_active ? 9'd38 : 9'd0;
+    assign viewport_width=video_width;
+    assign viewport_height=crop_active ? crop_height : video_height;
+    assign viewport_x0=9'd0;
     assign viewport_y0=crop_active ? crop_top : 9'd0;
     assign viewport_epoch=video_completed_epoch;
     assign viewport_frame_id=video_frame_id;
@@ -246,7 +255,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
             mem_state<=M_IDLE; command_state<=C_IDLE; mem_data_read<=0;
             setup_complete<=0; run<=0; focus<=0; rom_loading<=0;
             save_loading<=0; save_reading<=0; rom_ready<=0;
-            region<=0; sms_pal<=0; select_reset_enabled<=0; swap_ab<=0;
+            region<=0; sms_tv_mode<=0; select_reset_enabled<=0; swap_ab<=0;
             gg_scale_mode<=0; sms_scale_mode<=1; system_override<=0;
             mapper<=0; rom_length<=0; rom_mask<=0; rom_committed<=0; save_committed<=0;
             crc_state<=32'hffffffff; last_error<=0; stalls<=0; video_epoch<=0;
@@ -315,8 +324,9 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
                             32'h20: ; // The profile transaction handles cold restart.
                             32'h2c: system_override<=(host_word<=32'd2) ? host_word[1:0] : 2'd0;
                             32'h30: if(type_hint_rejected) last_error<=7;
-                            32'h38: sms_scale_mode<=(host_word<=32'd2) ? host_word[1:0] : 2'd1;
-                            32'h3c: if(host_word<=1) sms_pal<=host_word[0];
+                            // Former 4x value and unknown settings return to sharp 2x.
+                            32'h38: sms_scale_mode<=(host_word==32'd0) ? 2'd0 : 2'd1;
+                            32'h3c: if(host_word<=2) sms_tv_mode<=host_word[1:0];
                                 else last_error<=1;
                             32'h44: if(host_word<=1) select_reset_enabled<=host_word[0];
                                 else last_error<=1;
@@ -353,7 +363,7 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
                             32'h2c: read_word<={30'd0,system_override};
                             32'h30: read_word<={30'd0,type_hint};
                             32'h38: read_word<={30'd0,sms_scale_mode};
-                            32'h3c: read_word<={31'd0,sms_pal};
+                            32'h3c: read_word<={30'd0,sms_tv_mode};
                             32'h44: read_word<={31'd0,select_reset_enabled};
                             32'h40: read_word<={28'd0,mapper_active,mapper_step};
                             32'h48: read_word<={31'd0,swap_ab};

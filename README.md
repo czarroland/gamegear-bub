@@ -14,7 +14,7 @@ implementation and the work of other MiSTer-devel contributors. See
 tests, and release packages with human direction and testing on Gamebub hardware.
 
 Development port of the MiSTer Sega Master System/Game Gear engine to Gamebub
-rev4. The [GG and SMS Bub alpha.7 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.7)
+rev4. The [GG and SMS Bub alpha.8 prerelease](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.8)
 uses one GG/SMS core entry with selectable SMS NTSC or PAL. It includes
 on-screen button mapping, plus the crop, Pause and Select fixes requested in
 issues #3–#6. The combined build passed simulation and needs device play
@@ -56,11 +56,14 @@ Download its ZIP, then copy its `cores` and `roms` folders to the BUB SD card.
 It uses the separate `GameGear.Scale23` core ID and requires the existing
 custom core-loading firmware.
 
-The unified core offers sharp integer 3× and 2× for GG, plus
-2×, 3× crop and 4× crop for SMS. Stored 4× and 3.5× GG preferences normalize
-to 3×. It selects GG, SMS NTSC or SMS PAL at runtime in one SoC, with a shared
-256×240 framebuffer pair and native
-active viewport. Its
+The unified core offers sharp integer 3× and 2× for GG, plus 2× and 3× crop
+for SMS. Stored 4× SMS values normalize to 2×. Stored 4× and 3.5× GG
+preferences normalize to 3×. It selects GG, SMS NTSC or SMS PAL at runtime
+in one SoC, with a shared 256×240 framebuffer pair and native active viewport.
+The Master System TV setting defaults to Auto: the exact known PAL Alien 3 image
+selects PAL, while unknown images use NTSC until manually overridden. The
+alpha.8 package includes these changes. Alien 3 still shows a black screen on
+the reported Gamebub setup, including with PAL forced; Auto TV is not a boot fix.
 [alpha.4 GG/SMS trial](https://github.com/czarroland/gamegear-bub/releases/tag/v0.1.0-alpha.4)
 was released and installed, but hardware tests found that games do not
 progress beyond their first screen. The
@@ -69,7 +72,7 @@ received an initial successful rev4 play check, with exact ROMs and settings
 not yet recorded. Alpha.6 packages that same bitstream under the clearer menu
 name. Alpha.3 remains the GG-only rollback.
 Several PAL games and the original raster diagnostics played on a separate
-local PAL trial; the alpha.7 combined build has not yet passed its own device test.
+local PAL trial; the alpha.8 combined build has not yet passed its own device test.
 FM remains later work. Earlier
 4× and 3.5× trials remain documented as historical results.
 
@@ -77,8 +80,9 @@ The development controls menu includes **Map controls**, which opens a
 six-step on-screen prompt for Up, Down, Left, Right, A and B. Each step
 captures one physical D-pad or A/B/X/Y press; Select keeps the existing
 binding and advances, and Start exits. These custom bindings last for the
-current core session. **Swap A/B** is a separate saved menu choice. SMS 4×
-crop uses L and R to move the picture one source pixel per press. SMS Start
+current core session. **Swap A/B** is a separate saved menu choice. SMS 3×
+crop uses L and R to move the picture one source pixel per press.
+SMS Start
 acts as Pause after debounce. SMS Select does nothing by default, with an
 optional one-second hold to reset the console. See the [runtime ABI](docs/SEGA_RUNTIME_ABI.md)
 for register details.

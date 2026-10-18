@@ -16,8 +16,8 @@ Game Gear alpha.3 package retains its earlier `GGB1` ABI and core ID.
 | `0x28` | Read | Latest completed active width/height; zero when the frame tracker is invalid |
 | `0x2c` | Read/write | Requested System: 0 Auto, 1 GG, 2 SMS; setting ID 6 |
 | `0x30` | Read/write | Loader type hint: 0 unknown, 1 GG, 2 SMS; write only after ROM load start and before its first byte |
-| `0x38` | Read/write | SMS size: 1 sharp 2× (default), 0 sharp 3× crop, 2 sharp 4× crop; other values normalize to 1; setting ID 8 |
-| `0x3c` | Read/write | SMS TV: 0 NTSC (default), 1 PAL; setting ID 9. Changes restart the machine profile |
+| `0x38` | Read/write | SMS size: 1 sharp 2× (default), 0 sharp 3× crop; the former 4× value and other values normalize to 1; setting ID 8 |
+| `0x3c` | Read/write | SMS TV: 0 Auto (default), 1 PAL, 2 NTSC; setting ID 9. Auto selects PAL only for exact known ROM images and otherwise uses NTSC. Changes restart the machine profile |
 | `0x40` | Write/read | Write 1 to open the six-step on-screen press-to-bind mapper; write 2 to restore default bindings. Read active and current step. Setting IDs 10 and 12 |
 | `0x44` | Read/write | SMS Select: 0 disabled (default), 1 hold for one second to pulse console Reset. Setting ID 11 |
 | `0x48` | Read/write | Swap mapped A/B: 0 normal (default), 1 swapped. Setting ID 13 |
@@ -25,6 +25,10 @@ Game Gear alpha.3 package retains its earlier `GGB1` ABI and core ID.
 | `0x118` | Read | Type evidence: selected type bits 1:0, source bits 3:2 (1 override, 2 hint, 3 header), header bits 5:4, header-conflict bit 6 |
 | `0x120` | Read | Last completed frame's valid, TV, system, epoch and frame ID (development diagnostic) |
 | `0x124` | Read | Profile diagnostic: selected type bits 1:0, active type bits 3:2, ready bit 4, busy bit 5, error bit 6 |
+
+The current Auto TV list recognizes the exact Alien 3 (Europe, Brazil) image
+with CRC-32 `B618B144`. The Sega ROM header has an export-region code but no
+PAL/NTSC field, so other games use NTSC unless PAL is selected manually.
 
 The ROM and save windows remain `0x30000000` and `0x40000000`. ROM bytes are
 committed in order before machine type is applied. `SETUP_COMPLETE` schedules
@@ -45,10 +49,10 @@ error and code 8 available for diagnostics. The PAL profile selects an
 approximately 53.205128 MHz system clock and a 313-line native frame for SMS.
 PAL ROMs and the included raster diagnostics have been played on the separate
 local PAL trial. The next combined build still requires its own hardware test.
-FM synthesis is not offered by this ABI or package yet. SMS 3× crops the top
-and bottom on the LCD and eight source columns on each side of 720-pixel HDMI.
-SMS 4× displays a 180×120 source viewport; L moves the picture up one source
-pixel and R moves it down, with bounds set by the current native height.
+FM synthesis is not offered by this ABI or package yet. SMS 3× displays a
+256×160 source viewport and crops eight source columns on each side of
+720-pixel HDMI. In 3× crop, L moves the picture up one source pixel and R
+moves it down, with bounds set by the current native height.
 
 The on-screen mapper captures one physical D-pad or A/B/X/Y press for each of
 Up, Down, Left, Right, A and B. Start exits; Select keeps the current binding

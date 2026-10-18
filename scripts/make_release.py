@@ -121,8 +121,9 @@ diagnostics. Boot one of those headered diagnostics first to reach the menu
 before selecting a forced System for a headerless title. No firmware image
 is bundled or installed by this package.
 
-SMS PAL is selectable under Master System TV. The source branch also adds
-4x crop with L/R one-pixel picture movement, an on-screen press-to-bind
+SMS PAL is selectable under Master System TV. Auto TV recognizes the exact
+Alien 3 (Europe, Brazil) image and uses NTSC for unknown images. This build adds
+3x crop with L/R one-pixel picture movement, an on-screen press-to-bind
 mapper, a persistent Swap A/B menu choice, Start/Pause debounce, and a safe
 SMS Select default. Open Map controls in the core Settings menu, then press
 one button for each prompted action. Start exits; Select keeps a binding.
@@ -131,7 +132,9 @@ menu choice is saved by firmware. SMS Select defaults to no action; the
 optional Hold 1s Reset setting restores a guarded reset shortcut.
 
 The included test-logs directory records simulations with original test ROMs.
-This combined build needs its own device play check. FM synthesis, save states,
+This combined build needs its own device play check. Alien 3 still shows a
+black screen on the reported Gamebub setup even with PAL forced; Auto TV is
+not a verified boot fix. FM synthesis, save states,
 complete mapper/EEPROM coverage and long hardware soaks are not verified.
 {regression_note}Back up saves. The firmware derives .sav from the ROM basename, so GG and
 SMS files with the same basename in one directory share a save path. Keep

@@ -27,6 +27,14 @@ Game Gear release as a rollback baseline.
 | BIOS loading, cheats, EEPROM cartridges | Not integrated |
 | Advanced controllers and Gear-to-Gear link | Gamebub controls/physical connectivity need separate evaluation |
 
+Alpha.8 removes SMS 4×, moves the SMS 3× crop with
+L/R, and makes Auto the default TV setting. Auto currently recognizes only the
+exact Alien 3 (Europe, Brazil) ROM; unknown ROMs use NTSC and can be forced to
+PAL or NTSC. The mounted Alien 3 ROM shows a black screen on the device even
+with PAL forced, although the same image produces video in direct-engine and
+SoC/SDRAM simulation. Keep that compatibility issue open without holding the
+other release changes.
+
 ## 1. Battery-backed game saves
 
 The current GG core already imports and exports a 32 KiB cartridge RAM image as
