@@ -22,7 +22,10 @@ comparison baseline.
 ## Isolated transfer trial on the BUB card
 
 On October 27, `cores/Sega8bit.SlowTrial` was installed as **GG and SMS Bub
-Slow Transfer Test** alongside `Sega8bit.NextTrial`. It has the *identical*
+Slow Test** alongside `Sega8bit.NextTrial`. The initial 33-byte menu name
+exceeded the firmware's 32-byte core-name limit and was corrected after the
+core failed to appear. The Next Trial folder was restored for comparison.
+The Slow Test has the *identical*
 alpha.9 Rev4 bitstream (SHA-256
 `d62f8c53a620f8c232eca25e1b900eb039bff50cc166489153733ea7835262d9`)
 and settings. Only both file `max_transfer_speed` limits changed from 5000 to
