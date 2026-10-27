@@ -19,8 +19,10 @@ comparison baseline.
   remains black with no sound after the tester's firmware update. Six copies
   on the mounted BUB card match this hash. A subsequent video of the separate
   1000 KB/s Slow Test core again shows a black screen after this ROM is
-  selected. Simulation produces nonblack video. A forced-NTSC device check is
-  pending to separate PAL clock behavior from other runtime causes.
+  selected. The tester also forced NTSC and retried at both 2× and 3×,
+  restarting the core between changes; video stayed black. Simulation
+  produces nonblack video. PAL clock selection and file-transfer speed alone
+  do not explain the device failure.
 
 ## Isolated transfer trial on the BUB card
 
@@ -37,9 +39,10 @@ and settings. Only both file `max_transfer_speed` limits changed from 5000 to
 
 The user confirmed that the slow core appears and runs Gauntlet. Alien 3 still
 shows a black screen after selection, so lowering transfer speed did not
-resolve issue #10. Test the same image once with Master System TV forced to
-NTSC; Auto selects PAL for this exact CRC. This trial is **not** an alpha.10
-build or release.
+resolve issue #10. Auto selects PAL for this exact CRC, but the forced-NTSC
+retest also remained black. A forced Master System type check is pending to
+isolate automatic system detection. This trial is **not** an alpha.10 build or
+release.
 
 ## Release gate
 
