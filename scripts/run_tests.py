@@ -28,7 +28,8 @@ def main():
             if 'PASS' in line:print(line)
     for script in ['prepare_sources.py','generate_machine.py','make_diagnostic.py',
                    'make_sms_pause_diagnostic.py','make_sms_raster_diagnostics.py',
-                   'make_sms_fm_control_diagnostic.py']:
+                   'make_sms_fm_control_diagnostic.py','make_sms_top_row_diagnostic.py',
+                   'make_sms_crop_position_diagnostic.py']:
         run(script.removesuffix('.py'),[sys.executable,ROOT/'scripts'/script])
     run('staging-tests',[sys.executable,ROOT/'tests/test_prepare_sources.py'])
     run('engine-analysis',[sys.executable,ROOT/'scripts/analyze_engine.py','--synthesize'])
@@ -65,6 +66,7 @@ def main():
     run('audio_division_pal',[vvp,BUILD/'tb_audio_division_pal'])
     engine=['build/gamegear_machine.v']+sorted(str(p.relative_to(ROOT)) for p in (ROOT/'rtl/generated/jt89').glob('*.v'))+['rtl/platform/gg_enables.sv']
     for name,extra in [('engine',[]),('sms_engine',['rtl/platform/mapper_overlay.sv','rtl/platform/gg_video.sv']),
+                       ('sms_top_row',[]),('sms_crop_position',[]),
                        ('sms_fm_control',[]),
                        ('soc',['rtl/platform/gg_audio.sv','rtl/platform/mapper_overlay.sv',
                       'rtl/platform/gg_video.sv','rtl/platform/input_mapper.sv',
