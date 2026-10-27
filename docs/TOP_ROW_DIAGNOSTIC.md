@@ -14,7 +14,9 @@ edge in both modes. A red line should be visible at both sizes once 3× is
 shifted fully down.
 
 The generator's output is deterministic. Its engine testbench is
-`tests/tb_sms_top_row.sv`, included in `scripts/run_tests.py`. The ROM has not
-yet been simulated or tested on hardware in this workspace; do not use it to
-close [issue #7](https://github.com/czarroland/gamegear-bub/issues/7) until
-that verification and the device check are complete.
+`tests/tb_sms_top_row.sv`, included in `scripts/run_tests.py`. On October 27,
+the real SMS CPU/VDP engine passed this test in the offline Verilator
+container: native row zero was red and the following rows were blue, with
+no unexpected pixels in the checked rows. The ROM still needs a Rev4 device
+check before [issue #7](https://github.com/czarroland/gamegear-bub/issues/7)
+can be closed.
