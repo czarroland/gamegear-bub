@@ -17,9 +17,10 @@ DIAGNOSTICS={
     'sms-raster-192.sms':'MasterSystem',
     'sms-raster-224.sms':'MasterSystem',
     'sms-raster-240.sms':'MasterSystem',
+    'sms-top-row-diagnostic.sms':'MasterSystem',
 }
 TEST_LOGS=('engine.log','engine-four-state.log','sms_engine.log',
-           'sms_fm_control.log','soc.log','sms-pause.log',
+           'sms_top_row.log','sms_fm_control.log','soc.log','sms-pause.log',
            'input-mapper.log','video-viewport.log') + tuple(
                f'sms-raster-{height}{suffix}.log'
                for suffix in ('','-pal') for height in (192,224,240))
