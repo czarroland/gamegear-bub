@@ -12,7 +12,9 @@ comparison baseline.
   top-edge line, but gameplay advanced between shots. Native row-zero presence
   is inconclusive. The original SMS first-row diagnostic in draft PR #12
   passed a real-engine Verilator test on October 27, with row zero red and
-  following rows blue. Its controlled Rev4 device check remains.
+  following rows blue. The 32 KiB ROM was copied to
+  `roms/MasterSystem/sms-top-row-diagnostic.sms` on the BUB card and read back
+  with matching SHA-256. Its controlled Rev4 device check remains.
 - [Issue #10](https://github.com/czarroland/gamegear-bub/issues/10): The same
   262,144-byte Alien 3 image, SHA-256
   `01e1a84319d4c3c6462ffd79cc77733cfef62aca07cf6c111b5d3c4ed6a364e7`,
@@ -21,8 +23,9 @@ comparison baseline.
   1000 KB/s Slow Test core again shows a black screen after this ROM is
   selected. The tester also forced NTSC and retried at both 2× and 3×,
   restarting the core between changes; video stayed black. Simulation
-  produces nonblack video. PAL clock selection and file-transfer speed alone
-  do not explain the device failure.
+  produces nonblack video. Forcing System to Master System with TV at NTSC
+  also stayed black. PAL clock selection, automatic system detection, and
+  file-transfer speed alone do not explain the device failure.
 
 ## Isolated transfer trial on the BUB card
 
@@ -40,9 +43,8 @@ and settings. Only both file `max_transfer_speed` limits changed from 5000 to
 The user confirmed that the slow core appears and runs Gauntlet. Alien 3 still
 shows a black screen after selection, so lowering transfer speed did not
 resolve issue #10. Auto selects PAL for this exact CRC, but the forced-NTSC
-retest also remained black. A forced Master System type check is pending to
-isolate automatic system detection. This trial is **not** an alpha.10 build or
-release.
+retest also remained black. A forced Master System type check also stayed
+black. This trial is **not** an alpha.10 build or release.
 
 ## Release gate
 
