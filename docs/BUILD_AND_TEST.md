@@ -266,8 +266,13 @@ source viewport and centers it on LCD/HDMI output; L/R moves its vertical
 source origin one pixel per stable press. There are no extra corner samples,
 bilinear arithmetic, or fractional viewport calculations. The alpha.9 candidate
 routed with +0.310 ns setup WNS and +0.047 ns hold WHS, zero failing constrained
-endpoints, and zero DRC errors. Its source correction for the missing first SMS
-row needs an on-device check.
+endpoints, and zero DRC errors. The `sms-top-row-diagnostic.sms` ROM puts a
+red line at native row zero and blue below it. The companion
+`sms-crop-position-diagnostic.sms` uses red row zero, magenta rows 1–15,
+green rows 16–31, yellow rows 32–47, and blue below. In 3× from a fresh
+centered crop, 16 separate R taps should show red/magenta at the top;
+16 separate L taps should show yellow. This distinguishes viewport motion
+from a line fixed to the LCD edge. The device result is pending.
 
 The SMS TV menu setting selects Auto, NTSC or PAL. The original 192, 224, and
 240 line raster diagnostics should show a stable picture at both rates. The
