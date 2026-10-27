@@ -32,11 +32,11 @@ The mounted Alien 3 (Europe, Brazil) ROM now flashes white, then remains black
 with no sound on the alpha.9 Next Trial device build
 ([issue #10](https://github.com/czarroland/gamegear-bub/issues/10)).
 An October 27 retest on Rev4 firmware v1.1.0-beta1 again showed a black
-screen; audio was not checked separately in that retest. The newer
-v1.1.0-beta3 firmware
-[allows slower file transfers](https://discord.com/channels/1363136046757318927/1420426337214005360/1562962064924745740),
-so a same-ROM retest there would help separate firmware transfer behavior
-from a core defect.
+screen; audio was not checked separately in that retest. After updating to
+Eli's v1.1.0-beta3 firmware, the tester reports that the same game still
+shows a black screen with no sound. The handheld About version and ROM hash
+were not independently rechecked after the update, so this is a reported
+device result rather than a completed compatibility qualification.
 The same exact image produces video
 in direct-engine and full SoC/SDRAM simulation, including a new test with
 System: Auto and Auto PAL. Its Sega header selects SMS in Auto mode. Florin's
