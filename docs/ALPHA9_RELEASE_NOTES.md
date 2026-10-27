@@ -10,9 +10,12 @@ core. The ZIP contains no commercial ROMs or firmware image.
 - **SMS top row:** The rev4 display path now retains native row zero at 2×
   and 3× and ignores an empty line after VBlank when counting captured rows.
   This addresses the source path behind [core issue #7](https://github.com/czarroland/gamegear-bub/issues/7).
-  An October 27 Rev4 photo shows the SMS score area at 2× and the expected
-  crop at 3×, but does not resolve a single native pixel row. Keep the
-  first-row device check open.
+  October 27 Rev4 Gauntlet photos show the upper orange wall at 2× and a
+  patterned upper field at 3× after the tester reports 16 R crop taps. Both
+  show a thin bright line along the screen's top edge, extending beyond the
+  playfield into the dark score area. Gameplay advanced between photos, so
+  they do not establish whether the same native pixel row is present. Keep
+  the first-row device check open.
 - **Control mapping:** Map controls now prompts for directions, A/B,
   Start/Pause, crop up/down, and optional SMS Reset. Each can use any D-pad,
   A/B/X/Y, L/R, Start, or Select button. Tap to bind, hold one button for one
