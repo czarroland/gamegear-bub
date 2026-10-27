@@ -10,14 +10,17 @@ comparison baseline.
 - [Issue #7](https://github.com/czarroland/gamegear-bub/issues/7): October 27
   Gauntlet photos at 2× and 3× (after a reported 16 R taps) show a thin bright
   top-edge line, but gameplay advanced between shots. Native row-zero presence
-  is inconclusive. The original SMS first-row diagnostic in draft PR #12 still
-  needs engine simulation before a controlled device check.
+  is inconclusive. The original SMS first-row diagnostic in draft PR #12
+  passed a real-engine Verilator test on October 27, with row zero red and
+  following rows blue. Its controlled Rev4 device check remains.
 - [Issue #10](https://github.com/czarroland/gamegear-bub/issues/10): The same
   262,144-byte Alien 3 image, SHA-256
   `01e1a84319d4c3c6462ffd79cc77733cfef62aca07cf6c111b5d3c4ed6a364e7`,
   remains black with no sound after the tester's firmware update. Six copies
-  on the mounted BUB card match this hash. Simulation produces nonblack video,
-  so hardware transfer and runtime behavior need separate checks.
+  on the mounted BUB card match this hash. A subsequent video of the separate
+  1000 KB/s Slow Test core again shows a black screen after this ROM is
+  selected. Simulation produces nonblack video. A forced-NTSC device check is
+  pending to separate PAL clock behavior from other runtime causes.
 
 ## Isolated transfer trial on the BUB card
 
@@ -32,12 +35,11 @@ and settings. Only both file `max_transfer_speed` limits changed from 5000 to
 1000 KB/s. The source package and README are in
 `build/alpha10-slow-transfer-trial/` (local ignored build output).
 
-Launch the same Alien 3 ROM with `Sega8bit.SlowTrial` and note whether it
-loads video and audio, stays black, or triggers a firmware error. Compare
-against `Sega8bit.NextTrial` on the same firmware. A successful slow trial
-would point toward transfer handling; a repeated black screen would direct
-alpha.10 work toward runtime hardware differences. This trial is **not** an
-alpha.10 build or release.
+The user confirmed that the slow core appears and runs Gauntlet. Alien 3 still
+shows a black screen after selection, so lowering transfer speed did not
+resolve issue #10. Test the same image once with Master System TV forced to
+NTSC; Auto selects PAL for this exact CRC. This trial is **not** an alpha.10
+build or release.
 
 ## Release gate
 
