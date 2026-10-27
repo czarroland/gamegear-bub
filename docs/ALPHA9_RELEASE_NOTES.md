@@ -10,7 +10,12 @@ core. The ZIP contains no commercial ROMs or firmware image.
 - **SMS top row:** The rev4 display path now retains native row zero at 2×
   and 3× and ignores an empty line after VBlank when counting captured rows.
   This addresses the source path behind [core issue #7](https://github.com/czarroland/gamegear-bub/issues/7).
-  The first row still needs an on-device check.
+  October 27 Rev4 Gauntlet photos show the upper orange wall at 2× and a
+  patterned upper field at 3× after the tester reports 16 R crop taps. Both
+  show a thin bright line along the screen's top edge, extending beyond the
+  playfield into the dark score area. Gameplay advanced between photos, so
+  they do not establish whether the same native pixel row is present. Keep
+  the first-row device check open.
 - **Control mapping:** Map controls now prompts for directions, A/B,
   Start/Pause, crop up/down, and optional SMS Reset. Each can use any D-pad,
   A/B/X/Y, L/R, Start, or Select button. Tap to bind, hold one button for one
@@ -20,6 +25,8 @@ core. The ZIP contains no commercial ROMs or firmware image.
 - **Known menu behavior:** After selecting Map controls, manually exit the
   core settings menu to see the mapping prompt. This is tracked in
   [issue #9](https://github.com/czarroland/gamegear-bub/issues/9).
+  The settings action now says “Map controls (then exit menu)” so the
+  required firmware-menu step is visible at the point of use.
   The core package does not change Gamebub firmware.
 
 ## Known limits and test focus
@@ -27,6 +34,12 @@ core. The ZIP contains no commercial ROMs or firmware image.
 The mounted Alien 3 (Europe, Brazil) ROM now flashes white, then remains black
 with no sound on the alpha.9 Next Trial device build
 ([issue #10](https://github.com/czarroland/gamegear-bub/issues/10)).
+An October 27 retest on Rev4 firmware v1.1.0-beta1 again showed a black
+screen; audio was not checked separately in that retest. After updating to
+Eli's v1.1.0-beta3 firmware, the tester reports that the same game still
+shows a black screen with no sound. The handheld About version and ROM hash
+were not independently rechecked after the update, so this is a reported
+device result rather than a completed compatibility qualification.
 The same exact image produces video
 in direct-engine and full SoC/SDRAM simulation, including a new test with
 System: Auto and Auto PAL. Its Sega header selects SMS in Auto mode. Florin's
